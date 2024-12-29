@@ -23,35 +23,37 @@ const Sidebar = ({
 
   return (
     <div
-      className={`${isCollapsed ? "w-[80px]" : "w-[280px]"} h-full bg-white flex flex-col transition-all duration-300`}
+      className={`${isCollapsed ? "w-[80px]" : "w-[280px]"} h-full bg-[#F3F6FF] flex flex-col transition-all duration-300`}
     >
       {/* Logo Section */}
-      <div className="h-20 flex items-center px-4">
+      <div className="h-20 flex items-center px-4 bg-white">
         <div className="flex items-center">
           {!isCollapsed && (
             <div className="flex items-center">
-              <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
+              <div className="h-8 w-8 bg-[#2B4C7E] rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold">S</span>
               </div>
-              <span className="font-bold text-lg ml-2">SwapDecks</span>
+              <span className="font-bold text-lg ml-2 text-[#2B4C7E]">
+                SwapDecks
+              </span>
               <button
                 onClick={() => setIsCollapsed(!isCollapsed)}
-                className="ml-2 p-1.5 hover:bg-gray-100 rounded-md transition-colors"
+                className="ml-2 p-1.5 hover:bg-[#E6F3FF] rounded-md transition-colors"
               >
-                <Menu className="h-5 w-5 text-gray-600" />
+                <Menu className="h-5 w-5 text-[#2B4C7E]" />
               </button>
             </div>
           )}
           {isCollapsed && (
             <div className="flex items-center">
-              <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
+              <div className="h-8 w-8 bg-[#2B4C7E] rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold">S</span>
               </div>
               <button
                 onClick={() => setIsCollapsed(!isCollapsed)}
-                className="ml-2 p-1.5 hover:bg-gray-100 rounded-md transition-colors"
+                className="ml-2 p-1.5 hover:bg-[#E6F3FF] rounded-md transition-colors"
               >
-                <Menu className="h-5 w-5 text-gray-600" />
+                <Menu className="h-5 w-5 text-[#2B4C7E]" />
               </button>
             </div>
           )}
@@ -64,23 +66,23 @@ const Sidebar = ({
           <div
             className={`flex items-center ${isCollapsed ? "justify-center" : "space-x-2"} mb-4 px-4`}
           >
-            <User className="h-5 w-5 text-primary flex-shrink-0" />
+            <User className="h-5 w-5 text-[#2B4C7E] flex-shrink-0" />
             {!isCollapsed && (
-              <h2 className="text-sm font-semibold text-primary">
+              <h2 className="text-sm font-semibold text-[#2B4C7E]">
                 MY LEARNING
               </h2>
             )}
           </div>
           <div className={`space-y-2 ${isCollapsed ? "px-2" : "px-4"}`}>
             <button
-              className={`w-full flex items-center ${isCollapsed ? "justify-center" : "space-x-2"} p-2 text-sm text-gray-600 hover:bg-gray-100 rounded-md`}
+              className={`w-full flex items-center ${isCollapsed ? "justify-center" : "space-x-2"} p-2 text-sm text-[#2B4C7E] hover:bg-[#E6F3FF] rounded-md transition-colors`}
               title={isCollapsed ? "Purchased Decks" : ""}
             >
               <BookOpen className="h-5 w-5 flex-shrink-0" />
               {!isCollapsed && <span>Purchased Decks</span>}
             </button>
             <button
-              className={`w-full flex items-center ${isCollapsed ? "justify-center" : "space-x-2"} p-2 text-sm text-gray-600 hover:bg-gray-100 rounded-md`}
+              className={`w-full flex items-center ${isCollapsed ? "justify-center" : "space-x-2"} p-2 text-sm text-[#2B4C7E] hover:bg-[#E6F3FF] rounded-md transition-colors`}
               title={isCollapsed ? "Liked Decks" : ""}
             >
               <Heart className="h-5 w-5 flex-shrink-0" />
@@ -89,28 +91,28 @@ const Sidebar = ({
           </div>
         </div>
 
-        <Separator className="mx-4" />
+        <Separator className="mx-4 bg-[#2B4C7E]/20" />
 
         {/* Seller Section */}
         <div className="mt-6">
           <div
             className={`flex items-center ${isCollapsed ? "justify-center" : "space-x-2"} mb-4 px-4`}
           >
-            <Store className="h-5 w-5 text-primary flex-shrink-0" />
+            <Store className="h-5 w-5 text-[#2B4C7E] flex-shrink-0" />
             {!isCollapsed && (
-              <h2 className="text-sm font-semibold text-primary">MY STORE</h2>
+              <h2 className="text-sm font-semibold text-[#2B4C7E]">MY STORE</h2>
             )}
           </div>
           <div className={`space-y-2 ${isCollapsed ? "px-2" : "px-4"}`}>
             <button
-              className={`w-full flex items-center ${isCollapsed ? "justify-center" : "space-x-2"} p-2 text-sm text-gray-600 hover:bg-gray-100 rounded-md`}
+              className={`w-full flex items-center ${isCollapsed ? "justify-center" : "space-x-2"} p-2 text-sm text-[#2B4C7E] hover:bg-[#E6F3FF] rounded-md transition-colors`}
               title={isCollapsed ? "My Listed Decks" : ""}
             >
               <ShoppingCart className="h-5 w-5 flex-shrink-0" />
               {!isCollapsed && <span>My Listed Decks</span>}
             </button>
             <button
-              className={`w-full flex items-center ${isCollapsed ? "justify-center" : "space-x-2"} p-2 text-sm text-gray-600 hover:bg-gray-100 rounded-md`}
+              className={`w-full flex items-center ${isCollapsed ? "justify-center" : "space-x-2"} p-2 text-sm text-[#2B4C7E] hover:bg-[#E6F3FF] rounded-md transition-colors`}
               title={isCollapsed ? "Sales Analytics" : ""}
             >
               <TrendingUp className="h-5 w-5 flex-shrink-0" />

@@ -25,15 +25,15 @@ const TopNav = ({
   balance = 250.0,
 }: TopNavProps) => {
   return (
-    <div className="h-20 w-full border-b border-gray-200 px-6 flex items-center justify-between bg-white shadow-sm">
+    <div className="h-20 w-full px-6 flex items-center justify-between bg-white shadow-sm">
       {/* Search Bar */}
       <div className="flex-1 max-w-2xl">
         <div className="relative">
-          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#2B4C7E] h-5 w-5" />
           <Input
             type="search"
             placeholder="Search flashcard decks..."
-            className="pl-12 pr-4 py-6 text-lg w-full rounded-full border-2 focus:border-primary focus:ring-2 focus:ring-primary/20"
+            className="pl-12 pr-4 py-6 text-lg w-full rounded-full border-2 border-[#E6F3FF] focus:border-[#2B4C7E] focus:ring-2 focus:ring-[#2B4C7E]/20 bg-[#F8FAFF] placeholder-[#2B4C7E]/50"
           />
         </div>
       </div>
@@ -42,9 +42,9 @@ const TopNav = ({
       <div className="flex items-center space-x-6 ml-4">
         {/* Notifications */}
         <div className="relative cursor-pointer hover:opacity-80 transition-opacity">
-          <Bell className="h-6 w-6 text-gray-600" />
+          <Bell className="h-6 w-6 text-[#2B4C7E]" />
           {notifications > 0 && (
-            <div className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 rounded-full flex items-center justify-center">
+            <div className="absolute -top-1 -right-1 h-5 w-5 bg-[#FF6B6B] rounded-full flex items-center justify-center">
               <span className="text-white text-xs font-medium">
                 {notifications}
               </span>
@@ -55,34 +55,41 @@ const TopNav = ({
         {/* Profile Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger className="focus:outline-none">
-            <div className="flex items-center space-x-3 bg-gray-50 hover:bg-gray-100 transition-colors duration-200 rounded-full py-2 px-4 cursor-pointer">
-              <Avatar className="h-10 w-10 border-2 border-primary">
+            <div className="flex items-center space-x-3 bg-[#F3F6FF] hover:bg-[#E6F3FF] transition-colors duration-200 rounded-full py-2 px-4 cursor-pointer">
+              <Avatar className="h-10 w-10 border-2 border-[#2B4C7E]">
                 <AvatarImage src={avatarUrl} alt={username} />
-                <AvatarFallback>
+                <AvatarFallback className="bg-[#2B4C7E] text-white">
                   {username.slice(0, 2).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col items-start">
-                <span className="text-sm font-medium">{username}</span>
-                <span className="text-xs text-gray-500">
+                <span className="text-sm font-medium text-[#2B4C7E]">
+                  {username}
+                </span>
+                <span className="text-xs text-[#2B4C7E]/70">
                   ${balance.toFixed(2)}
                 </span>
               </div>
             </div>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56 mt-2">
-            <DropdownMenuLabel>{username}</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
+          <DropdownMenuContent
+            align="end"
+            className="w-56 mt-2 bg-white border-[#E6F3FF]"
+          >
+            <DropdownMenuLabel className="text-[#2B4C7E]">
+              {username}
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator className="bg-[#E6F3FF]" />
+            <DropdownMenuItem className="text-[#2B4C7E] focus:bg-[#E6F3FF] focus:text-[#2B4C7E]">
               <Wallet className="mr-2 h-4 w-4" />
               <span>Balance: ${balance.toFixed(2)}</span>
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem className="text-[#2B4C7E] focus:bg-[#E6F3FF] focus:text-[#2B4C7E]">
               <Settings className="mr-2 h-4 w-4" />
               <span>Settings</span>
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-red-600">
+            <DropdownMenuSeparator className="bg-[#E6F3FF]" />
+            <DropdownMenuItem className="text-[#FF6B6B] focus:bg-[#FFE4E9] focus:text-[#FF6B6B]">
               <LogOut className="mr-2 h-4 w-4" />
               <span>Logout</span>
             </DropdownMenuItem>
