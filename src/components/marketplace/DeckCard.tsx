@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Card,
   CardContent,
@@ -6,7 +6,8 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, BookOpen } from "lucide-react";
+import { Star, BookOpen, Lock } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface DeckCardProps {
   title?: string;
@@ -16,6 +17,7 @@ interface DeckCardProps {
   cardCount?: number;
   difficulty?: "Beginner" | "Intermediate" | "Advanced";
   imageUrl?: string;
+  requiresAuth?: boolean;
 }
 
 const DeckCard = ({
@@ -26,6 +28,7 @@ const DeckCard = ({
   cardCount = 100,
   difficulty = "Beginner",
   imageUrl = "https://images.unsplash.com/photo-1505902987837-9e40ec37e607",
+  requiresAuth = false,
 }: DeckCardProps) => {
   const difficultyColors = {
     Beginner: "bg-green-100 text-green-800",
@@ -33,8 +36,14 @@ const DeckCard = ({
     Advanced: "bg-red-100 text-red-800",
   };
 
+  const [isHovered, setIsHovered] = useState(false);
+
   return (
-    <Card className="w-72 h-80 overflow-hidden hover:shadow-lg transition-shadow duration-300 bg-white">
+    <Card
+      className="w-72 h-80 overflow-hidden hover:shadow-lg transition-all duration-300 bg-white relative"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <CardHeader className="p-0">
         <div className="relative h-40 w-full">
           <img
@@ -49,6 +58,20 @@ const DeckCard = ({
           </div>
         </div>
       </CardHeader>
+      {requiresAuth && isHovered && (
+        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center space-y-4 transition-opacity duration-300">
+          <Lock className="h-8 w-8 text-white" />
+          <p className="text-white text-center px-4">
+            Sign in to access this deck
+          </p>
+          <Button
+            className="bg-blue-600 text-white hover:bg-blue-700"
+            onClick={() => console.log("Navigate to sign in")}
+          >
+            Sign In
+          </Button>
+        </div>
+      )}
       <CardContent className="p-4">
         <h3 className="font-semibold text-lg truncate">{title}</h3>
         <p className="text-sm text-gray-500 h-12 line-clamp-2">{description}</p>
