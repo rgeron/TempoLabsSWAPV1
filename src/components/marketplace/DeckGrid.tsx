@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React from "react";
 import DeckCard from "./DeckCard";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, ChevronLeft } from "lucide-react";
 
 interface DeckGridProps {
   decks?: Array<{
@@ -17,28 +17,51 @@ interface DeckGridProps {
 
 interface Category {
   name: string;
-  icon: string;
+  color: string;
   subcategories: string[];
 }
 
 const DeckGrid = ({ decks }: DeckGridProps) => {
-  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
-
   const categories: Category[] = [
     {
       name: "Languages",
-      icon: "🌎",
-      subcategories: ["Spanish", "French", "German", "Japanese", "Chinese"],
+      color: "bg-blue-50",
+      subcategories: [
+        "Spanish",
+        "French",
+        "German",
+        "Japanese",
+        "Chinese",
+        "Italian",
+        "Korean",
+        "Russian",
+      ],
     },
     {
       name: "Sciences",
-      icon: "🔬",
-      subcategories: ["Physics", "Chemistry", "Biology", "Mathematics"],
+      color: "bg-green-50",
+      subcategories: [
+        "Physics",
+        "Chemistry",
+        "Biology",
+        "Mathematics",
+        "Computer Science",
+        "Astronomy",
+        "Environmental Science",
+      ],
     },
     {
       name: "Arts",
-      icon: "🎨",
-      subcategories: ["Literature", "History", "Music", "Visual Arts"],
+      color: "bg-pink-50",
+      subcategories: [
+        "Literature",
+        "History",
+        "Music",
+        "Visual Arts",
+        "Theater",
+        "Film Studies",
+        "Architecture",
+      ],
     },
   ];
 
@@ -83,65 +106,125 @@ const DeckGrid = ({ decks }: DeckGridProps) => {
       difficulty: "Beginner" as const,
       imageUrl: "https://images.unsplash.com/photo-1530026405186-ed1f139313f8",
     },
+    {
+      id: "5",
+      title: "French for Beginners",
+      description: "Start your journey in French",
+      price: 11.99,
+      rating: 4.7,
+      cardCount: 90,
+      difficulty: "Beginner" as const,
+      imageUrl: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34",
+    },
   ];
 
   const displayDecks = decks || defaultDecks;
 
+  const scrollContainer = (
+    direction: "left" | "right",
+    containerId: string,
+  ) => {
+    const container = document.getElementById(containerId);
+    if (container) {
+      const scrollAmount = 600;
+      const targetScroll =
+        container.scrollLeft +
+        (direction === "left" ? -scrollAmount : scrollAmount);
+      container.scrollTo({
+        left: targetScroll,
+        behavior: "smooth",
+      });
+    }
+  };
+
   return (
-    <div className="w-full min-h-screen bg-gray-50 p-6 space-y-8">
+    <div className="w-full min-h-screen bg-gray-50 overflow-y-auto">
       {/* Categories Section */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-4 p-6 h-[calc(60vh-64px)]">
         {categories.map((category) => (
           <div
             key={category.name}
-            className={`bg-white rounded-lg shadow-sm transition-all duration-300 cursor-pointer ${expandedCategory === category.name ? "col-span-full" : ""}`}
-            onClick={() =>
-              setExpandedCategory(
-                expandedCategory === category.name ? null : category.name,
-              )
-            }
+            className={`${category.color} rounded-lg p-6 overflow-y-auto`}
           >
-            <div className="p-4 flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <span className="text-2xl">{category.icon}</span>
-                <h3 className="text-lg font-semibold">{category.name}</h3>
-              </div>
-              <ChevronRight
-                className={`h-5 w-5 transition-transform duration-300 ${expandedCategory === category.name ? "rotate-90" : ""}`}
-              />
+            <h3 className="text-xl font-semibold mb-4">{category.name}</h3>
+            <div className="grid gap-2">
+              {category.subcategories.map((subcategory) => (
+                <button
+                  key={subcategory}
+                  className="text-left px-4 py-2 bg-white/60 hover:bg-white/80 rounded-md transition-colors duration-200 shadow-sm"
+                  onClick={() =>
+                    console.log(`Navigate to ${category.name} - ${subcategory}`)
+                  }
+                >
+                  {subcategory}
+                </button>
+              ))}
             </div>
-            {expandedCategory === category.name && (
-              <div className="px-4 pb-4 pt-2 border-t">
-                <div className="flex flex-wrap gap-2">
-                  {category.subcategories.map((subcategory) => (
-                    <button
-                      key={subcategory}
-                      className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm"
-                    >
-                      {subcategory}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         ))}
       </div>
 
-      {/* Decks Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
-        {displayDecks.map((deck) => (
-          <DeckCard
-            key={deck.id}
-            title={deck.title}
-            description={deck.description}
-            price={deck.price}
-            rating={deck.rating}
-            cardCount={deck.cardCount}
-            difficulty={deck.difficulty}
-            imageUrl={deck.imageUrl}
-          />
-        ))}
+      {/* Horizontal Deck Sections */}
+      <div className="px-6 space-y-8">
+        {/* Recommended Section */}
+        <div className="relative">
+          <h2 className="text-2xl font-semibold mb-4">Recommended for you</h2>
+          <div className="relative group">
+            <button
+              onClick={() => scrollContainer("left", "recommended-container")}
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white shadow-lg rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 -ml-4"
+            >
+              <ChevronLeft className="h-6 w-6" />
+            </button>
+            <div
+              id="recommended-container"
+              className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-4"
+              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+            >
+              {displayDecks.map((deck) => (
+                <div key={deck.id} className="flex-none">
+                  <DeckCard {...deck} />
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => scrollContainer("right", "recommended-container")}
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white shadow-lg rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 -mr-4"
+            >
+              <ChevronRight className="h-6 w-6" />
+            </button>
+          </div>
+        </div>
+
+        {/* Best of the Month Section */}
+        <div className="relative pb-6">
+          <h2 className="text-2xl font-semibold mb-4">Best of the Month</h2>
+          <div className="relative group">
+            <button
+              onClick={() => scrollContainer("left", "best-container")}
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white shadow-lg rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 -ml-4"
+            >
+              <ChevronLeft className="h-6 w-6" />
+            </button>
+            <div
+              id="best-container"
+              className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-4"
+              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+            >
+              {[...displayDecks].reverse().map((deck) => (
+                <div key={deck.id} className="flex-none">
+                  <DeckCard {...deck} />
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => scrollContainer("right", "best-container")}
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white shadow-lg rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 -mr-4"
+            >
+              <ChevronRight className="h-6 w-6" />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
