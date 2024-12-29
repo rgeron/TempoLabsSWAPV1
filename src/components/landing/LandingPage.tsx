@@ -1,10 +1,20 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import DeckGrid from "../marketplace/DeckGrid";
+import { AuthModal } from "../auth/AuthModal";
+import { useAuth } from "@/lib/auth";
+import { Navigate } from "react-router-dom";
 
 const LandingPage = () => {
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const { user } = useAuth();
+
+  if (user) {
+    return <Navigate to="/home" replace />;
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
@@ -23,7 +33,10 @@ const LandingPage = () => {
             >
               About Us
             </Button>
-            <Button className="bg-blue-600 text-white hover:bg-blue-700">
+            <Button
+              className="bg-blue-600 text-white hover:bg-blue-700"
+              onClick={() => setShowAuthModal(true)}
+            >
               Sign In
             </Button>
           </div>
@@ -61,7 +74,7 @@ const LandingPage = () => {
               journey.
             </p>
           </div>
-          <DeckGrid />
+          <DeckGrid hideRecommended />
         </div>
       </section>
 
@@ -77,11 +90,17 @@ const LandingPage = () => {
           <Button
             size="lg"
             className="bg-white text-blue-600 hover:bg-blue-50 text-lg px-8"
+            onClick={() => setShowAuthModal(true)}
           >
             Sign Up Now
           </Button>
         </div>
       </footer>
+
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
     </div>
   );
 };

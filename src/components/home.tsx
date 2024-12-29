@@ -2,59 +2,30 @@ import React from "react";
 import Sidebar from "./marketplace/Sidebar";
 import TopNav from "./marketplace/TopNav";
 import DeckGrid from "./marketplace/DeckGrid";
+import { useAuth } from "@/lib/auth";
+import { Navigate } from "react-router-dom";
 
-interface HomeProps {
-  username?: string;
-  avatarUrl?: string;
-  notifications?: number;
-  balance?: number;
-  selectedCategory?: string;
-  decks?: Array<{
-    id: string;
-    title: string;
-    description: string;
-    price: number;
-    rating: number;
-    cardCount: number;
-    difficulty: "Beginner" | "Intermediate" | "Advanced";
-    imageUrl: string;
-  }>;
-}
+const Home = () => {
+  const { user, profile, loading } = useAuth();
 
-const Home = ({
-  username,
-  avatarUrl,
-  notifications,
-  balance,
-  selectedCategory,
-  decks,
-}: HomeProps) => {
-  const handleSearch = (query: string) => {
-    // Implement search functionality
-    console.log("Searching for:", query);
-  };
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
-  const handleCategorySelect = (category: string) => {
-    // Implement category selection
-    console.log("Selected category:", category);
-  };
+  if (!user) {
+    return <Navigate to="/" replace />;
+  }
 
   return (
     <div className="flex h-screen w-full bg-white">
-      <Sidebar
-        onCategorySelect={handleCategorySelect}
-        onSearch={handleSearch}
-        selectedCategory={selectedCategory}
-      />
+      <Sidebar />
       <div className="flex flex-col flex-1 overflow-hidden">
         <TopNav
-          username={username}
-          avatarUrl={avatarUrl}
-          notifications={notifications}
-          balance={balance}
+          username={profile?.username || user.email}
+          avatarUrl={profile?.avatar_url}
         />
         <div className="flex-1 overflow-auto">
-          <DeckGrid decks={decks} />
+          <DeckGrid />
         </div>
       </div>
     </div>
