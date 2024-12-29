@@ -1,6 +1,7 @@
 import React from "react";
 import DeckCard from "./DeckCard";
 import { ChevronRight, ChevronLeft } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface DeckGridProps {
   decks?: Array<{
@@ -35,6 +36,10 @@ const DeckGrid = ({ decks }: DeckGridProps) => {
         "Italian",
         "Korean",
         "Russian",
+        "Portuguese",
+        "Arabic",
+        "Hindi",
+        "Vietnamese",
       ],
     },
     {
@@ -48,6 +53,11 @@ const DeckGrid = ({ decks }: DeckGridProps) => {
         "Computer Science",
         "Astronomy",
         "Environmental Science",
+        "Geology",
+        "Statistics",
+        "Engineering",
+        "Medicine",
+        "Psychology",
       ],
     },
     {
@@ -61,6 +71,11 @@ const DeckGrid = ({ decks }: DeckGridProps) => {
         "Theater",
         "Film Studies",
         "Architecture",
+        "Photography",
+        "Dance",
+        "Creative Writing",
+        "Art History",
+        "Design",
       ],
     },
   ];
@@ -140,25 +155,31 @@ const DeckGrid = ({ decks }: DeckGridProps) => {
   return (
     <div className="w-full min-h-screen bg-gray-50 overflow-y-auto">
       {/* Categories Section */}
-      <div className="grid grid-cols-3 gap-4 p-6 h-[calc(60vh-64px)]">
+      <div className="grid grid-cols-3 gap-4 p-6 h-[calc(60vh-80px)]">
         {categories.map((category) => (
           <div
             key={category.name}
-            className={`${category.color} rounded-lg p-6 overflow-y-auto`}
+            className={`${category.color} rounded-lg overflow-hidden flex flex-col`}
           >
-            <h3 className="text-xl font-semibold mb-4">{category.name}</h3>
-            <div className="grid gap-2">
-              {category.subcategories.map((subcategory) => (
-                <button
-                  key={subcategory}
-                  className="text-left px-4 py-2 bg-white/60 hover:bg-white/80 rounded-md transition-colors duration-200 shadow-sm"
-                  onClick={() =>
-                    console.log(`Navigate to ${category.name} - ${subcategory}`)
-                  }
-                >
-                  {subcategory}
-                </button>
-              ))}
+            <div className="p-4">
+              <h3 className="text-xl font-semibold mb-4">{category.name}</h3>
+              <ScrollArea className="h-[calc(60vh-180px)]">
+                <div className="grid gap-2 pr-4">
+                  {category.subcategories.map((subcategory) => (
+                    <button
+                      key={subcategory}
+                      className="text-left px-4 py-2 bg-white/60 hover:bg-white/80 rounded-md transition-colors duration-200 shadow-sm"
+                      onClick={() =>
+                        console.log(
+                          `Navigate to ${category.name} - ${subcategory}`,
+                        )
+                      }
+                    >
+                      {subcategory}
+                    </button>
+                  ))}
+                </div>
+              </ScrollArea>
             </div>
           </div>
         ))}
