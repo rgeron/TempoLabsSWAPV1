@@ -15,7 +15,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { BuyDeckDialog } from "./BuyDeckDialog";
+import BuyDeckDialog from "./BuyDeckDialog";
 
 interface DeckCardProps {
   id: string;
@@ -28,6 +28,9 @@ interface DeckCardProps {
   imageUrl?: string;
   creatorName?: string;
   creatorAvatar?: string;
+  hideActions?: boolean;
+  isLiked?: boolean;
+  onUnlike?: () => void;
 }
 
 const DeckCard = ({
@@ -41,6 +44,9 @@ const DeckCard = ({
   imageUrl = "https://images.unsplash.com/photo-1505902987837-9e40ec37e607",
   creatorName = "Anonymous",
   creatorAvatar,
+  hideActions = false,
+  isLiked = false,
+  onUnlike,
 }: DeckCardProps) => {
   const difficultyColors = {
     Beginner: "bg-emerald-100 text-emerald-800 border-emerald-200",
@@ -48,17 +54,11 @@ const DeckCard = ({
     Advanced: "bg-rose-100 text-rose-800 border-rose-200",
   };
 
-  const [isHovered, setIsHovered] = useState(false);
-  const [isLiked, setIsLiked] = useState(false);
   const [showBuyDialog, setShowBuyDialog] = useState(false);
 
   return (
     <TooltipProvider>
-      <Card
-        className="w-72 overflow-hidden hover:shadow-lg transition-all duration-300 bg-white relative group"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
+      <Card className="w-72 overflow-hidden hover:shadow-lg transition-all duration-300 bg-white relative group">
         <CardHeader className="p-0">
           <div className="relative h-40 w-full overflow-hidden">
             <img
@@ -73,14 +73,16 @@ const DeckCard = ({
               >
                 {difficulty}
               </Badge>
-              <button
-                onClick={() => setIsLiked(!isLiked)}
-                className="p-2 rounded-full bg-white/90 hover:bg-white transition-colors duration-200 shadow-sm"
-              >
-                <Heart
-                  className={`h-4 w-4 ${isLiked ? "text-red-500 fill-red-500" : "text-gray-600"}`}
-                />
-              </button>
+              {!hideActions && (
+                <button
+                  onClick={onUnlike}
+                  className="p-2 rounded-full bg-white/90 hover:bg-white transition-colors duration-200 shadow-sm"
+                >
+                  <Heart
+                    className={`h-4 w-4 ${isLiked ? "text-red-500 fill-red-500" : "text-gray-600"}`}
+                  />
+                </button>
+              )}
             </div>
             <div className="absolute bottom-2 left-2 flex items-center space-x-2">
               <Tooltip>
@@ -146,13 +148,15 @@ const DeckCard = ({
               ${price.toFixed(2)}
             </div>
           </div>
-          <Button
-            className="w-full bg-[#2B4C7E] text-white hover:bg-[#1A365D] transition-colors duration-200"
-            size="sm"
-            onClick={() => setShowBuyDialog(true)}
-          >
-            Buy Now
-          </Button>
+          {!hideActions && (
+            <Button
+              className="w-full bg-[#2B4C7E] text-white hover:bg-[#1A365D] transition-colors duration-200"
+              size="sm"
+              onClick={() => setShowBuyDialog(true)}
+            >
+              Buy Now
+            </Button>
+          )}
         </CardFooter>
 
         <BuyDeckDialog

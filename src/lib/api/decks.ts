@@ -87,6 +87,27 @@ export const likeDeck = async (userId: string, deckId: string) => {
   if (error) throw error;
 };
 
+export const unlikeDeck = async (userId: string, deckId: string) => {
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("likedDeckIds")
+    .eq("id", userId)
+    .single();
+
+  if (profileError) throw profileError;
+
+  const likedDeckIds = (profile?.likedDeckIds || []).filter(
+    (id) => id !== deckId,
+  );
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ likedDeckIds })
+    .eq("id", userId);
+
+  if (error) throw error;
+};
+
 export const purchaseDeck = async (userId: string, deckId: string) => {
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
