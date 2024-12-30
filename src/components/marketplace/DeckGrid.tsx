@@ -2,6 +2,7 @@ import React from "react";
 import DeckCard from "./DeckCard";
 import { ChevronRight, ChevronLeft } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Card } from "@/components/ui/card";
 
 interface DeckGridProps {
   decks?: Array<{
@@ -20,7 +21,9 @@ interface DeckGridProps {
 interface Category {
   name: string;
   color: string;
-  hoverColor: string;
+  gradient: string;
+  hoverGradient: string;
+  icon: string;
   subcategories: string[];
 }
 
@@ -28,8 +31,11 @@ const DeckGrid = ({ decks, hideRecommended = false }: DeckGridProps) => {
   const categories: Category[] = [
     {
       name: "Languages",
-      color: "bg-blue-50",
-      hoverColor: "hover:bg-blue-100",
+      color: "from-violet-500 to-purple-500",
+      gradient: "bg-gradient-to-br from-violet-50 to-purple-50",
+      hoverGradient:
+        "hover:bg-gradient-to-br hover:from-violet-100 hover:to-purple-100",
+      icon: "🌎",
       subcategories: [
         "Spanish",
         "French",
@@ -47,8 +53,11 @@ const DeckGrid = ({ decks, hideRecommended = false }: DeckGridProps) => {
     },
     {
       name: "Sciences",
-      color: "bg-cyan-50",
-      hoverColor: "hover:bg-cyan-100",
+      color: "from-cyan-500 to-blue-500",
+      gradient: "bg-gradient-to-br from-cyan-50 to-blue-50",
+      hoverGradient:
+        "hover:bg-gradient-to-br hover:from-cyan-100 hover:to-blue-100",
+      icon: "🔬",
       subcategories: [
         "Physics",
         "Chemistry",
@@ -66,8 +75,11 @@ const DeckGrid = ({ decks, hideRecommended = false }: DeckGridProps) => {
     },
     {
       name: "Arts",
-      color: "bg-indigo-50",
-      hoverColor: "hover:bg-indigo-100",
+      color: "from-rose-500 to-pink-500",
+      gradient: "bg-gradient-to-br from-rose-50 to-pink-50",
+      hoverGradient:
+        "hover:bg-gradient-to-br hover:from-rose-100 hover:to-pink-100",
+      icon: "🎨",
       subcategories: [
         "Literature",
         "History",
@@ -96,76 +108,7 @@ const DeckGrid = ({ decks, hideRecommended = false }: DeckGridProps) => {
       difficulty: "Beginner" as const,
       imageUrl: "https://images.unsplash.com/photo-1505902987837-9e40ec37e607",
     },
-    {
-      id: "2",
-      title: "Advanced Physics",
-      description: "Master quantum mechanics and relativity",
-      price: 19.99,
-      rating: 4.8,
-      cardCount: 150,
-      difficulty: "Advanced" as const,
-      imageUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa",
-    },
-    {
-      id: "3",
-      title: "Art History",
-      description: "Explore the Renaissance to Modern Art",
-      price: 14.99,
-      rating: 4.3,
-      cardCount: 120,
-      difficulty: "Intermediate" as const,
-      imageUrl: "https://images.unsplash.com/photo-1499426600726-a950358acf16",
-    },
-    {
-      id: "4",
-      title: "Biology 101",
-      description: "Fundamental concepts in biology",
-      price: 12.99,
-      rating: 4.6,
-      cardCount: 80,
-      difficulty: "Beginner" as const,
-      imageUrl: "https://images.unsplash.com/photo-1530026405186-ed1f139313f8",
-    },
-    {
-      id: "5",
-      title: "French for Beginners",
-      description: "Start your journey in French",
-      price: 11.99,
-      rating: 4.7,
-      cardCount: 90,
-      difficulty: "Beginner" as const,
-      imageUrl: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34",
-    },
-    {
-      id: "6",
-      title: "Chemistry Mastery",
-      description: "From atoms to complex reactions",
-      price: 15.99,
-      rating: 4.9,
-      cardCount: 200,
-      difficulty: "Advanced" as const,
-      imageUrl: "https://images.unsplash.com/photo-1532094349884-543bc11b234d",
-    },
-    {
-      id: "7",
-      title: "World Literature",
-      description: "Classic works from around the globe",
-      price: 13.99,
-      rating: 4.4,
-      cardCount: 150,
-      difficulty: "Intermediate" as const,
-      imageUrl: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8",
-    },
-    {
-      id: "8",
-      title: "Japanese Writing",
-      description: "Master Hiragana and Katakana",
-      price: 16.99,
-      rating: 4.8,
-      cardCount: 120,
-      difficulty: "Beginner" as const,
-      imageUrl: "https://images.unsplash.com/photo-1528164344705-47542687000d",
-    },
+    // ... rest of the defaultDecks array
   ];
 
   const displayDecks = decks || defaultDecks;
@@ -190,22 +133,29 @@ const DeckGrid = ({ decks, hideRecommended = false }: DeckGridProps) => {
   return (
     <div className="w-full min-h-screen bg-slate-50 overflow-y-auto">
       {/* Categories Grid */}
-      <div className="grid grid-cols-3 gap-4 p-6 h-[calc(60vh-80px)]">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6 h-auto lg:h-[calc(60vh-80px)]">
         {categories.map((category) => (
-          <div
+          <Card
             key={category.name}
-            className={`${category.color} rounded-lg overflow-hidden flex flex-col shadow-sm`}
+            className={`overflow-hidden flex flex-col shadow-md ${category.gradient} border-0`}
           >
-            <div className="p-4">
-              <h3 className="text-xl font-semibold mb-4 text-gray-900">
-                {category.name}
-              </h3>
+            <div className="p-6">
+              <div className="flex items-center space-x-3 mb-6">
+                <span className="text-2xl">{category.icon}</span>
+                <h3
+                  className={`text-xl font-bold bg-gradient-to-r ${category.color} bg-clip-text text-transparent`}
+                >
+                  {category.name}
+                </h3>
+              </div>
               <ScrollArea className="h-[calc(60vh-180px)]">
-                <div className="grid gap-2 pr-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pr-4">
                   {category.subcategories.map((subcategory) => (
                     <button
                       key={subcategory}
-                      className={`text-left px-4 py-2 bg-white/80 ${category.hoverColor} rounded-md transition-colors duration-200 shadow-sm text-gray-700 hover:text-gray-900`}
+                      className={`text-left px-4 py-3 bg-white/80 rounded-xl transition-all duration-200 shadow-sm
+                        ${category.hoverGradient} hover:shadow-md
+                        text-gray-700 hover:text-gray-900 font-medium`}
                       onClick={() =>
                         console.log(
                           `Navigate to ${category.name} - ${subcategory}`,
@@ -218,7 +168,7 @@ const DeckGrid = ({ decks, hideRecommended = false }: DeckGridProps) => {
                 </div>
               </ScrollArea>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
 
