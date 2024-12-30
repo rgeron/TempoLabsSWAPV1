@@ -5,12 +5,12 @@ import DeckGrid from "./marketplace/DeckGrid";
 import { useAuth } from "@/lib/auth";
 import { Navigate } from "react-router-dom";
 
-const Home = () => {
-  const { user, profile, loading } = useAuth();
+interface HomeProps {
+  children?: React.ReactNode;
+}
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+const Home = ({ children }: HomeProps) => {
+  const { user, profile } = useAuth();
 
   if (!user) {
     return <Navigate to="/" replace />;
@@ -24,9 +24,7 @@ const Home = () => {
           username={profile?.username || user.email}
           avatarUrl={profile?.avatar_url}
         />
-        <div className="flex-1 overflow-auto">
-          <DeckGrid />
-        </div>
+        <div className="flex-1 overflow-auto">{children || <DeckGrid />}</div>
       </div>
     </div>
   );
