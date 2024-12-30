@@ -2,6 +2,7 @@ import type { Database } from "@/types/supabase";
 import type { User } from "@supabase/supabase-js";
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "./supabase";
+import { useNavigate } from "react-router-dom";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
@@ -11,7 +12,6 @@ type AuthContextType = {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, username: string) => Promise<void>;
   signOut: () => Promise<void>;
-  loading: boolean;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -19,47 +19,56 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Check active sessions and sets the user
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
+      if (session) {
+        setUser(session.user);
         fetchProfile(session.user.id);
       }
-      setLoading(false);
     });
 
     // Listen for changes on auth state (signed in, signed out, etc.)
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
+      if (session) {
+        setUser(session.user);
         await fetchProfile(session.user.id);
+        if (event === "SIGNED_IN") {
+          navigate("/home");
+        }
       } else {
+        setUser(null);
         setProfile(null);
+        if (event === "SIGNED_OUT") {
+          navigate("/");
+        }
       }
-      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [navigate]);
 
   const fetchProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", userId)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .single();
 
-    if (error) {
+      if (error) {
+        console.error("Error fetching profile:", error);
+        return;
+      }
+
+      setProfile(data);
+    } catch (error) {
       console.error("Error fetching profile:", error);
-      return;
     }
-
-    setProfile(data);
   };
 
   const signIn = async (email: string, password: string) => {
@@ -86,8 +95,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+
+      // Clear the user and profile state
+      setUser(null);
+      setProfile(null);
+
+      // Navigate to landing page
+      navigate("/", { replace: true });
+    } catch (error) {
+      console.error("Error signing out:", error);
+      throw error;
+    }
   };
 
   const value = {
@@ -96,7 +117,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signUp,
     signOut,
-    loading,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

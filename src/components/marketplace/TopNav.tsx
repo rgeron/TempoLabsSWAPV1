@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Search, Bell, Settings, LogOut, Wallet } from "lucide-react";
 import { useAuth } from "@/lib/auth";
-import { useNavigate } from "react-router-dom";
 import { SettingsModal } from "../auth/SettingsModal";
 
 interface TopNavProps {
@@ -29,12 +28,10 @@ const TopNav = ({
 }: TopNavProps) => {
   const [showSettings, setShowSettings] = useState(false);
   const { signOut } = useAuth();
-  const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
       await signOut();
-      navigate("/");
     } catch (error) {
       console.error("Error signing out:", error);
     }
@@ -76,7 +73,7 @@ const TopNav = ({
                 <Avatar className="h-10 w-10 border-2 border-[#2B4C7E]">
                   <AvatarImage src={avatarUrl} alt={username} />
                   <AvatarFallback className="bg-[#2B4C7E] text-white">
-                    {username.slice(0, 2).toUpperCase()}
+                    {username?.slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col items-start">
