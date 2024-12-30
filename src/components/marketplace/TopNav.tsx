@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Search, Bell, Settings, LogOut, Wallet } from "lucide-react";
 import { useAuth } from "@/lib/auth";
-import { useNavigate } from "react-router-dom";
 import { SettingsModal } from "../auth/SettingsModal";
 
 interface TopNavProps {
@@ -29,12 +28,10 @@ const TopNav = ({
 }: TopNavProps) => {
   const [showSettings, setShowSettings] = useState(false);
   const { signOut } = useAuth();
-  const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
       await signOut();
-      navigate("/", { replace: true });
     } catch (error) {
       console.error("Error signing out:", error);
     }
