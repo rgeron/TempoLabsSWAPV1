@@ -4,6 +4,7 @@ import LandingPage from "./components/landing/LandingPage";
 import PurchasedDecks from "./components/marketplace/PurchasedDecks";
 import LikedDecks from "./components/marketplace/LikedDecks";
 import ListedDecks from "./components/marketplace/ListedDecks";
+import SalesAnalytics from "./components/marketplace/SalesAnalytics";
 import { AuthProvider } from "./lib/auth";
 import { Toaster } from "./components/ui/toaster";
 
@@ -34,6 +35,14 @@ function App() {
           element={
             <Home>
               <ListedDecks />
+            </Home>
+          }
+        />
+        <Route
+          path="/sales-analytics"
+          element={
+            <Home>
+              <SalesAnalytics />
             </Home>
           }
         />

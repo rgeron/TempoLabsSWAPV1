@@ -8,6 +8,7 @@ import {
   Store,
   User,
   Menu,
+  Home,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
@@ -64,6 +65,19 @@ const Sidebar = ({
       </div>
 
       <div className="flex-1 overflow-y-auto py-4">
+        {/* Home Button */}
+        <div className="mb-6 px-4">
+          <button
+            className={`w-full flex items-center ${isCollapsed ? "justify-center" : "space-x-2"} p-2 text-sm text-[#2B4C7E] hover:bg-[#E6F3FF] rounded-md transition-colors`}
+            onClick={() => navigate("/home")}
+          >
+            <Home className="h-5 w-5 flex-shrink-0" />
+            {!isCollapsed && <span>Home</span>}
+          </button>
+        </div>
+
+        <Separator className="mx-4 bg-[#2B4C7E]/20 mb-6" />
+
         {/* Consumer Section */}
         <div className="mb-6">
           <div
@@ -120,6 +134,7 @@ const Sidebar = ({
             <button
               className={`w-full flex items-center ${isCollapsed ? "justify-center" : "space-x-2"} p-2 text-sm text-[#2B4C7E] hover:bg-[#E6F3FF] rounded-md transition-colors`}
               title={isCollapsed ? "Sales Analytics" : ""}
+              onClick={() => navigate("/sales-analytics")}
             >
               <TrendingUp className="h-5 w-5 flex-shrink-0" />
               {!isCollapsed && <span>Sales Analytics</span>}

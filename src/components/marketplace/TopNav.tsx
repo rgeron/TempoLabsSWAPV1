@@ -34,7 +34,7 @@ const TopNav = ({
   const handleLogout = async () => {
     try {
       await signOut();
-      navigate("/");
+      navigate("/", { replace: true });
     } catch (error) {
       console.error("Error signing out:", error);
     }
@@ -76,7 +76,7 @@ const TopNav = ({
                 <Avatar className="h-10 w-10 border-2 border-[#2B4C7E]">
                   <AvatarImage src={avatarUrl} alt={username} />
                   <AvatarFallback className="bg-[#2B4C7E] text-white">
-                    {username.slice(0, 2).toUpperCase()}
+                    {username?.slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col items-start">
