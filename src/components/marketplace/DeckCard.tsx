@@ -6,7 +6,7 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, BookOpen, Lock, User, Heart } from "lucide-react";
+import { Star, BookOpen, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -15,6 +15,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { BuyDeckDialog } from "./BuyDeckDialog";
 
 interface DeckCardProps {
   id: string;
@@ -25,7 +26,6 @@ interface DeckCardProps {
   cardCount?: number;
   difficulty?: "Beginner" | "Intermediate" | "Advanced";
   imageUrl?: string;
-  requiresAuth?: boolean;
   creatorName?: string;
   creatorAvatar?: string;
 }
@@ -39,7 +39,6 @@ const DeckCard = ({
   cardCount = 100,
   difficulty = "Beginner",
   imageUrl = "https://images.unsplash.com/photo-1505902987837-9e40ec37e607",
-  requiresAuth = false,
   creatorName = "Anonymous",
   creatorAvatar,
 }: DeckCardProps) => {
@@ -51,6 +50,7 @@ const DeckCard = ({
 
   const [isHovered, setIsHovered] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
+  const [showBuyDialog, setShowBuyDialog] = useState(false);
 
   return (
     <TooltipProvider>
@@ -105,21 +105,6 @@ const DeckCard = ({
           </div>
         </CardHeader>
 
-        {requiresAuth && isHovered && (
-          <div className="absolute inset-0 bg-black/75 flex flex-col items-center justify-center space-y-4 transition-opacity duration-300 z-10">
-            <Lock className="h-8 w-8 text-white" />
-            <p className="text-white text-center px-4 font-medium">
-              Sign in to access this deck
-            </p>
-            <Button
-              className="bg-white text-gray-900 hover:bg-gray-100"
-              onClick={() => console.log("Navigate to sign in")}
-            >
-              Sign In
-            </Button>
-          </div>
-        )}
-
         <CardContent className="p-4">
           <h3 className="font-semibold text-lg truncate group-hover:text-[#2B4C7E] transition-colors duration-200">
             {title}
@@ -164,10 +149,25 @@ const DeckCard = ({
           <Button
             className="w-full bg-[#2B4C7E] text-white hover:bg-[#1A365D] transition-colors duration-200"
             size="sm"
+            onClick={() => setShowBuyDialog(true)}
           >
-            Add to Cart
+            Buy Now
           </Button>
         </CardFooter>
+
+        <BuyDeckDialog
+          isOpen={showBuyDialog}
+          onClose={() => setShowBuyDialog(false)}
+          deck={{
+            id,
+            title,
+            description,
+            price,
+            cardCount,
+            difficulty,
+            creatorName,
+          }}
+        />
       </Card>
     </TooltipProvider>
   );

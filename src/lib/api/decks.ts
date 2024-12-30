@@ -7,7 +7,10 @@ type NewDeck = Database["public"]["Tables"]["decks"]["Insert"];
 export const createDeck = async (deck: NewDeck) => {
   const { data, error } = await supabase
     .from("decks")
-    .insert(deck)
+    .insert({
+      ...deck,
+      creatorid: deck.creatorid, // ensure correct case
+    })
     .select()
     .single();
 
@@ -24,7 +27,7 @@ export const getAllDecks = async () => {
     .select(
       `
       *,
-      profiles:creatorId (username, avatar_url)
+      profiles:creatorid (username, avatar_url)
     `,
     )
     .order("created_at", { ascending: false });
@@ -45,7 +48,7 @@ export const getUserDecks = async (userId: string) => {
   const { data, error } = await supabase
     .from("decks")
     .select("*")
-    .eq("creatorId", userId)
+    .eq("creatorid", userId)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -101,4 +104,29 @@ export const purchaseDeck = async (userId: string, deckId: string) => {
     .eq("id", userId);
 
   if (error) throw error;
+};
+
+export const parseFlashcardsFile = (content: string) => {
+  const lines = content.split("\n");
+  const flashcards = [];
+  let separator = "\t";
+
+  for (const line of lines) {
+    if (line.startsWith("#separator:")) {
+      separator = line.replace("#separator:", "").trim();
+      continue;
+    }
+    if (line.startsWith("#") || !line.trim()) continue;
+
+    const [front, back, tags] = line.split(separator);
+    if (front && back) {
+      flashcards.push({
+        front: front.trim(),
+        back: back.trim(),
+        tags: tags ? tags.split(",").map((tag) => tag.trim()) : [],
+      });
+    }
+  }
+
+  return flashcards;
 };
