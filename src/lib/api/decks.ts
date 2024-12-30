@@ -11,7 +11,10 @@ export const createDeck = async (deck: NewDeck) => {
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error("Error creating deck:", error);
+    throw error;
+  }
   return data;
 };
 
@@ -26,18 +29,40 @@ export const getAllDecks = async () => {
     )
     .order("created_at", { ascending: false });
 
-  if (error) throw error;
+  if (error) {
+    console.error("Error getting all decks:", error);
+    throw error;
+  }
   return data;
 };
 
 export const getUserDecks = async (userId: string) => {
+  if (!userId) {
+    console.error("No user ID provided to getUserDecks");
+    return [];
+  }
+
   const { data, error } = await supabase
     .from("decks")
-    .select()
-    .eq("creatorId", userId);
+    .select("*")
+    .eq("creatorId", userId)
+    .order("created_at", { ascending: false });
 
-  if (error) throw error;
-  return data;
+  if (error) {
+    console.error("Error getting user decks:", error);
+    throw error;
+  }
+
+  return data || [];
+};
+
+export const deleteDeck = async (deckId: string) => {
+  const { error } = await supabase.from("decks").delete().eq("id", deckId);
+
+  if (error) {
+    console.error("Error deleting deck:", error);
+    throw error;
+  }
 };
 
 export const likeDeck = async (userId: string, deckId: string) => {
