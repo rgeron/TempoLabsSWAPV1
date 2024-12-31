@@ -21,8 +21,8 @@ interface TopNavProps {
 }
 
 const TopNav = ({
-  username = "John Doe",
-  avatarUrl = "https://api.dicebear.com/7.x/avataaars/svg?seed=John",
+  username,
+  avatarUrl,
   notifications = 3,
   balance = 250.0,
 }: TopNavProps) => {
