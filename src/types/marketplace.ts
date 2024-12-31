@@ -3,9 +3,11 @@ export interface Deck {
   title: string;
   description: string;
   price: number;
-  cardCount: number;
-  difficulty: string;
-  creatorName: string;
+  cardcount: number;
+  difficulty: "Beginner" | "Intermediate" | "Advanced";
+  imageurl: string;
+  creatorid: string;
+  created_at: string;
 }
 
 export interface FlashCard {
@@ -17,5 +19,13 @@ export interface FlashCard {
 export interface BuyDeckDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  deck: Deck;
+  deck: {
+    id: string;
+    title: string;
+    description: string;
+    price: number;
+    cardcount: number;
+    difficulty: "Beginner" | "Intermediate" | "Advanced";
+    creatorName: string;
+  };
 }

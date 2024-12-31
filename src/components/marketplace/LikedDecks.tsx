@@ -4,40 +4,32 @@ import { useAuth } from "@/lib/auth";
 import { getAllDecks, unlikeDeck } from "@/lib/api/decks";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import type { Database } from "@/types/supabase";
 
-interface LikedDeck {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  cardCount: number;
-  difficulty: "Beginner" | "Intermediate" | "Advanced";
-  imageUrl: string;
-  creatorName: string;
-  creatorAvatar?: string;
-}
+type Deck = Database["public"]["Tables"]["decks"]["Row"] & {
+  profiles: {
+    username: string;
+    avatar_url: string | null;
+  };
+};
 
 const LikedDecks = () => {
   const { user, profile } = useAuth();
   const { toast } = useToast();
-  const [likedDecks, setLikedDecks] = useState<LikedDeck[]>([]);
+  const [likedDecks, setLikedDecks] = useState<Deck[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchLikedDecks = async () => {
-    if (!user || !profile?.likedDeckIds) {
+    if (!user || !profile?.likeddeckids) {
       setIsLoading(false);
       return;
     }
 
     try {
       const allDecks = await getAllDecks();
-      const liked = allDecks
-        .filter((deck) => profile.likedDeckIds.includes(deck.id))
-        .map((deck) => ({
-          ...deck,
-          creatorName: deck.profiles.username,
-          creatorAvatar: deck.profiles.avatar_url,
-        }));
+      const liked = allDecks.filter((deck) =>
+        profile.likeddeckids.includes(deck.id),
+      );
 
       setLikedDecks(liked);
     } catch (error) {
@@ -84,7 +76,15 @@ const LikedDecks = () => {
         {likedDecks.map((deck) => (
           <DeckCard
             key={deck.id}
-            {...deck}
+            id={deck.id}
+            title={deck.title}
+            description={deck.description}
+            price={deck.price}
+            cardCount={deck.cardcount}
+            difficulty={deck.difficulty}
+            imageUrl={deck.imageurl}
+            creatorName={deck.profiles.username}
+            creatorAvatar={deck.profiles.avatar_url || undefined}
             onUnlike={() => handleUnlike(deck.id)}
             isLiked={true}
           />

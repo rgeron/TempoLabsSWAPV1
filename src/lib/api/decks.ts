@@ -1,11 +1,8 @@
 import { supabase } from "../supabase";
 import type { Database } from "@/types/supabase";
 
-// Base deck type from your database
 type Deck = Database["public"]["Tables"]["decks"]["Row"];
-// Type for creating new decks
 type NewDeck = Database["public"]["Tables"]["decks"]["Insert"];
-// Extended deck type that includes joined profile data
 type DeckWithProfile = Deck & {
   profiles: {
     username: string;
@@ -18,7 +15,7 @@ export const createDeck = async (deck: NewDeck) => {
     .from("decks")
     .insert({
       ...deck,
-      creatorid: deck.creatorId,
+      creatorid: deck.creatorid,
     })
     .select()
     .single();
@@ -81,17 +78,17 @@ export const deleteDeck = async (deckId: string) => {
 export const likeDeck = async (userId: string, deckId: string) => {
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("likedDeckIds")
+    .select("likeddeckids")
     .eq("id", userId)
     .single();
 
   if (profileError) throw profileError;
 
-  const likedDeckIds = [...(profile?.likedDeckIds || []), deckId];
+  const likeddeckids = [...(profile?.likeddeckids || []), deckId];
 
   const { error } = await supabase
     .from("profiles")
-    .update({ likedDeckIds })
+    .update({ likeddeckids })
     .eq("id", userId);
 
   if (error) throw error;
@@ -100,19 +97,19 @@ export const likeDeck = async (userId: string, deckId: string) => {
 export const unlikeDeck = async (userId: string, deckId: string) => {
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("likedDeckIds")
+    .select("likeddeckids")
     .eq("id", userId)
     .single();
 
   if (profileError) throw profileError;
 
-  const likedDeckIds = (profile?.likedDeckIds || []).filter(
+  const likeddeckids = (profile?.likeddeckids || []).filter(
     (id) => id !== deckId,
   );
 
   const { error } = await supabase
     .from("profiles")
-    .update({ likedDeckIds })
+    .update({ likeddeckids })
     .eq("id", userId);
 
   if (error) throw error;
@@ -121,43 +118,18 @@ export const unlikeDeck = async (userId: string, deckId: string) => {
 export const purchaseDeck = async (userId: string, deckId: string) => {
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("purchasedDeckIds")
+    .select("purchaseddeckids")
     .eq("id", userId)
     .single();
 
   if (profileError) throw profileError;
 
-  const purchasedDeckIds = [...(profile?.purchasedDeckIds || []), deckId];
+  const purchaseddeckids = [...(profile?.purchaseddeckids || []), deckId];
 
   const { error } = await supabase
     .from("profiles")
-    .update({ purchasedDeckIds })
+    .update({ purchaseddeckids })
     .eq("id", userId);
 
   if (error) throw error;
-};
-
-export const parseFlashcardsFile = (content: string) => {
-  const lines = content.split("\n");
-  const flashcards = [];
-  let separator = "\t";
-
-  for (const line of lines) {
-    if (line.startsWith("#separator:")) {
-      separator = line.replace("#separator:", "").trim();
-      continue;
-    }
-    if (line.startsWith("#") || !line.trim()) continue;
-
-    const [front, back, tags] = line.split(separator);
-    if (front && back) {
-      flashcards.push({
-        front: front.trim(),
-        back: back.trim(),
-        tags: tags ? tags.split(",").map((tag) => tag.trim()) : [],
-      });
-    }
-  }
-
-  return flashcards;
 };

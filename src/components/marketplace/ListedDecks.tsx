@@ -59,10 +59,10 @@ const ListedDecks = () => {
           | "Beginner"
           | "Intermediate"
           | "Advanced",
-        cardCount: 0,
-        imageUrl:
+        cardcount: 0,
+        imageurl:
           "https://images.unsplash.com/photo-1532094349884-543bc11b234d",
-        creatorId: user!.id,
+        creatorid: user!.id,
       };
 
       await createDeck(newDeck);
@@ -107,7 +107,6 @@ const ListedDecks = () => {
     }
   };
 
-  // Render the empty state immediately if there are no decks
   if (!isLoading && listedDecks.length === 0) {
     return (
       <div className="p-6 space-y-6">
@@ -159,7 +158,15 @@ const ListedDecks = () => {
           {listedDecks.map((deck) => (
             <div key={deck.id} className="space-y-2">
               <div className="relative group">
-                <DeckCard {...deck} />
+                <DeckCard
+                  id={deck.id}
+                  title={deck.title}
+                  description={deck.description}
+                  price={deck.price}
+                  cardCount={deck.cardcount}
+                  difficulty={deck.difficulty}
+                  imageUrl={deck.imageurl}
+                />
                 <DeleteDeckButton
                   onDelete={() => handleDeleteDeck(deck.id)}
                   isDeleting={deletingDeckId === deck.id}
