@@ -1,20 +1,20 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import DeckCard from "./DeckCard";
 import { ChevronRight, ChevronLeft } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
+import { getAllDecks } from "@/lib/api/decks";
+import { Loader2 } from "lucide-react";
+import type { Database } from "@/types/supabase";
+
+type DeckWithProfile = Database["public"]["Tables"]["decks"]["Row"] & {
+  profiles: {
+    username: string;
+    avatar_url: string | null;
+  };
+};
 
 interface DeckGridProps {
-  decks?: Array<{
-    id: string;
-    title: string;
-    description: string;
-    price: number;
-    rating: number;
-    cardCount: number;
-    difficulty: "Beginner" | "Intermediate" | "Advanced";
-    imageUrl: string;
-  }>;
   hideRecommended?: boolean;
 }
 
@@ -27,7 +27,25 @@ interface Category {
   subcategories: string[];
 }
 
-const DeckGrid = ({ decks, hideRecommended = false }: DeckGridProps) => {
+const DeckGrid = ({ hideRecommended = false }: DeckGridProps) => {
+  const [decks, setDecks] = useState<DeckWithProfile[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDecks = async () => {
+      try {
+        const fetchedDecks = await getAllDecks();
+        setDecks(fetchedDecks);
+      } catch (error) {
+        console.error("Error fetching decks:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDecks();
+  }, []);
+
   const categories: Category[] = [
     {
       name: "Languages",
@@ -97,22 +115,6 @@ const DeckGrid = ({ decks, hideRecommended = false }: DeckGridProps) => {
     },
   ];
 
-  const defaultDecks = [
-    {
-      id: "1",
-      title: "Spanish Basics",
-      description: "Learn essential Spanish vocabulary and phrases",
-      price: 9.99,
-      rating: 4.5,
-      cardCount: 100,
-      difficulty: "Beginner" as const,
-      imageUrl: "https://images.unsplash.com/photo-1505902987837-9e40ec37e607",
-    },
-    // ... rest of the defaultDecks array
-  ];
-
-  const displayDecks = decks || defaultDecks;
-
   const scrollContainer = (
     direction: "left" | "right",
     containerId: string,
@@ -129,6 +131,14 @@ const DeckGrid = ({ decks, hideRecommended = false }: DeckGridProps) => {
       });
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-[#2B4C7E]" />
+      </div>
+    );
+  }
 
   return (
     <div className="w-full min-h-screen bg-slate-50 overflow-y-auto">
@@ -191,9 +201,19 @@ const DeckGrid = ({ decks, hideRecommended = false }: DeckGridProps) => {
                 className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-4"
                 style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
               >
-                {displayDecks.map((deck) => (
+                {decks.map((deck) => (
                   <div key={deck.id} className="flex-none">
-                    <DeckCard {...deck} />
+                    <DeckCard
+                      id={deck.id}
+                      title={deck.title}
+                      description={deck.description}
+                      price={deck.price}
+                      cardCount={deck.cardcount}
+                      difficulty={deck.difficulty}
+                      imageUrl={deck.imageurl}
+                      creatorName={deck.profiles.username}
+                      creatorAvatar={deck.profiles.avatar_url || undefined}
+                    />
                   </div>
                 ))}
               </div>
@@ -226,9 +246,19 @@ const DeckGrid = ({ decks, hideRecommended = false }: DeckGridProps) => {
               className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-4"
               style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
             >
-              {[...displayDecks].reverse().map((deck) => (
+              {[...decks].reverse().map((deck) => (
                 <div key={deck.id} className="flex-none">
-                  <DeckCard {...deck} requiresAuth />
+                  <DeckCard
+                    id={deck.id}
+                    title={deck.title}
+                    description={deck.description}
+                    price={deck.price}
+                    cardCount={deck.cardcount}
+                    difficulty={deck.difficulty}
+                    imageUrl={deck.imageurl}
+                    creatorName={deck.profiles.username}
+                    creatorAvatar={deck.profiles.avatar_url || undefined}
+                  />
                 </div>
               ))}
             </div>
