@@ -1,15 +1,24 @@
 import { supabase } from "../supabase";
 import type { Database } from "@/types/supabase";
 
+// Base deck type from your database
 type Deck = Database["public"]["Tables"]["decks"]["Row"];
+// Type for creating new decks
 type NewDeck = Database["public"]["Tables"]["decks"]["Insert"];
+// Extended deck type that includes joined profile data
+type DeckWithProfile = Deck & {
+  profiles: {
+    username: string;
+    avatar_url: string | null;
+  };
+};
 
 export const createDeck = async (deck: NewDeck) => {
   const { data, error } = await supabase
     .from("decks")
     .insert({
       ...deck,
-      creatorid: deck.creatorid, // ensure correct case
+      creatorid: deck.creatorId,
     })
     .select()
     .single();
@@ -21,7 +30,7 @@ export const createDeck = async (deck: NewDeck) => {
   return data;
 };
 
-export const getAllDecks = async () => {
+export const getAllDecks = async (): Promise<DeckWithProfile[]> => {
   const { data, error } = await supabase
     .from("decks")
     .select(
@@ -30,16 +39,17 @@ export const getAllDecks = async () => {
       profiles:creatorid (username, avatar_url)
     `,
     )
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .returns<DeckWithProfile[]>();
 
   if (error) {
     console.error("Error getting all decks:", error);
     throw error;
   }
-  return data;
+  return data || [];
 };
 
-export const getUserDecks = async (userId: string) => {
+export const getUserDecks = async (userId: string): Promise<Deck[]> => {
   if (!userId) {
     console.error("No user ID provided to getUserDecks");
     return [];

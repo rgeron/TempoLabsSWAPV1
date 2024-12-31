@@ -6,8 +6,10 @@ import { useAuth } from "@/lib/auth";
 import { Navigate } from "react-router-dom";
 import { getAllDecks } from "@/lib/api/decks";
 import type { Database } from "@/types/supabase";
+import DeckCard from "./marketplace/DeckCard";
 
-type Deck = Database["public"]["Tables"]["decks"]["Row"] & {
+// Import the DeckWithProfile type from your decks file
+type DeckWithProfile = Database["public"]["Tables"]["decks"]["Row"] & {
   profiles: {
     username: string;
     avatar_url: string | null;
@@ -20,12 +22,14 @@ interface HomeProps {
 
 const Home = ({ children }: HomeProps) => {
   const { user, profile } = useAuth();
-  const [allDecks, setAllDecks] = useState<Deck[]>([]);
+  // Update the state type to DeckWithProfile
+  const [allDecks, setAllDecks] = useState<DeckWithProfile[]>([]);
 
   useEffect(() => {
     const fetchDecks = async () => {
       try {
         const decks = await getAllDecks();
+        // TypeScript now knows that decks matches DeckWithProfile[]
         setAllDecks(decks);
       } catch (error) {
         console.error("Error fetching decks:", error);
