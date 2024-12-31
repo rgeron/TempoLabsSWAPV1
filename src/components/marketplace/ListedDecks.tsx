@@ -51,6 +51,11 @@ const ListedDecks = () => {
     const formData = new FormData(event.currentTarget);
 
     try {
+      const flashcardsFile = formData.get("deck-file") as File;
+      if (!flashcardsFile) {
+        throw new Error("No flashcards file provided");
+      }
+
       const newDeck = {
         title: formData.get("title") as string,
         description: formData.get("description") as string,
@@ -59,13 +64,13 @@ const ListedDecks = () => {
           | "Beginner"
           | "Intermediate"
           | "Advanced",
-        cardcount: 0,
+        cardcount: 0, // This will be calculated in createDeck
         imageurl:
           "https://images.unsplash.com/photo-1532094349884-543bc11b234d",
         creatorid: user!.id,
       };
 
-      await createDeck(newDeck);
+      await createDeck(newDeck, flashcardsFile);
       await fetchUserDecks();
 
       toast({
@@ -177,7 +182,7 @@ const ListedDecks = () => {
                   Listed on: {new Date(deck.created_at).toLocaleDateString()}
                 </p>
                 <p className="text-sm font-semibold text-[#2B4C7E]">
-                  Price: ${deck.price}
+                  Price: ${deck.price.toFixed(2)}
                 </p>
               </div>
             </div>

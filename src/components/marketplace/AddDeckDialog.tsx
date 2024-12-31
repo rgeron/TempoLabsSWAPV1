@@ -1,5 +1,5 @@
-import React from "react";
-import { Plus, Loader2 } from "lucide-react";
+import React, { useState } from "react";
+import { Plus, Loader2, AlertCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -10,6 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface AddDeckDialogProps {
   isOpen: boolean;
@@ -24,6 +25,31 @@ const AddDeckDialog = ({
   onSubmit,
   isSubmitting,
 }: AddDeckDialogProps) => {
+  const [fileError, setFileError] = useState<string | null>(null);
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    setFileError(null);
+
+    if (!file) {
+      setFileError("Please select a file");
+      return;
+    }
+
+    if (!file.name.endsWith(".txt")) {
+      setFileError("Please upload a .txt file");
+      event.target.value = "";
+      return;
+    }
+
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setFileError("File size should be less than 5MB");
+      event.target.value = "";
+      return;
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
@@ -70,19 +96,32 @@ const AddDeckDialog = ({
             </select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="deck-file">Deck File (.txt)</Label>
+            <Label htmlFor="deck-file">Flashcards File (.txt)</Label>
             <Input
               id="deck-file"
               name="deck-file"
               type="file"
               accept=".txt"
               required
+              onChange={handleFileChange}
             />
+            {fileError && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{fileError}</AlertDescription>
+              </Alert>
+            )}
+            <p className="text-sm text-gray-500">
+              File format: front[tab]back[tab]tags(optional)
+              <br />
+              Example: What is the capital of
+              France?[tab]Paris[tab]geography,europe
+            </p>
           </div>
           <Button
             type="submit"
             className="w-full bg-[#2B4C7E] text-white hover:bg-[#1A365D]"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !!fileError}
           >
             {isSubmitting ? (
               <>

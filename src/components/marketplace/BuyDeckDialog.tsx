@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,7 +11,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/components/ui/use-toast";
+import { getFlashcards } from "@/lib/api/decks";
 import type { BuyDeckDialogProps, FlashCard } from "@/types/marketplace";
+import { Loader2 } from "lucide-react";
 
 export const BuyDeckDialog = ({
   isOpen,
@@ -21,12 +23,33 @@ export const BuyDeckDialog = ({
   const { user } = useAuth();
   const { toast } = useToast();
   const [selectedTab, setSelectedTab] = useState("overview");
+  const [flashcards, setFlashcards] = useState<FlashCard[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Sample flashcards - in real app, these would come from your backend
-  const sampleFlashcards: FlashCard[] = [
-    { front: "Test1", back: "VersoTest1" },
-    { front: "Test2", back: "VersoTest2" },
-  ];
+  useEffect(() => {
+    const loadFlashcards = async () => {
+      if (!deck.flashcardsurl) return;
+
+      try {
+        setIsLoading(true);
+        const cards = await getFlashcards(deck.flashcardsurl);
+        setFlashcards(cards);
+      } catch (error) {
+        console.error("Error loading flashcards:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load flashcards preview",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (isOpen && selectedTab === "preview") {
+      loadFlashcards();
+    }
+  }, [isOpen, selectedTab, deck.flashcardsurl]);
 
   const handlePurchase = async () => {
     if (!user) {
@@ -60,7 +83,7 @@ export const BuyDeckDialog = ({
         <DialogHeader>
           <DialogTitle>{deck.title}</DialogTitle>
           <DialogDescription>
-            Created by {deck.creatorName} • {deck.cardCount} cards
+            Created by {deck.creatorName} • {deck.cardcount} cards
           </DialogDescription>
         </DialogHeader>
 
@@ -86,7 +109,7 @@ export const BuyDeckDialog = ({
                 <h4 className="font-semibold mb-2">Details</h4>
                 <ul className="text-sm text-gray-600 space-y-2">
                   <li>Difficulty: {deck.difficulty}</li>
-                  <li>Total Cards: {deck.cardCount}</li>
+                  <li>Total Cards: {deck.cardcount}</li>
                   <li>Price: ${deck.price.toFixed(2)}</li>
                 </ul>
               </div>
@@ -95,17 +118,33 @@ export const BuyDeckDialog = ({
 
           <TabsContent value="preview" className="space-y-4">
             <ScrollArea className="h-[300px] w-full rounded-md border p-4">
-              <div className="space-y-4">
-                {sampleFlashcards.map((card, index) => (
-                  <div
-                    key={index}
-                    className="p-4 rounded-lg border bg-gray-50 space-y-2"
-                  >
-                    <div className="font-medium">Front: {card.front}</div>
-                    <div className="text-gray-600">Back: {card.back}</div>
-                  </div>
-                ))}
-              </div>
+              {isLoading ? (
+                <div className="flex items-center justify-center h-full">
+                  <Loader2 className="h-8 w-8 animate-spin text-[#2B4C7E]" />
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {flashcards.slice(0, 5).map((card, index) => (
+                    <div
+                      key={index}
+                      className="p-4 rounded-lg border bg-gray-50 space-y-2"
+                    >
+                      <div className="font-medium">Front: {card.front}</div>
+                      <div className="text-gray-600">Back: {card.back}</div>
+                      {card.tags && card.tags.length > 0 && (
+                        <div className="text-xs text-gray-500">
+                          Tags: {card.tags.join(", ")}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {flashcards.length > 5 && (
+                    <p className="text-sm text-gray-500 text-center pt-4">
+                      ... and {flashcards.length - 5} more cards
+                    </p>
+                  )}
+                </div>
+              )}
             </ScrollArea>
           </TabsContent>
         </Tabs>
