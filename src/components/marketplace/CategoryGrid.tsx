@@ -1,6 +1,4 @@
-import React from "react";
 import { Card } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Category {
   name: string;
@@ -86,7 +84,7 @@ const CategoryGrid = () => {
       {categories.map((category) => (
         <Card
           key={category.name}
-          className={`overflow-hidden flex flex-col shadow-md ${category.gradient} border-0`}
+          className={` flex flex-col shadow-md ${category.gradient} border-0`}
         >
           <div className="p-6">
             <div className="flex items-center space-x-3 mb-6">
@@ -97,25 +95,21 @@ const CategoryGrid = () => {
                 {category.name}
               </h3>
             </div>
-            <ScrollArea className="h-[calc(60vh-180px)]">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pr-4">
-                {category.subcategories.map((subcategory) => (
-                  <button
-                    key={subcategory}
-                    className={`text-left px-4 py-3 bg-white/80 rounded-xl transition-all duration-200 shadow-sm
-                      ${category.hoverGradient} hover:shadow-md
-                      text-gray-700 hover:text-gray-900 font-medium`}
-                    onClick={() =>
-                      console.log(
-                        `Navigate to ${category.name} - ${subcategory}`,
-                      )
-                    }
-                  >
-                    {subcategory}
-                  </button>
-                ))}
-              </div>
-            </ScrollArea>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {category.subcategories.map((subcategory) => (
+                <button
+                  key={subcategory}
+                  className={`text-left px-4 py-3 bg-white/80 rounded-xl transition-all duration-200 shadow-sm
+                    ${category.hoverGradient} hover:shadow-md
+                    text-gray-700 hover:text-gray-900 font-medium`}
+                  onClick={() =>
+                    console.log(`Navigate to ${category.name} - ${subcategory}`)
+                  }
+                >
+                  {subcategory}
+                </button>
+              ))}
+            </div>
           </div>
         </Card>
       ))}
