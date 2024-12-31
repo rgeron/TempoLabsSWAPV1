@@ -31,20 +31,6 @@ const DeckGrid = ({ hideRecommended = false }: DeckGridProps) => {
   const [decks, setDecks] = useState<DeckWithProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchDecks = async () => {
-      try {
-        const fetchedDecks = await getAllDecks();
-        setDecks(fetchedDecks);
-      } catch (error) {
-        console.error("Error fetching decks:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchDecks();
-  }, []);
 
   const categories: Category[] = [
     {

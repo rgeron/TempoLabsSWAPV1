@@ -8,7 +8,7 @@ export interface Deck {
   imageurl: string;
   creatorid: string;
   created_at: string;
-  flashcardsurl: string | null;
+  flashcards_file_url: string | null; // Aligné avec la colonne de la base de données
 }
 
 export interface FlashCard {
@@ -28,6 +28,6 @@ export interface BuyDeckDialogProps {
     cardcount: number;
     difficulty: "Beginner" | "Intermediate" | "Advanced";
     creatorName: string;
-    flashcardsurl?: string;
+    flashcards_file_url?: string; // Aligné avec la nouvelle colonne
   };
 }

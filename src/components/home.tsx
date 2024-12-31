@@ -66,9 +66,9 @@ const Home = ({ children }: HomeProps) => {
                     title={deck.title}
                     description={deck.description}
                     price={deck.price}
-                    cardCount={deck.cardCount}
+                    cardCount={deck.cardcount}
                     difficulty={deck.difficulty}
-                    imageUrl={deck.imageUrl}
+                    imageUrl={deck.imageurl}
                     creatorName={deck.profiles.username}
                     creatorAvatar={deck.profiles.avatar_url || undefined}
                   />

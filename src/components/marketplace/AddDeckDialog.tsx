@@ -11,20 +11,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { supabase } from "@/lib/supabase";
 
 interface AddDeckDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (event: React.FormEvent<HTMLFormElement>) => Promise<void>;
-  isSubmitting: boolean;
 }
 
-const AddDeckDialog = ({
-  isOpen,
-  onOpenChange,
-  onSubmit,
-  isSubmitting,
-}: AddDeckDialogProps) => {
+const AddDeckDialog = ({ isOpen, onOpenChange }: AddDeckDialogProps) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -50,6 +45,65 @@ const AddDeckDialog = ({
     }
   };
 
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsSubmitting(true);
+
+    const formData = new FormData(event.currentTarget);
+    const title = formData.get("title") as string;
+    const description = formData.get("description") as string;
+    const price = Number(formData.get("price"));
+    const difficulty = formData.get("difficulty") as string;
+    const file = formData.get("deck-file") as File;
+
+    if (!file) {
+      setFileError("Please select a valid .txt file");
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      // 1. Upload file to Supabase Storage
+      const filePath = `${Date.now()}-${file.name}`;
+      const { data: storageData, error: storageError } = await supabase.storage
+        .from("flashcards-files")
+        .upload(filePath, file, { cacheControl: "3600", upsert: false });
+
+      if (storageError) throw new Error(`File upload error: ${storageError.message}`);
+
+      const { data: fileUrlData } = supabase.storage
+        .from("flashcards-files")
+        .getPublicUrl(filePath);
+
+      if (!fileUrlData) throw new Error("Could not retrieve file URL");
+
+      // 2. Insert deck metadata into the `decks` table
+      const { error: dbError } = await supabase
+        .from("decks")
+        .insert({
+          title,
+          description,
+          price,
+          cardcount: 0, // Default value; can be updated later
+          difficulty,
+          imageurl: "", // Placeholder, update if needed
+          creatorid: "", // Replace with the current user's ID
+          flashcards_file_url: filePath, // Use the private file path
+        });
+
+      if (dbError) throw new Error(`Database error: ${dbError.message}`);
+
+      // Success
+      alert("Deck added successfully!");
+      onOpenChange(false);
+    } catch (error: any) {
+      console.error("Error adding deck:", error.message);
+      alert(`Error: ${error.message}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
@@ -62,7 +116,7 @@ const AddDeckDialog = ({
         <DialogHeader>
           <DialogTitle>Add New Deck to Store</DialogTitle>
         </DialogHeader>
-        <form onSubmit={onSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="title">Deck Title</Label>
             <Input id="title" name="title" required />

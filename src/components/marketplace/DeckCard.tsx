@@ -33,26 +33,6 @@ interface DeckCardProps {
   onUnlike?: () => void;
 }
 
-const DeckCard = ({
-  id,
-  title = "Spanish Basics",
-  description = "Learn essential Spanish vocabulary and phrases",
-  price = 9.99,
-  rating = 4.5,
-  cardCount = 100,
-  difficulty = "Beginner",
-  imageUrl = "https://images.unsplash.com/photo-1505902987837-9e40ec37e607",
-  creatorName = "Anonymous",
-  creatorAvatar,
-  hideActions = false,
-  isLiked = false,
-  onUnlike,
-}: DeckCardProps) => {
-  const difficultyColors = {
-    Beginner: "bg-emerald-100 text-emerald-800 border-emerald-200",
-    Intermediate: "bg-amber-100 text-amber-800 border-amber-200",
-    Advanced: "bg-rose-100 text-rose-800 border-rose-200",
-  };
 
   const [showBuyDialog, setShowBuyDialog] = useState(false);
 
