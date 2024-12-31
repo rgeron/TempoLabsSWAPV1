@@ -6,8 +6,14 @@ import DeckCard from "./DeckCard";
 import { useAuth } from "@/lib/auth";
 import { createDeck, getUserDecks, deleteDeck } from "@/lib/api/decks";
 import type { Deck } from "@/types/marketplace";
+import type { Database } from "@/types/supabase";
 import DeleteDeckButton from "./DeleteDeckButton";
 import AddDeckDialog from "./AddDeckDialog";
+
+type NewDeck = Omit<
+  Database["public"]["Tables"]["decks"]["Insert"],
+  "id" | "created_at" | "updated_at"
+>;
 
 const ListedDecks = () => {
   const [isAddDeckOpen, setIsAddDeckOpen] = useState(false);
@@ -22,6 +28,8 @@ const ListedDecks = () => {
   useEffect(() => {
     if (user) {
       fetchUserDecks();
+    } else {
+      setIsLoading(false); // Make sure to stop loading if there's no user
     }
   }, [user]);
 
@@ -49,7 +57,12 @@ const ListedDecks = () => {
     const formData = new FormData(event.currentTarget);
 
     try {
-      const newDeck = {
+      if (!user) throw new Error("User not authenticated");
+
+      const file = formData.get("flashcardsFile") as File;
+      if (!file) throw new Error("No file selected");
+
+      const newDeck: NewDeck = {
         title: formData.get("title") as string,
         description: formData.get("description") as string,
         price: parseFloat(formData.get("price") as string),
@@ -60,10 +73,11 @@ const ListedDecks = () => {
         cardcount: 0,
         imageurl:
           "https://images.unsplash.com/photo-1532094349884-543bc11b234d",
-        creatorid: user!.id,
+        creatorid: user.id,
+        flashcards_file_url: null, // This will be set by the createDeck function
       };
 
-      await createDeck(newDeck);
+      await createDeck(newDeck, file);
       await fetchUserDecks();
 
       toast({
