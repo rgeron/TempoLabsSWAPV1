@@ -21,7 +21,7 @@ export interface Database {
           creatorid: string;
           created_at: string;
           updated_at: string;
-          flashcardsurl: string | null;
+          flashcardcontent: string | null;
         };
         Insert: {
           id?: string;
@@ -34,7 +34,7 @@ export interface Database {
           creatorid: string;
           created_at?: string;
           updated_at?: string;
-          flashcardsurl?: string | null;
+          flashcardcontent?: string | null;
         };
         Update: {
           id?: string;
@@ -47,7 +47,7 @@ export interface Database {
           creatorid?: string;
           created_at?: string;
           updated_at?: string;
-          flashcardsurl?: string | null;
+          flashcardcontent?: string | null;
         };
       };
       profiles: {
