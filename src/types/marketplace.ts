@@ -8,7 +8,6 @@ export interface Deck {
   imageurl: string;
   creatorid: string;
   created_at: string;
-  flashcards_file_url: string | null; // Aligné avec la colonne de la base de données
 }
 
 export interface FlashCard {
@@ -17,17 +16,9 @@ export interface FlashCard {
   tags?: string[];
 }
 
-export interface BuyDeckDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  deck: {
-    id: string;
-    title: string;
-    description: string;
-    price: number;
-    cardcount: number;
-    difficulty: "Beginner" | "Intermediate" | "Advanced";
-    creatorName: string;
-    flashcards_file_url?: string; // Aligné avec la nouvelle colonne
+export interface DeckWithProfile extends Deck {
+  profiles: {
+    username: string;
+    avatar_url: string | null;
   };
 }
