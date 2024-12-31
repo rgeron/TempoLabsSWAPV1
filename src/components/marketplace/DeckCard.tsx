@@ -15,7 +15,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import BuyDeckDialog from "./BuyDeckDialog";
+import { BuyDeckDialog } from "./BuyDeckDialog";
 
 interface DeckCardProps {
   id: string;

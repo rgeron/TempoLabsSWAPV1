@@ -13,7 +13,11 @@ import { useAuth } from "@/lib/auth";
 import { useToast } from "@/components/ui/use-toast";
 import type { BuyDeckDialogProps, FlashCard } from "@/types/marketplace";
 
-export function BuyDeckDialog({ isOpen, onClose, deck }: BuyDeckDialogProps) {
+export const BuyDeckDialog = ({
+  isOpen,
+  onClose,
+  deck,
+}: BuyDeckDialogProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [selectedTab, setSelectedTab] = useState("overview");
@@ -120,4 +124,4 @@ export function BuyDeckDialog({ isOpen, onClose, deck }: BuyDeckDialogProps) {
       </DialogContent>
     </Dialog>
   );
-}
+};
