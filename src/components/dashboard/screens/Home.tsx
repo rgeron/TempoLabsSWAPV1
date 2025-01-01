@@ -1,7 +1,7 @@
+import DeckCard from "@/components/marketplace/DeckCard";
 import { getAllDecks } from "@/lib/api/decks";
 import type { Database } from "@/types/supabase";
 import { useEffect, useState } from "react";
-import DeckCard from "@/components/marketplace/DeckCard";
 
 type DeckWithProfile = Database["public"]["Tables"]["decks"]["Row"] & {
   profiles: {
