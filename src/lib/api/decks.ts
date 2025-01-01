@@ -28,7 +28,6 @@ export const uploadFlashcardsFile = async (file: File, userId: string) => {
   return publicUrl;
 };
 
-
 export const getFlashcards = async (deckId: string): Promise<FlashCard[]> => {
   const { data, error } = await supabase
     .from("flashcards")
@@ -71,18 +70,20 @@ export const createDeck = async (deck: NewDeck, file: File): Promise<Deck> => {
 };
 
 // Define return type for getAllDecks
-export const getAllDecks = async (): Promise<Deck[]> => {
-  const { data, error } = await supabase
-    .from('decks')
-    .select(`
+export const getAllDecks = async (): Promise<DeckWithProfile[]> => {
+  const { data, error } = await supabase.from("decks").select(`
       *,
-      profiles(username, avatar_url)
+      creator:profiles!decks_creatorid_fkey(username, avatar_url)
     `);
-  
-  if (error) throw error;
-  return data as Deck[];
-}
 
+  if (error) throw error;
+
+  return data.map((deck: any) => ({
+    ...deck,
+    creatorName: deck.creator?.username,
+    creatorAvatar: deck.creator?.avatar_url,
+  }));
+};
 
 export const getUserDecks = async (userId: string): Promise<Deck[]> => {
   if (!userId) {

@@ -28,8 +28,6 @@ const ListedDecks = () => {
   useEffect(() => {
     if (user) {
       fetchUserDecks();
-    } else {
-      setIsLoading(false); // Make sure to stop loading if there's no user
     }
   }, [user]);
 
@@ -125,23 +123,21 @@ const ListedDecks = () => {
         <h1 className="text-2xl font-bold text-[#2B4C7E]">
           Your Decks on the Market
         </h1>
-        {listedDecks.length === 0 && !isLoading ? (
-          <Button
-            onClick={() => setIsAddDeckOpen(true)}
-            className="bg-[#2B4C7E] text-white hover:bg-[#1A365D]"
-          >
-            <Plus className="h-5 w-5 mr-2" />
-            Add Your First Deck
-          </Button>
-        ) : (
-          <AddDeckDialog
-            isOpen={isAddDeckOpen}
-            onOpenChange={setIsAddDeckOpen}
-            onSubmit={handleAddDeck}
-            isSubmitting={isSubmitting}
-          />
-        )}
+        <Button
+          onClick={() => setIsAddDeckOpen(true)}
+          className="bg-[#2B4C7E] text-white hover:bg-[#1A365D]"
+        >
+          <Plus className="h-5 w-5 mr-2" />
+          Add New Deck
+        </Button>
       </div>
+
+      <AddDeckDialog
+        isOpen={isAddDeckOpen}
+        onOpenChange={setIsAddDeckOpen}
+        onSubmit={handleAddDeck}
+        isSubmitting={isSubmitting}
+      />
 
       {isLoading ? (
         <div className="flex items-center justify-center h-64">
@@ -150,6 +146,9 @@ const ListedDecks = () => {
       ) : listedDecks.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-64 space-y-4">
           <p className="text-lg text-gray-500">No decks listed yet</p>
+          <p className="text-sm text-gray-400">
+            Click the button above to add your first deck
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
