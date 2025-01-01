@@ -40,14 +40,15 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           title: "Account created",
           description: "Please check your email to verify your account.",
         });
+        onClose(); // Close modal after sign-up
       } else {
         await signIn(email, password);
         toast({
           title: "Welcome back!",
           description: "You have successfully signed in.",
         });
+        onClose(); // Close modal after sign-in
       }
-      onClose();
     } catch (error) {
       toast({
         title: "Error",

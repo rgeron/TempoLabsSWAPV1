@@ -69,7 +69,7 @@ const Sidebar = ({
         <div className="mb-6 px-4">
           <button
             className={`w-full flex items-center ${isCollapsed ? "justify-center" : "space-x-2"} p-2 text-sm text-[#2B4C7E] hover:bg-[#E6F3FF] rounded-md transition-colors`}
-            onClick={() => navigate("/home")}
+            onClick={() => navigate("/app/home")}
           >
             <Home className="h-5 w-5 flex-shrink-0" />
             {!isCollapsed && <span>Home</span>}
@@ -102,7 +102,7 @@ const Sidebar = ({
             <button
               className={`w-full flex items-center ${isCollapsed ? "justify-center" : "space-x-2"} p-2 text-sm text-[#2B4C7E] hover:bg-[#E6F3FF] rounded-md transition-colors`}
               title={isCollapsed ? "Liked Decks" : ""}
-              onClick={() => navigate("/liked-decks")}
+              onClick={() => navigate("/app/liked-decks")}
             >
               <Heart className="h-5 w-5 flex-shrink-0" />
               {!isCollapsed && <span>Liked Decks</span>}
@@ -126,7 +126,7 @@ const Sidebar = ({
             <button
               className={`w-full flex items-center ${isCollapsed ? "justify-center" : "space-x-2"} p-2 text-sm text-[#2B4C7E] hover:bg-[#E6F3FF] rounded-md transition-colors`}
               title={isCollapsed ? "My Listed Decks" : ""}
-              onClick={() => navigate("/listed-decks")}
+              onClick={() => navigate("/app/listed-decks")}
             >
               <ShoppingCart className="h-5 w-5 flex-shrink-0" />
               {!isCollapsed && <span>My Listed Decks</span>}
@@ -134,7 +134,7 @@ const Sidebar = ({
             <button
               className={`w-full flex items-center ${isCollapsed ? "justify-center" : "space-x-2"} p-2 text-sm text-[#2B4C7E] hover:bg-[#E6F3FF] rounded-md transition-colors`}
               title={isCollapsed ? "Sales Analytics" : ""}
-              onClick={() => navigate("/sales-analytics")}
+              onClick={() => navigate("/app/sales-analytics")}
             >
               <TrendingUp className="h-5 w-5 flex-shrink-0" />
               {!isCollapsed && <span>Sales Analytics</span>}

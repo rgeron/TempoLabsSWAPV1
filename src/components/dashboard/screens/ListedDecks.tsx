@@ -2,13 +2,13 @@ import React, { useState, useEffect } from "react";
 import { Loader2, Plus } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
-import DeckCard from "./DeckCard";
+import DeckCard from "@/components/marketplace/DeckCard";
 import { useAuth } from "@/lib/auth";
 import { createDeck, getUserDecks, deleteDeck } from "@/lib/api/decks";
 import type { Deck } from "@/types/marketplace";
 import type { Database } from "@/types/supabase";
-import DeleteDeckButton from "./DeleteDeckButton";
-import AddDeckDialog from "./AddDeckDialog";
+import DeleteDeckButton from "@/components/marketplace/DeleteDeckButton";
+import AddDeckDialog from "@/components/marketplace/AddDeckDialog";
 
 type NewDeck = Omit<
   Database["public"]["Tables"]["decks"]["Insert"],

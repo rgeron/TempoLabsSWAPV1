@@ -1,8 +1,8 @@
 import type { Database } from "@/types/supabase";
 import type { User } from "@supabase/supabase-js";
 import { createContext, useContext, useEffect, useState } from "react";
-import { supabase } from "./supabase";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "./supabase";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
@@ -38,13 +38,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(session.user);
         await fetchProfile(session.user.id);
         if (event === "SIGNED_IN") {
-          navigate("/home");
+          navigate("/app/home"); // Ensure that after sign-in, user is redirected here.
         }
       } else {
         setUser(null);
         setProfile(null);
         if (event === "SIGNED_OUT") {
-          navigate("/");
+          navigate("/"); // Redirect to landing page on sign-out
         }
       }
     });
