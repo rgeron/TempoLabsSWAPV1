@@ -80,38 +80,39 @@ const categories: Category[] = [
 
 const CategoryGrid = () => {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6 h-auto lg:h-[calc(60vh-80px)]">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6 w-full">
       {categories.map((category) => (
-        <Card
-          key={category.name}
-          className={` flex flex-col shadow-md ${category.gradient} border-0`}
-        >
-          <div className="p-6">
-            <div className="flex items-center space-x-3 mb-6">
-              <span className="text-2xl">{category.icon}</span>
-              <h3
-                className={`text-xl font-bold bg-gradient-to-r ${category.color} bg-clip-text text-transparent`}
-              >
-                {category.name}
-              </h3>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {category.subcategories.map((subcategory) => (
-                <button
-                  key={subcategory}
-                  className={`text-left px-4 py-3 bg-white/80 rounded-xl transition-all duration-200 shadow-sm
-                    ${category.hoverGradient} hover:shadow-md
-                    text-gray-700 hover:text-gray-900 font-medium`}
-                  onClick={() =>
-                    console.log(`Navigate to ${category.name} - ${subcategory}`)
-                  }
+        <div key={category.name} className="flex">
+          <Card
+            className={`flex flex-col shadow-md ${category.gradient} border-0 w-full`}
+          >
+            <div className="p-6">
+              <div className="flex items-center space-x-3 mb-6">
+                <span className="text-2xl">{category.icon}</span>
+                <h3
+                  className={`text-xl font-bold bg-gradient-to-r ${category.color} bg-clip-text text-transparent`}
                 >
-                  {subcategory}
-                </button>
-              ))}
+                  {category.name}
+                </h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {category.subcategories.map((subcategory) => (
+                  <button
+                    key={subcategory}
+                    className={`text-left px-4 py-3 bg-white/80 rounded-xl transition-all duration-200 shadow-sm
+                      ${category.hoverGradient} hover:shadow-md
+                      text-gray-700 hover:text-gray-900 font-medium`}
+                    onClick={() =>
+                      console.log(`Navigate to ${category.name} - ${subcategory}`)
+                    }
+                  >
+                    {subcategory}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+        </div>
       ))}
     </div>
   );
