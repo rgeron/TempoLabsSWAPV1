@@ -62,20 +62,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       password,
     });
     if (data?.user) {
+      await fetchProfile(data.user.id);
       navigate("/app/home");
     }
   };
 
   const signUp = async (email: string, password: string, username: string) => {
-    const { data } = await supabase.auth.signUp({ email, password });
-    if (data?.user) {
-      await supabase.from("profiles").insert({
-        id: data.user.id,
-        username,
-        avatar_url: null,
-        purchaseddeckids: [],
-        likeddeckids: [],
+    try {
+      // First sign up the user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            username: username,
+          },
+        },
       });
+
+      if (authError) throw authError;
+      if (!authData.user) throw new Error("No user returned from sign up");
+
+      // Check if profile already exists
+      const { data: existingProfile } = await supabase
+        .from("profiles")
+        .select()
+        .eq("id", authData.user.id)
+        .single();
+
+      if (existingProfile) {
+        setUser(authData.user);
+        setProfile(existingProfile);
+        navigate("/app/home");
+        return;
+      }
+
+      // If no profile exists, create one
+      const { error: profileError } = await supabase.rpc("create_new_profile", {
+        user_id: authData.user.id,
+        user_username: username,
+      });
+
+      if (profileError) throw profileError;
+
+      setUser(authData.user);
+      await fetchProfile(authData.user.id);
+      navigate("/app/home");
+    } catch (error) {
+      console.error("Error in signUp:", error);
+      throw error;
     }
   };
 

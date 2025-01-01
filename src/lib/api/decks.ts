@@ -28,7 +28,6 @@ export const uploadFlashcardsFile = async (file: File, userId: string) => {
   return publicUrl;
 };
 
-
 export const getFlashcards = async (deckId: string): Promise<FlashCard[]> => {
   const { data, error } = await supabase
     .from("flashcards")
@@ -70,19 +69,57 @@ export const createDeck = async (deck: NewDeck, file: File): Promise<Deck> => {
   }
 };
 
-// Define return type for getAllDecks
-export const getAllDecks = async (): Promise<Deck[]> => {
+// Get user profile by ID
+const getUserProfile = async (userId: string) => {
   const { data, error } = await supabase
-    .from('decks')
-    .select(`
-      *,
-      profiles(username, avatar_url)
-    `);
-  
-  if (error) throw error;
-  return data as Deck[];
-}
+    .from("profiles")
+    .select("username, avatar_url")
+    .eq("id", userId)
+    .single();
 
+  if (error) {
+    console.error("Error fetching user profile:", error);
+    return null;
+  }
+
+  return data;
+};
+
+// Define return type for getAllDecks
+export const getAllDecks = async (): Promise<DeckWithProfile[]> => {
+  try {
+    // First, get all decks
+    const { data: decks, error: decksError } = await supabase
+      .from("decks")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (decksError) throw decksError;
+
+    // Then, fetch creator profiles for each deck
+    const decksWithProfiles = await Promise.all(
+      decks.map(async (deck) => {
+        const profile = await getUserProfile(deck.creatorid);
+        return {
+          ...deck,
+          creatorName: profile?.username || "Unknown Creator",
+          creatorAvatar: profile?.avatar_url,
+          profiles: profile
+            ? {
+                username: profile.username,
+                avatar_url: profile.avatar_url,
+              }
+            : null,
+        };
+      }),
+    );
+
+    return decksWithProfiles;
+  } catch (error) {
+    console.error("Error in getAllDecks:", error);
+    throw error;
+  }
+};
 
 export const getUserDecks = async (userId: string): Promise<Deck[]> => {
   if (!userId) {

@@ -1,11 +1,11 @@
 import React from "react";
-import { Plus, Loader2, Upload } from "lucide-react";
+import { Loader2, Upload } from "lucide-react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,15 +26,12 @@ const AddDeckDialog = ({
 }: AddDeckDialogProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        <Button className="bg-[#2B4C7E] text-white hover:bg-[#1A365D]">
-          <Plus className="h-5 w-5 mr-2" />
-          Add Deck to Store
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Add New Deck to Store</DialogTitle>
+          <DialogDescription>
+            Fill in the details below to create a new flashcard deck.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
