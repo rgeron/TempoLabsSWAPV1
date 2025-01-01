@@ -38,7 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(session.user);
         await fetchProfile(session.user.id);
         if (event === "SIGNED_IN") {
-          navigate("/app/home"); // Ensure that after sign-in, user is redirected here.
+          navigate("/app/home", { replace: true }); // Added replace: true
         }
       } else {
         setUser(null);

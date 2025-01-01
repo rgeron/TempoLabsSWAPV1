@@ -12,7 +12,7 @@ const DashboardLayout = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col bg-[#F8FAFF]">
         {/* Top Navigation */}
-        <TopNav username="John Doe" avatarUrl="https://via.placeholder.com/40" />
+        <TopNav />
 
         {/* Page Content */}
         <div className="flex-1 overflow-y-auto p-6">

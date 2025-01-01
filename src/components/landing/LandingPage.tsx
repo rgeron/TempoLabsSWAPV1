@@ -13,7 +13,7 @@ const LandingPage = () => {
   const { user } = useAuth();
 
   if (user) {
-    return <Navigate to="/home" replace />;
+    return <Navigate to="/app/home" replace />;
   }
 
   return (
