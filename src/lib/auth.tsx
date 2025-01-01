@@ -12,7 +12,6 @@ type AuthContextType = {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, username: string) => Promise<void>;
   signOut: () => Promise<void>;
-  isLoading: boolean;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -20,103 +19,71 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   const fetchProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", userId)
-        .single();
+    const { data } = await supabase
+      .from("profiles")
+      .select()
+      .eq("id", userId)
+      .single();
 
-      if (error) {
-        console.error("Error fetching profile:", error);
-        return;
-      }
-
-      setProfile(data);
-    } catch (error) {
-      console.error("Error fetching profile:", error);
-    }
+    if (data) setProfile(data);
   };
 
   useEffect(() => {
-    // Initialize auth state
-    const initializeAuth = async () => {
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        if (session) {
-          setUser(session.user);
-          await fetchProfile(session.user.id);
-        }
-      } catch (error) {
-        console.error("Error initializing auth:", error);
-      } finally {
-        setIsLoading(false);
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser(session.user);
+        fetchProfile(session.user.id);
       }
-    };
-
-    initializeAuth();
+    });
 
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session) {
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
         setUser(session.user);
-        await fetchProfile(session.user.id);
-        if (event === "SIGNED_IN") {
-          navigate("/app/home");
-        }
+        fetchProfile(session.user.id);
       } else {
         setUser(null);
         setProfile(null);
-        if (event === "SIGNED_OUT") {
-          navigate("/");
-        }
       }
     });
 
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [navigate]);
+    return () => subscription.unsubscribe();
+  }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
-
-    if (error) throw error;
+    if (data?.user) {
+      navigate("/app/home");
+    }
   };
 
   const signUp = async (email: string, password: string, username: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          username,
-        },
-      },
-    });
-
-    if (error) throw error;
+    const { data } = await supabase.auth.signUp({ email, password });
+    if (data?.user) {
+      await supabase.from("profiles").insert({
+        id: data.user.id,
+        username,
+        avatar_url: null,
+        purchaseddeckids: [],
+        likeddeckids: [],
+      });
+    }
   };
 
   const signOut = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-    } catch (error) {
-      console.error("Error signing out:", error);
-      throw error;
-    }
+    await supabase.auth.signOut();
+    setUser(null);
+    setProfile(null);
+    navigate("/");
   };
 
   const value = {
@@ -125,7 +92,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signUp,
     signOut,
-    isLoading,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
