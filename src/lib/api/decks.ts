@@ -69,20 +69,56 @@ export const createDeck = async (deck: NewDeck, file: File): Promise<Deck> => {
   }
 };
 
+// Get user profile by ID
+const getUserProfile = async (userId: string) => {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("username, avatar_url")
+    .eq("id", userId)
+    .single();
+
+  if (error) {
+    console.error("Error fetching user profile:", error);
+    return null;
+  }
+
+  return data;
+};
+
 // Define return type for getAllDecks
 export const getAllDecks = async (): Promise<DeckWithProfile[]> => {
-  const { data, error } = await supabase.from("decks").select(`
-      *,
-      creator:profiles!decks_creatorid_fkey(username, avatar_url)
-    `);
+  try {
+    // First, get all decks
+    const { data: decks, error: decksError } = await supabase
+      .from("decks")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-  if (error) throw error;
+    if (decksError) throw decksError;
 
-  return data.map((deck: any) => ({
-    ...deck,
-    creatorName: deck.creator?.username,
-    creatorAvatar: deck.creator?.avatar_url,
-  }));
+    // Then, fetch creator profiles for each deck
+    const decksWithProfiles = await Promise.all(
+      decks.map(async (deck) => {
+        const profile = await getUserProfile(deck.creatorid);
+        return {
+          ...deck,
+          creatorName: profile?.username || "Unknown Creator",
+          creatorAvatar: profile?.avatar_url,
+          profiles: profile
+            ? {
+                username: profile.username,
+                avatar_url: profile.avatar_url,
+              }
+            : null,
+        };
+      }),
+    );
+
+    return decksWithProfiles;
+  } catch (error) {
+    console.error("Error in getAllDecks:", error);
+    throw error;
+  }
 };
 
 export const getUserDecks = async (userId: string): Promise<Deck[]> => {
