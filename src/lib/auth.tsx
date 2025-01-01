@@ -1,8 +1,8 @@
 import type { Database } from "@/types/supabase";
 import type { User } from "@supabase/supabase-js";
 import { createContext, useContext, useEffect, useState } from "react";
-import { supabase } from "./supabase";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "./supabase";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
@@ -21,94 +21,69 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const navigate = useNavigate();
 
+  const fetchProfile = async (userId: string) => {
+    const { data } = await supabase
+      .from("profiles")
+      .select()
+      .eq("id", userId)
+      .single();
+
+    if (data) setProfile(data);
+  };
+
   useEffect(() => {
-    // Check active sessions and sets the user
+    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
+      if (session?.user) {
         setUser(session.user);
         fetchProfile(session.user.id);
       }
     });
 
-    // Listen for changes on auth state (signed in, signed out, etc.)
+    // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session) {
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
         setUser(session.user);
-        await fetchProfile(session.user.id);
-        if (event === "SIGNED_IN") {
-          navigate("/home");
-        }
+        fetchProfile(session.user.id);
       } else {
         setUser(null);
         setProfile(null);
-        if (event === "SIGNED_OUT") {
-          navigate("/");
-        }
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
-
-  const fetchProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", userId)
-        .single();
-
-      if (error) {
-        console.error("Error fetching profile:", error);
-        return;
-      }
-
-      setProfile(data);
-    } catch (error) {
-      console.error("Error fetching profile:", error);
-    }
-  };
+  }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
-
-    if (error) throw error;
+    if (data?.user) {
+      navigate("/app/home");
+    }
   };
 
   const signUp = async (email: string, password: string, username: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          username,
-        },
-      },
-    });
-
-    if (error) throw error;
+    const { data } = await supabase.auth.signUp({ email, password });
+    if (data?.user) {
+      await supabase.from("profiles").insert({
+        id: data.user.id,
+        username,
+        avatar_url: null,
+        purchaseddeckids: [],
+        likeddeckids: [],
+      });
+    }
   };
 
   const signOut = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-
-      // Clear the user and profile state
-      setUser(null);
-      setProfile(null);
-
-      // Navigate to landing page
-      navigate("/", { replace: true });
-    } catch (error) {
-      console.error("Error signing out:", error);
-      throw error;
-    }
+    await supabase.auth.signOut();
+    setUser(null);
+    setProfile(null);
+    navigate("/");
   };
 
   const value = {

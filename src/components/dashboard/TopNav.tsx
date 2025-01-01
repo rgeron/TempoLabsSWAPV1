@@ -13,21 +13,9 @@ import { Search, Bell, Settings, LogOut, Wallet } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { SettingsModal } from "../auth/SettingsModal";
 
-interface TopNavProps {
-  username?: string;
-  avatarUrl?: string;
-  notifications?: number;
-  balance?: number;
-}
-
-const TopNav = ({
-  username,
-  avatarUrl,
-  notifications = 3,
-  balance = 250.0,
-}: TopNavProps) => {
+const TopNav = () => {
   const [showSettings, setShowSettings] = useState(false);
-  const { signOut } = useAuth();
+  const { signOut, user, profile } = useAuth();
 
   const handleLogout = async () => {
     try {
@@ -35,6 +23,17 @@ const TopNav = ({
     } catch (error) {
       console.error("Error signing out:", error);
     }
+  };
+
+  // Get initials from username or email
+  const getInitials = () => {
+    if (profile?.username) {
+      return profile.username.slice(0, 2).toUpperCase();
+    }
+    if (user?.email) {
+      return user.email.slice(0, 2).toUpperCase();
+    }
+    return "??";
   };
 
   return (
@@ -57,13 +56,9 @@ const TopNav = ({
           {/* Notifications */}
           <div className="relative cursor-pointer hover:opacity-80 transition-opacity">
             <Bell className="h-6 w-6 text-[#2B4C7E]" />
-            {notifications > 0 && (
-              <div className="absolute -top-1 -right-1 h-5 w-5 bg-[#FF6B6B] rounded-full flex items-center justify-center">
-                <span className="text-white text-xs font-medium">
-                  {notifications}
-                </span>
-              </div>
-            )}
+            <div className="absolute -top-1 -right-1 h-5 w-5 bg-[#FF6B6B] rounded-full flex items-center justify-center">
+              <span className="text-white text-xs font-medium">3</span>
+            </div>
           </div>
 
           {/* Profile Dropdown */}
@@ -71,17 +66,17 @@ const TopNav = ({
             <DropdownMenuTrigger className="focus:outline-none">
               <div className="flex items-center space-x-3 bg-[#F3F6FF] hover:bg-[#E6F3FF] transition-colors duration-200 rounded-full py-2 px-4 cursor-pointer">
                 <Avatar className="h-10 w-10 border-2 border-[#2B4C7E]">
-                  <AvatarImage src={avatarUrl} alt={username} />
+                  <AvatarImage src={profile?.avatar_url || undefined} />
                   <AvatarFallback className="bg-[#2B4C7E] text-white">
-                    {username?.slice(0, 2).toUpperCase()}
+                    {getInitials()}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col items-start">
                   <span className="text-sm font-medium text-[#2B4C7E]">
-                    {username}
+                    {profile?.username || user?.email}
                   </span>
                   <span className="text-xs text-[#2B4C7E]/70">
-                    ${balance.toFixed(2)}
+                    ${(250).toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -91,12 +86,12 @@ const TopNav = ({
               className="w-56 mt-2 bg-white border-[#E6F3FF]"
             >
               <DropdownMenuLabel className="text-[#2B4C7E]">
-                {username}
+                {profile?.username || user?.email}
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-[#E6F3FF]" />
               <DropdownMenuItem className="text-[#2B4C7E] focus:bg-[#E6F3FF] focus:text-[#2B4C7E]">
                 <Wallet className="mr-2 h-4 w-4" />
-                <span>Balance: ${balance.toFixed(2)}</span>
+                <span>Balance: ${(250).toFixed(2)}</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="text-[#2B4C7E] focus:bg-[#E6F3FF] focus:text-[#2B4C7E] cursor-pointer"

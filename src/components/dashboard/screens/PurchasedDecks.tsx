@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import DeckCard from "./DeckCard";
+import DeckCard from "@/components/marketplace/DeckCard";
 import { useAuth } from "@/lib/auth";
 import { getAllDecks } from "@/lib/api/decks";
 import { Loader2 } from "lucide-react";
@@ -27,9 +27,8 @@ const PurchasedDecks = () => {
       try {
         const allDecks = await getAllDecks();
         const purchased = allDecks.filter((deck) =>
-          profile.purchaseddeckids.includes(deck.id),
-        );
-
+          profile.purchaseddeckids.includes(deck.id)
+        ) as Deck[];
         setPurchasedDecks(purchased);
       } catch (error) {
         console.error("Error fetching purchased decks:", error);
@@ -60,12 +59,11 @@ const PurchasedDecks = () => {
               title={deck.title}
               description={deck.description}
               price={deck.price}
-              cardCount={deck.cardcount}
+              cardcount={deck.cardcount}
               difficulty={deck.difficulty}
-              imageUrl={deck.imageurl}
+              imageurl={deck.imageurl}
               creatorName={deck.profiles.username}
               creatorAvatar={deck.profiles.avatar_url || undefined}
-              hideActions
             />
             <div className="px-4 py-2 bg-white rounded-lg shadow-sm">
               <p className="text-sm text-gray-600">

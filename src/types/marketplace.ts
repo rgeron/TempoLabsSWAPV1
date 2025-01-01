@@ -1,3 +1,4 @@
+// marketplace.ts
 export interface Deck {
   id: string;
   title: string;
@@ -8,17 +9,25 @@ export interface Deck {
   imageurl: string;
   creatorid: string;
   created_at: string;
-}
-
-export interface FlashCard {
+ }
+ 
+ export interface FlashCard {
   front: string;
   back: string;
   tags?: string[];
-}
-
-export interface DeckWithProfile extends Deck {
+ }
+ 
+ export interface DeckWithProfile extends Deck {
+  creatorName: string;
+  creatorAvatar: string | null;
   profiles: {
-    username: string;
+    username: string; 
     avatar_url: string | null;
   };
-}
+ }
+ 
+ export interface BuyDeckDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  deck: DeckWithProfile;
+ }

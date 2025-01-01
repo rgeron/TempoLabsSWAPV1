@@ -1,6 +1,7 @@
 import { supabase } from "../supabase";
 import type { Database } from "@/types/supabase";
 import type { Deck, DeckWithProfile } from "@/types/marketplace";
+import { FlashCard } from "@/types/marketplace";
 
 type NewDeck = Omit<
   Database["public"]["Tables"]["decks"]["Insert"],
@@ -25,6 +26,21 @@ export const uploadFlashcardsFile = async (file: File, userId: string) => {
   } = supabase.storage.from("flashcards-files").getPublicUrl(filePath);
 
   return publicUrl;
+};
+
+
+export const getFlashcards = async (deckId: string): Promise<FlashCard[]> => {
+  const { data, error } = await supabase
+    .from("flashcards")
+    .select("*")
+    .eq("deck_id", deckId);
+
+  if (error) {
+    console.error("Error fetching flashcards:", error);
+    throw error;
+  }
+
+  return data as FlashCard[];
 };
 
 export const createDeck = async (deck: NewDeck, file: File): Promise<Deck> => {
@@ -54,24 +70,19 @@ export const createDeck = async (deck: NewDeck, file: File): Promise<Deck> => {
   }
 };
 
-export const getAllDecks = async (): Promise<DeckWithProfile[]> => {
+// Define return type for getAllDecks
+export const getAllDecks = async (): Promise<Deck[]> => {
   const { data, error } = await supabase
-    .from("decks")
-    .select(
-      `
+    .from('decks')
+    .select(`
       *,
-      profiles:creatorid (username, avatar_url)
-    `,
-    )
-    .order("created_at", { ascending: false });
+      profiles(username, avatar_url)
+    `);
+  
+  if (error) throw error;
+  return data as Deck[];
+}
 
-  if (error) {
-    console.error("Error getting all decks:", error);
-    throw error;
-  }
-
-  return data || [];
-};
 
 export const getUserDecks = async (userId: string): Promise<Deck[]> => {
   if (!userId) {

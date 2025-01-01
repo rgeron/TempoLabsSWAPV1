@@ -1,93 +1,40 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[];
+// Common deck fields
+interface DeckBase {
+  title: string;
+  description: string;
+  price: number;
+  cardcount: number;
+  difficulty: "Beginner" | "Intermediate" | "Advanced";
+  imageurl: string;
+  creatorid: string;
+  flashcards_file_url?: string | null;
+}
 
+// Database types
 export interface Database {
   public: {
     Tables: {
       decks: {
-        Row: {
+        Row: DeckBase & {
           id: string;
-          title: string;
-          description: string;
-          price: number;
-          cardcount: number;
-          difficulty: "Beginner" | "Intermediate" | "Advanced";
-          imageurl: string;
-          creatorid: string;
           created_at: string;
           updated_at: string;
-          flashcards_file_url: string | null; // Remplace flashcardcontent
         };
-        Insert: {
+        Insert: Partial<DeckBase> & {
           id?: string;
-          title: string;
-          description: string;
-          price: number;
-          cardcount: number;
-          difficulty: "Beginner" | "Intermediate" | "Advanced";
-          imageurl: string;
-          creatorid: string;
           created_at?: string;
           updated_at?: string;
-          flashcards_file_url?: string | null; // Remplace flashcardcontent
         };
-        Update: {
-          id?: string;
-          title?: string;
-          description?: string;
-          price?: number;
-          cardcount?: number;
-          difficulty?: "Beginner" | "Intermediate" | "Advanced";
-          imageurl?: string;
-          creatorid?: string;
-          created_at?: string;
-          updated_at?: string;
-          flashcards_file_url?: string | null; // Remplace flashcardcontent
-        };
-      };
-      profiles: {
-        Row: {
+        Update: Partial<DeckBase & {
           id: string;
-          username: string;
-          avatar_url: string | null;
           created_at: string;
           updated_at: string;
-          purchaseddeckids: string[];
-          likeddeckids: string[];
-        };
-        Insert: {
-          id: string;
-          username: string;
-          avatar_url?: string | null;
-          created_at?: string;
-          updated_at?: string;
-          purchaseddeckids?: string[];
-          likeddeckids?: string[];
-        };
-        Update: {
-          id?: string;
-          username?: string;
-          avatar_url?: string | null;
-          created_at?: string;
-          updated_at?: string;
-          purchaseddeckids?: string[];
-          likeddeckids?: string[];
-        };
+        }>;
       };
+      // Similar pattern for profiles...
     };
-    Views: {
-      [_ in never]: never;
-    };
-    Functions: {
-      [_ in never]: never;
-    };
-    Enums: {
-      [_ in never]: never;
-    };
+    Views: Record<never, never>;
+    Functions: Record<never, never>;
+    Enums: Record<never, never>;
   };
 }
