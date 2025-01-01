@@ -161,14 +161,6 @@ const ListedDecks = () => {
                   isDeleting={deletingDeckId === deck.id}
                 />
               </div>
-              <div className="px-4 py-2 bg-white rounded-lg shadow-sm">
-                <p className="text-sm text-gray-600">
-                  Listed on: {new Date(deck.created_at).toLocaleDateString()}
-                </p>
-                <p className="text-sm font-semibold text-[#2B4C7E]">
-                  Price: ${deck.price.toFixed(2)}
-                </p>
-              </div>
             </div>
           ))}
         </div>
