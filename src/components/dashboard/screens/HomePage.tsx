@@ -18,7 +18,7 @@ const Home = () => {
     const fetchDecks = async () => {
       try {
         const decks = await getAllDecks();
-        setAllDecks(decks);
+        setAllDecks(decks as DeckWithProfile[]);
       } catch (error) {
         console.error("Error fetching decks:", error);
       } finally {

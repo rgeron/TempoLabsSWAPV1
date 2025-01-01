@@ -28,9 +28,9 @@ const LikedDecks = () => {
     try {
       const allDecks = await getAllDecks();
       const liked = allDecks.filter((deck) =>
-        profile.likeddeckids.includes(deck.id),
-      );
-
+        profile.likeddeckids.includes(deck.id)
+      ) as Deck[];
+      
       setLikedDecks(liked);
     } catch (error) {
       console.error("Error fetching liked decks:", error);
@@ -80,13 +80,11 @@ const LikedDecks = () => {
             title={deck.title}
             description={deck.description}
             price={deck.price}
-            cardCount={deck.cardcount}
+            cardcount={deck.cardcount}
             difficulty={deck.difficulty}
-            imageUrl={deck.imageurl}
+            imageurl={deck.imageurl}
             creatorName={deck.profiles.username}
             creatorAvatar={deck.profiles.avatar_url || undefined}
-            onUnlike={() => handleUnlike(deck.id)}
-            isLiked={true}
           />
         ))}
       </div>

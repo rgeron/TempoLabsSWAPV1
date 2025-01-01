@@ -54,24 +54,19 @@ export const createDeck = async (deck: NewDeck, file: File): Promise<Deck> => {
   }
 };
 
-export const getAllDecks = async (): Promise<DeckWithProfile[]> => {
+// Define return type for getAllDecks
+export const getAllDecks = async (): Promise<Deck[]> => {
   const { data, error } = await supabase
-    .from("decks")
-    .select(
-      `
+    .from('decks')
+    .select(`
       *,
-      profiles:creatorid (username, avatar_url)
-    `,
-    )
-    .order("created_at", { ascending: false });
+      profiles(username, avatar_url)
+    `);
+  
+  if (error) throw error;
+  return data as Deck[];
+}
 
-  if (error) {
-    console.error("Error getting all decks:", error);
-    throw error;
-  }
-
-  return data || [];
-};
 
 export const getUserDecks = async (userId: string): Promise<Deck[]> => {
   if (!userId) {
