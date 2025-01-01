@@ -1,7 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import DashboardLayout from "./components/dashboard/DashboardLayout";
 import LandingPage from "./components/landing/LandingPage";
-import Home from "./components/dashboard/screens/Home";
+import Home from "./components/dashboard/screens/HomePage";
 import LikedDecks from "./components/dashboard/screens/LikedDecks";
 import ListedDecks from "./components/dashboard/screens/ListedDecks";
 import PurchasedDecks from "./components/dashboard/screens/PurchasedDecks";
