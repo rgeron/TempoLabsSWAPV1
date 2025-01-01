@@ -11,8 +11,14 @@ import { AuthProvider, useAuth } from "./lib/auth";
 
 // Wrapper for private/authenticated routes
 const PrivateRoute = ({ children }: { children: JSX.Element }) => {
-  const { user } = useAuth();
-  return user ? children : <Navigate to="/" replace />;
+  const { user, isLoading } = useAuth();
+
+  // Show nothing while checking authentication
+  if (isLoading) {
+    return null;
+  }
+
+  return user ? children : <Navigate to="/" />;
 };
 
 const App = () => {
@@ -37,7 +43,7 @@ const App = () => {
           <Route path="listed-decks" element={<ListedDecks />} />
           <Route path="sales-analytics" element={<SalesAnalytics />} />
           {/* Default redirect */}
-          <Route path="*" element={<Navigate to="home" replace />} />
+          <Route path="*" element={<Navigate to="home" />} />
         </Route>
       </Routes>
       <Toaster />
