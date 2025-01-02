@@ -18,7 +18,7 @@ interface SettingsModalProps {
 }
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
-  const { profile, user } = useAuth();
+  const { profile, user, updateProfile } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -27,16 +27,26 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     setIsLoading(true);
 
     try {
-      // Add settings update logic here
+      const formData = new FormData(event.currentTarget);
+      const newUsername = formData.get("username") as string;
+
+      if (!user) throw new Error("Not authenticated");
+      if (!newUsername) throw new Error("Username is required");
+
+      await updateProfile({ username: newUsername });
+
       toast({
         title: "Settings updated",
         description: "Your settings have been saved successfully.",
       });
+
       onClose();
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Error updating settings:", error);
       toast({
         title: "Error",
-        description: error.message,
+        description:
+          error.message || "An error occurred while updating settings",
         variant: "destructive",
       });
     } finally {
@@ -71,7 +81,16 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 name="username"
                 type="text"
                 defaultValue={profile?.username || ""}
+                required
+                minLength={3}
+                maxLength={20}
+                pattern="^[a-zA-Z0-9_-]+$"
+                title="Username can only contain letters, numbers, underscores, and hyphens"
               />
+              <p className="text-sm text-gray-500">
+                Username must be between 3 and 20 characters and can only
+                contain letters, numbers, underscores, and hyphens.
+              </p>
             </div>
           </div>
           <div className="flex justify-end space-x-4">
