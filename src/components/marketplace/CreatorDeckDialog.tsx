@@ -1,19 +1,4 @@
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Loader2, Users, DollarSign, TrendingUp, Trash2 } from "lucide-react";
-import { useState, useEffect } from "react";
-import { getFlashcards } from "@/lib/api/decks";
-import type { DeckWithProfile, FlashCard } from "@/types/marketplace";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -24,6 +9,24 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getFlashcards } from "@/lib/api/decks";
+import type { DeckWithProfile, FlashCard } from "@/types/marketplace";
+import { DollarSign, Trash2, TrendingUp, Users } from "lucide-react";
+import { useEffect, useState } from "react";
+
+// 1) Import the new OverviewTab
+import { OverviewTab } from "./OverviewTab";
+import { FlashcardPreview } from "./FlashcardPreview";
 
 interface CreatorDeckDialogProps {
   isOpen: boolean;
@@ -72,7 +75,7 @@ export function CreatorDeckDialog({
   const handleDelete = async () => {
     try {
       await onDelete();
-      onClose(); // Close the dialog after successful deletion
+      onClose(); // Close after successful deletion
     } catch (error) {
       console.error("Error deleting deck:", error);
     }
@@ -100,52 +103,13 @@ export function CreatorDeckDialog({
             <TabsTrigger value="stats">Statistics</TabsTrigger>
           </TabsList>
 
+          {/* 2) Use the new OverviewTab for the overview content */}
           <TabsContent value="overview" className="space-y-4">
-            <div className="space-y-4">
-              <div>
-                <h4 className="font-semibold mb-2">Description</h4>
-                <p className="text-sm text-gray-600">{deck.description}</p>
-              </div>
-
-              <div>
-                <h4 className="font-semibold mb-2">Details</h4>
-                <ul className="text-sm text-gray-600 space-y-2">
-                  <li>Difficulty: {deck.difficulty}</li>
-                  <li>Total Cards: {deck.cardcount}</li>
-                  <li>Price: ${deck.price.toFixed(2)}</li>
-                  <li>
-                    Created: {new Date(deck.created_at).toLocaleDateString()}
-                  </li>
-                </ul>
-              </div>
-            </div>
+            <OverviewTab deck={deck} />
           </TabsContent>
 
           <TabsContent value="flashcards" className="space-y-4">
-            <ScrollArea className="h-[300px] w-full rounded-md border p-4">
-              {isLoading ? (
-                <div className="flex items-center justify-center h-full">
-                  <Loader2 className="h-8 w-8 animate-spin text-[#2B4C7E]" />
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {flashcards.map((card, index) => (
-                    <div
-                      key={index}
-                      className="p-4 rounded-lg border bg-gray-50 space-y-2"
-                    >
-                      <div className="font-medium">Front: {card.front}</div>
-                      <div className="text-gray-600">Back: {card.back}</div>
-                      {card.tags && card.tags.length > 0 && (
-                        <div className="text-xs text-gray-500">
-                          Tags: {card.tags.join(", ")}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
+            <FlashcardPreview flashcards={flashcards} isLoading={isLoading} />
           </TabsContent>
 
           <TabsContent value="stats" className="space-y-4">

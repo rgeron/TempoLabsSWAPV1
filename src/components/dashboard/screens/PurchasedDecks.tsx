@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from "react";
 import DeckCard from "@/components/marketplace/DeckCard";
-import { useAuth } from "@/lib/auth";
 import { getAllDecks } from "@/lib/api/decks";
-import { Loader2 } from "lucide-react";
+import { useAuth } from "@/lib/auth";
 import type { Database } from "@/types/supabase";
+import { Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 type Deck = Database["public"]["Tables"]["decks"]["Row"] & {
   profiles: {
@@ -62,18 +62,10 @@ const PurchasedDecks = () => {
               cardcount={deck.cardcount}
               difficulty={deck.difficulty}
               imageurl={deck.imageurl}
+              creatorid={deck.creatorid}
               creatorName={deck.profiles.username}
               creatorAvatar={deck.profiles.avatar_url || undefined}
             />
-            <div className="px-4 py-2 bg-white rounded-lg shadow-sm">
-              <p className="text-sm text-gray-600">
-                Purchased on:{" "}
-                {new Date(deck.created_at).toLocaleDateString("en-GB")}
-              </p>
-              <p className="text-sm font-semibold text-[#2B4C7E]">
-                Price paid: ${deck.price.toFixed(2)}
-              </p>
-            </div>
           </div>
         ))}
       </div>
