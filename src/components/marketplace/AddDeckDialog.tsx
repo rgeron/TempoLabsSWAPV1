@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Loader2, Upload } from "lucide-react";
 import {
   Dialog,
@@ -55,16 +55,20 @@ const AddDeckDialog = ({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[900px] h-[80vh] flex flex-col">
-        <DialogHeader>
+        <DialogHeader className="px-6 pt-6">
           <DialogTitle>Add New Deck to Store</DialogTitle>
           <DialogDescription>
             Fill in the details below to create a new flashcard deck.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="flex-1 overflow-hidden">
-          <div className="flex gap-6 h-full">
+
+        <form
+          onSubmit={handleSubmit}
+          className="flex-1 flex flex-col overflow-hidden px-6"
+        >
+          <div className="flex gap-6 flex-1 overflow-y-auto py-6">
             {/* Left Column */}
-            <div className="flex-1 space-y-4">
+            <div className="flex-1 space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="title">Deck Title</Label>
                 <Input id="title" name="title" required />
@@ -110,7 +114,7 @@ const AddDeckDialog = ({
             <Separator orientation="vertical" />
 
             {/* Right Column */}
-            <div className="flex-1 space-y-4">
+            <div className="flex-1 space-y-6">
               <div className="space-y-2">
                 <Label>Categories</Label>
                 <ScrollArea className="h-[300px] w-full rounded-md border">
@@ -171,11 +175,18 @@ const AddDeckDialog = ({
             </div>
           </div>
 
-          <div className="mt-6 flex justify-end">
+          <div className="flex justify-end space-x-4 py-4 border-t bg-background">
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => onOpenChange(false)}
+            >
+              Cancel
+            </Button>
             <Button
               type="submit"
-              className="bg-[#2B4C7E] text-white hover:bg-[#1A365D] w-[200px]"
               disabled={isSubmitting}
+              className="bg-[#2B4C7E] text-white hover:bg-[#1A365D]"
             >
               {isSubmitting ? (
                 <>
