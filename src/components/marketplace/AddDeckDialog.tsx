@@ -55,11 +55,8 @@ const AddDeckDialog = ({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[900px] h-[80vh] flex flex-col">
-        <DialogHeader className="px-6 pt-6">
+        <DialogHeader className="px-6 pt-2">
           <DialogTitle>Add New Deck to Store</DialogTitle>
-          <DialogDescription>
-            Fill in the details below to create a new flashcard deck.
-          </DialogDescription>
         </DialogHeader>
 
         <form
