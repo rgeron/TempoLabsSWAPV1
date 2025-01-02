@@ -15,6 +15,7 @@ import { CreatorDeckDialog } from "./CreatorDeckDialog";
 import { deleteDeck, likeDeck, unlikeDeck } from "@/lib/api/decks";
 import { useToast } from "@/components/ui/use-toast";
 import type { DeckWithProfile } from "@/types/marketplace";
+import { getCategoryStyle } from "@/types/marketplace";
 import { cn } from "@/lib/utils";
 
 interface DeckCardProps extends DeckWithProfile {}
@@ -37,6 +38,7 @@ const DeckCard = ({
   creatorAvatar,
   creatorid,
   created_at,
+  categories,
   profiles,
 }: DeckCardProps) => {
   const { user, profile } = useAuth();
@@ -133,6 +135,7 @@ const DeckCard = ({
             created_at,
             creatorName,
             creatorAvatar,
+            categories,
             profiles,
           }}
           onDelete={handleDelete}
@@ -158,9 +161,10 @@ const DeckCard = ({
             created_at,
             creatorName,
             creatorAvatar,
+            categories,
             profiles,
           }}
-          purchaseDate={created_at} // Replace with actual purchase date when available
+          purchaseDate={created_at}
         />
       );
     }
@@ -181,6 +185,7 @@ const DeckCard = ({
           created_at,
           creatorName,
           creatorAvatar,
+          categories,
           profiles,
         }}
       />
@@ -248,6 +253,22 @@ const DeckCard = ({
           <p className="text-sm text-gray-500 h-12 line-clamp-2">
             {description}
           </p>
+          {categories && categories.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {categories.map((category) => {
+                const style = getCategoryStyle(category);
+                return (
+                  <div
+                    key={category}
+                    className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium ${style?.gradient} transition-colors duration-200 ${style?.hoverGradient}`}
+                  >
+                    <span>{style?.icon}</span>
+                    {category}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </CardContent>
 
         <CardFooter className="p-4 pt-0">
