@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Navigate } from "react-router-dom";
 import { AuthModal } from "../auth/AuthModal";
 import CategoryGrid from "../marketplace/CategoryGrid";
-import DeckGrid from "../marketplace/DeckGrid";
+import AllDecks from "../marketplace/AllDecks";
 
 const LandingPage = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -69,7 +69,10 @@ const LandingPage = () => {
       {/* Decks Section */}
       <section className="py-16">
         <div className="container mx-auto px-4">
-          <DeckGrid />
+          <h2 className="text-2xl md:text-3xl font-bold text-[#2B4C7E] mb-8">
+            All Decks
+          </h2>
+          <AllDecks showTitle={false} />
         </div>
       </section>
 
