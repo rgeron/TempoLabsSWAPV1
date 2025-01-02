@@ -193,24 +193,6 @@ const DeckCard = ({
         className="w-full overflow-hidden hover:shadow-lg transition-all duration-300 bg-white cursor-pointer relative"
         onClick={() => setShowDialog(true)}
       >
-        {/* Like Button */}
-        {canLike && (
-          <button
-            onClick={handleLikeClick}
-            disabled={isLiking}
-            className="absolute top-2 right-2 z-10 p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-colors duration-200"
-          >
-            <Heart
-              className={cn(
-                "h-5 w-5 transition-colors duration-200",
-                isLiked
-                  ? "fill-red-500 text-red-500"
-                  : "fill-none text-gray-600 hover:text-red-500",
-              )}
-            />
-          </button>
-        )}
-
         <CardHeader className="p-0">
           <div className="relative h-40 w-full">
             <img
@@ -218,11 +200,46 @@ const DeckCard = ({
               alt={title}
               className="w-full h-full object-cover"
             />
-            <div className="absolute top-2 left-2">
+            {/* Gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+
+            {/* Top row: Difficulty and Like button */}
+            <div className="absolute top-2 w-full px-2 flex justify-between items-center">
               <Badge className={`${difficultyColors[difficulty]} border-none`}>
                 {difficulty}
               </Badge>
+              {canLike && (
+                <button
+                  onClick={handleLikeClick}
+                  disabled={isLiking}
+                  className="p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-colors duration-200"
+                >
+                  <Heart
+                    className={cn(
+                      "h-5 w-5 transition-colors duration-200",
+                      isLiked
+                        ? "fill-red-500 text-red-500"
+                        : "fill-none text-gray-600 hover:text-red-500",
+                    )}
+                  />
+                </button>
+              )}
             </div>
+
+            {/* Bottom row: Creator profile */}
+            {creatorName && (
+              <div className="absolute bottom-2 left-2 flex items-center space-x-2">
+                <Avatar className="h-6 w-6 border border-white/50">
+                  <AvatarImage src={creatorAvatar} />
+                  <AvatarFallback className="bg-white/10 text-white">
+                    {creatorName.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-sm text-white font-medium">
+                  {creatorName}
+                </span>
+              </div>
+            )}
           </div>
         </CardHeader>
 
@@ -233,7 +250,7 @@ const DeckCard = ({
           </p>
         </CardContent>
 
-        <CardFooter className="p-4 pt-0 flex flex-col space-y-2">
+        <CardFooter className="p-4 pt-0">
           <div className="flex justify-between items-center w-full">
             <div className="flex items-center space-x-4">
               <div className="flex items-center">
@@ -249,18 +266,6 @@ const DeckCard = ({
               ${price.toFixed(2)}
             </div>
           </div>
-
-          {creatorName && (
-            <div className="flex items-center space-x-2 text-sm text-gray-500">
-              <Avatar className="h-6 w-6">
-                <AvatarImage src={creatorAvatar} />
-                <AvatarFallback>
-                  {creatorName.slice(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <span>{creatorName}</span>
-            </div>
-          )}
         </CardFooter>
       </Card>
       {renderDialog()}
