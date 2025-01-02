@@ -6,15 +6,16 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, BookOpen } from "lucide-react";
+import { Star, BookOpen, Heart } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/auth";
 import { BuyDeckDialog } from "./BuyDeckDialog";
 import { PurchasedDeckDialog } from "./PurchasedDeckDialog";
 import { CreatorDeckDialog } from "./CreatorDeckDialog";
-import { deleteDeck } from "@/lib/api/decks";
+import { deleteDeck, likeDeck, unlikeDeck } from "@/lib/api/decks";
 import { useToast } from "@/components/ui/use-toast";
 import type { DeckWithProfile } from "@/types/marketplace";
+import { cn } from "@/lib/utils";
 
 interface DeckCardProps extends DeckWithProfile {}
 
@@ -42,9 +43,12 @@ const DeckCard = ({
   const { toast } = useToast();
   const [showDialog, setShowDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isLiking, setIsLiking] = useState(false);
 
   const isCreator = user?.id === creatorid;
   const isPurchased = profile?.purchaseddeckids?.includes(id);
+  const isLiked = profile?.likeddeckids?.includes(id);
+  const canLike = !isCreator && !isPurchased;
 
   const handleDelete = async () => {
     try {
@@ -65,6 +69,47 @@ const DeckCard = ({
       });
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleLikeClick = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent opening the deck dialog
+
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to like this deck",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsLiking(true);
+      if (isLiked) {
+        await unlikeDeck(user.id, id);
+        toast({
+          title: "Deck unliked",
+          description: "Deck removed from your liked decks",
+        });
+      } else {
+        await likeDeck(user.id, id);
+        toast({
+          title: "Deck liked",
+          description: "Deck added to your liked decks",
+        });
+      }
+      // Force reload to update the UI
+      window.location.reload();
+    } catch (error) {
+      console.error("Error liking/unliking deck:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update deck like status",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLiking(false);
     }
   };
 
@@ -145,7 +190,7 @@ const DeckCard = ({
   return (
     <>
       <Card
-        className="w-full overflow-hidden hover:shadow-lg transition-all duration-300 bg-white cursor-pointer"
+        className="w-full overflow-hidden hover:shadow-lg transition-all duration-300 bg-white cursor-pointer relative"
         onClick={() => setShowDialog(true)}
       >
         <CardHeader className="p-0">
@@ -155,11 +200,46 @@ const DeckCard = ({
               alt={title}
               className="w-full h-full object-cover"
             />
-            <div className="absolute top-2 right-2">
+            {/* Gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+
+            {/* Top row: Difficulty and Like button */}
+            <div className="absolute top-2 w-full px-2 flex justify-between items-center">
               <Badge className={`${difficultyColors[difficulty]} border-none`}>
                 {difficulty}
               </Badge>
+              {canLike && (
+                <button
+                  onClick={handleLikeClick}
+                  disabled={isLiking}
+                  className="p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-colors duration-200"
+                >
+                  <Heart
+                    className={cn(
+                      "h-5 w-5 transition-colors duration-200",
+                      isLiked
+                        ? "fill-red-500 text-red-500"
+                        : "fill-none text-gray-600 hover:text-red-500",
+                    )}
+                  />
+                </button>
+              )}
             </div>
+
+            {/* Bottom row: Creator profile */}
+            {creatorName && (
+              <div className="absolute bottom-2 left-2 flex items-center space-x-2">
+                <Avatar className="h-6 w-6 border border-white/50">
+                  <AvatarImage src={creatorAvatar} />
+                  <AvatarFallback className="bg-white/10 text-white">
+                    {creatorName.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-sm text-white font-medium">
+                  {creatorName}
+                </span>
+              </div>
+            )}
           </div>
         </CardHeader>
 
@@ -170,7 +250,7 @@ const DeckCard = ({
           </p>
         </CardContent>
 
-        <CardFooter className="p-4 pt-0 flex flex-col space-y-2">
+        <CardFooter className="p-4 pt-0">
           <div className="flex justify-between items-center w-full">
             <div className="flex items-center space-x-4">
               <div className="flex items-center">
@@ -186,18 +266,6 @@ const DeckCard = ({
               ${price.toFixed(2)}
             </div>
           </div>
-
-          {creatorName && (
-            <div className="flex items-center space-x-2 text-sm text-gray-500">
-              <Avatar className="h-6 w-6">
-                <AvatarImage src={creatorAvatar} />
-                <AvatarFallback>
-                  {creatorName.slice(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <span>{creatorName}</span>
-            </div>
-          )}
         </CardFooter>
       </Card>
       {renderDialog()}
