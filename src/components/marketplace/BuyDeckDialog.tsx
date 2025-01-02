@@ -1,19 +1,19 @@
-import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAuth } from "@/lib/auth";
 import { useToast } from "@/components/ui/use-toast";
 import { getFlashcards, purchaseDeck } from "@/lib/api/decks";
+import { useAuth } from "@/lib/auth";
 import type { BuyDeckDialogProps, FlashCard } from "@/types/marketplace";
 import { Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { FlashcardPreview } from "./FlashcardPreview";
 
 export const BuyDeckDialog = ({
   isOpen,
@@ -48,7 +48,7 @@ export const BuyDeckDialog = ({
     if (isOpen && selectedTab === "preview") {
       loadFlashcards();
     }
-  }, [isOpen, selectedTab, deck.id, deck.creatorid]);
+  }, [isOpen, selectedTab, deck.id, deck.creatorid, toast]);
 
   const handlePurchase = async () => {
     if (!user) {
@@ -105,6 +105,7 @@ export const BuyDeckDialog = ({
             <TabsTrigger value="preview">Preview Cards</TabsTrigger>
           </TabsList>
 
+          {/* Overview tab */}
           <TabsContent value="overview" className="space-y-4">
             <div className="space-y-4">
               <div>
@@ -123,39 +124,17 @@ export const BuyDeckDialog = ({
             </div>
           </TabsContent>
 
+          {/* Preview tab */}
           <TabsContent value="preview" className="space-y-4">
-            <ScrollArea className="h-[300px] w-full rounded-md border p-4">
-              {isLoading ? (
-                <div className="flex items-center justify-center h-full">
-                  <Loader2 className="h-8 w-8 animate-spin text-[#2B4C7E]" />
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {flashcards.slice(0, 5).map((card, index) => (
-                    <div
-                      key={index}
-                      className="p-4 rounded-lg border bg-gray-50 space-y-2"
-                    >
-                      <div className="font-medium">Front: {card.front}</div>
-                      <div className="text-gray-600">Back: {card.back}</div>
-                      {card.tags && card.tags.length > 0 && (
-                        <div className="text-xs text-gray-500">
-                          Tags: {card.tags.join(", ")}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                  {flashcards.length > 5 && (
-                    <p className="text-sm text-gray-500 text-center pt-4">
-                      ... and {flashcards.length - 5} more cards
-                    </p>
-                  )}
-                </div>
-              )}
-            </ScrollArea>
+            <FlashcardPreview
+              flashcards={flashcards}
+              isLoading={isLoading}
+              limit={5}
+            />
           </TabsContent>
         </Tabs>
 
+        {/* Footer actions */}
         <div className="flex justify-end space-x-4 mt-4">
           <Button variant="outline" onClick={onClose}>
             Cancel

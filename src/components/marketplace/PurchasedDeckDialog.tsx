@@ -1,17 +1,16 @@
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
-import { useState, useEffect } from "react";
 import { getFlashcards } from "@/lib/api/decks";
 import type { DeckWithProfile, FlashCard } from "@/types/marketplace";
+import { useEffect, useState } from "react";
+import { FlashcardPreview } from "./FlashcardPreview";
 
 interface PurchasedDeckDialogProps {
   isOpen: boolean;
@@ -32,7 +31,7 @@ export function PurchasedDeckDialog({
 
   useEffect(() => {
     const loadFlashcards = async () => {
-      if (selectedTab === "flashcards") {
+      if (selectedTab === "flashcards" && deck.creatorid) {
         try {
           setIsLoading(true);
           const cards = await getFlashcards(deck.id, deck.creatorid);
@@ -91,30 +90,11 @@ export function PurchasedDeckDialog({
           </TabsContent>
 
           <TabsContent value="flashcards" className="space-y-4">
-            <ScrollArea className="h-[300px] w-full rounded-md border p-4">
-              {isLoading ? (
-                <div className="flex items-center justify-center h-full">
-                  <Loader2 className="h-8 w-8 animate-spin text-[#2B4C7E]" />
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {flashcards.map((card, index) => (
-                    <div
-                      key={index}
-                      className="p-4 rounded-lg border bg-gray-50 space-y-2"
-                    >
-                      <div className="font-medium">Front: {card.front}</div>
-                      <div className="text-gray-600">Back: {card.back}</div>
-                      {card.tags && card.tags.length > 0 && (
-                        <div className="text-xs text-gray-500">
-                          Tags: {card.tags.join(", ")}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
+            <FlashcardPreview
+              flashcards={flashcards}
+              isLoading={isLoading}
+              limit={5}
+            />
           </TabsContent>
         </Tabs>
 
