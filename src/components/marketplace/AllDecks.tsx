@@ -3,6 +3,7 @@ import DeckCard from "./DeckCard";
 import { Loader2 } from "lucide-react";
 import { getAllDecks } from "@/lib/api/decks";
 import type { DeckWithProfile } from "@/types/marketplace";
+import { useAuth } from "@/lib/auth";
 
 interface AllDecksProps {
   showTitle?: boolean;
@@ -11,12 +12,18 @@ interface AllDecksProps {
 const AllDecks = ({ showTitle = true }: AllDecksProps) => {
   const [allDecks, setAllDecks] = useState<DeckWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchDecks = async () => {
       try {
         const decks = await getAllDecks();
-        setAllDecks(decks);
+        // Ensure creatorid is properly set for each deck
+        const decksWithCreatorId = decks.map((deck) => ({
+          ...deck,
+          creatorid: deck.creatorid, // Make sure this is explicitly included
+        }));
+        setAllDecks(decksWithCreatorId);
       } catch (error) {
         console.error("Error fetching decks:", error);
       } finally {
@@ -41,15 +48,8 @@ const AllDecks = ({ showTitle = true }: AllDecksProps) => {
           {allDecks.map((deck) => (
             <DeckCard
               key={deck.id}
-              id={deck.id}
-              title={deck.title}
-              description={deck.description}
-              price={deck.price}
-              cardcount={deck.cardcount}
-              difficulty={deck.difficulty}
-              imageurl={deck.imageurl}
-              creatorName={deck.creatorName}
-              creatorAvatar={deck.creatorAvatar}
+              {...deck}
+              creatorid={deck.creatorid} // Explicitly pass creatorid
             />
           ))}
         </div>

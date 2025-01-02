@@ -8,6 +8,11 @@ type NewDeck = Omit<
   "id" | "created_at" | "updated_at"
 >;
 
+type PurchaseInfo = {
+  deckId: string;
+  purchaseDate: string;
+};
+
 export const uploadFlashcardsFile = async (file: File, userId: string) => {
   const fileExt = file.name.split(".").pop();
   const filePath = `${userId}/${Math.random()}.${fileExt}`;
@@ -119,6 +124,51 @@ export const getAllDecks = async (): Promise<DeckWithProfile[]> => {
     console.error("Error in getAllDecks:", error);
     throw error;
   }
+};
+
+export const purchaseDeck = async (
+  userId: string,
+  deckId: string,
+): Promise<void> => {
+  const purchaseDate = new Date().toISOString();
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("purchaseddeckids, purchaseinfo")
+    .eq("id", userId)
+    .single();
+
+  if (profileError) throw profileError;
+
+  const purchaseddeckids = [...(profile?.purchaseddeckids || []), deckId];
+  const purchaseinfo = [
+    ...(profile?.purchaseinfo || []),
+    { deckId, purchaseDate },
+  ];
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ purchaseddeckids, purchaseinfo })
+    .eq("id", userId);
+
+  if (error) throw error;
+};
+
+export const getPurchaseDate = async (
+  userId: string,
+  deckId: string,
+): Promise<string | null> => {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("purchaseinfo")
+    .eq("id", userId)
+    .single();
+
+  if (error) throw error;
+
+  const purchaseInfo = data?.purchaseinfo as PurchaseInfo[];
+  const purchase = purchaseInfo?.find((p) => p.deckId === deckId);
+  return purchase?.purchaseDate || null;
 };
 
 export const getUserDecks = async (userId: string): Promise<Deck[]> => {
