@@ -31,7 +31,7 @@ export const BuyDeckDialog = ({
     const loadFlashcards = async () => {
       try {
         setIsLoading(true);
-        const cards = await getFlashcards(deck.id);
+        const cards = await getFlashcards(deck.id, deck.creatorid);
         setFlashcards(cards);
       } catch (error) {
         console.error("Error loading flashcards:", error);
@@ -48,7 +48,7 @@ export const BuyDeckDialog = ({
     if (isOpen && selectedTab === "preview") {
       loadFlashcards();
     }
-  }, [isOpen, selectedTab, deck.id]);
+  }, [isOpen, selectedTab, deck.id, deck.creatorid]);
 
   const handlePurchase = async () => {
     if (!user) {

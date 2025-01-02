@@ -34,19 +34,12 @@ export function CreatorDeckDialog({
   const [flashcards, setFlashcards] = useState<FlashCard[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Sample statistics - replace with real data from your backend
-  const stats = {
-    totalSales: 150,
-    revenue: 1485,
-    uniqueBuyers: 142,
-  };
-
   useEffect(() => {
     const loadFlashcards = async () => {
-      if (selectedTab === "flashcards") {
+      if (selectedTab === "flashcards" && deck.creatorid) {
         try {
           setIsLoading(true);
-          const cards = await getFlashcards(deck.id);
+          const cards = await getFlashcards(deck.id, deck.creatorid);
           setFlashcards(cards);
         } catch (error) {
           console.error("Error loading flashcards:", error);
@@ -57,7 +50,14 @@ export function CreatorDeckDialog({
     };
 
     loadFlashcards();
-  }, [selectedTab, deck.id]);
+  }, [selectedTab, deck.id, deck.creatorid]);
+
+  // Sample statistics - replace with real data from your backend
+  const stats = {
+    totalSales: 150,
+    revenue: 1485,
+    uniqueBuyers: 142,
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
