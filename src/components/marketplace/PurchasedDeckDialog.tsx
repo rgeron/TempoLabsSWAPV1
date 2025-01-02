@@ -35,7 +35,7 @@ export function PurchasedDeckDialog({
       if (selectedTab === "flashcards") {
         try {
           setIsLoading(true);
-          const cards = await getFlashcards(deck.id);
+          const cards = await getFlashcards(deck.id, deck.creatorid);
           setFlashcards(cards);
         } catch (error) {
           console.error("Error loading flashcards:", error);
@@ -46,7 +46,7 @@ export function PurchasedDeckDialog({
     };
 
     loadFlashcards();
-  }, [selectedTab, deck.id]);
+  }, [selectedTab, deck.id, deck.creatorid]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
