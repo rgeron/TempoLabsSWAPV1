@@ -13,13 +13,19 @@ type PurchaseInfo = {
   purchaseDate: string;
 };
 
-export const uploadFlashcardsFile = async (file: File, userId: string) => {
-  const fileExt = file.name.split(".").pop();
-  const filePath = `${userId}/${Math.random()}.${fileExt}`;
+export const uploadFlashcardsFile = async (
+  file: File,
+  userId: string,
+  deckId: string,
+) => {
+  // Always save as .txt regardless of original extension
+  const filePath = `${userId}/${deckId}.txt`;
 
   const { data, error } = await supabase.storage
     .from("flashcards-files")
-    .upload(filePath, file);
+    .upload(filePath, file, {
+      upsert: true, // Replace if exists
+    });
 
   if (error) {
     console.error("Error uploading file:", error);
@@ -30,49 +36,98 @@ export const uploadFlashcardsFile = async (file: File, userId: string) => {
     data: { publicUrl },
   } = supabase.storage.from("flashcards-files").getPublicUrl(filePath);
 
-  return publicUrl;
+  return { publicUrl, filePath };
 };
 
-export const getFlashcards = async (deckId: string): Promise<FlashCard[]> => {
-  const { data, error } = await supabase
-    .from("flashcards")
-    .select("*")
-    .eq("deck_id", deckId);
+export const getFlashcards = async (
+  deckId: string,
+  creatorId: string,
+): Promise<FlashCard[]> => {
+  try {
+    if (!creatorId) {
+      throw new Error("Creator ID is required");
+    }
 
-  if (error) {
+    // Use consistent .txt extension
+    const filePath = `${creatorId}/${deckId}.txt`;
+
+    // Download the file content
+    const { data, error } = await supabase.storage
+      .from("flashcards-files")
+      .download(filePath);
+
+    if (error) {
+      console.error("Error downloading file:", error);
+      throw error;
+    }
+
+    if (!data) {
+      throw new Error("No file data received");
+    }
+
+    // Parse the text file content
+    const text = await data.text();
+    const lines = text.split("\n").filter((line) => line.trim());
+
+    // Parse the flashcards
+    const flashcards: FlashCard[] = [];
+    for (let i = 0; i < lines.length; i += 2) {
+      if (lines[i] && lines[i + 1]) {
+        flashcards.push({
+          front: lines[i].trim(),
+          back: lines[i + 1].trim(),
+        });
+      }
+    }
+
+    return flashcards;
+  } catch (error) {
     console.error("Error fetching flashcards:", error);
     throw error;
   }
-
-  return data as FlashCard[];
 };
 
 export const createDeck = async (deck: NewDeck, file: File): Promise<Deck> => {
   try {
-    // First upload the file
-    const flashcardsFileUrl = await uploadFlashcardsFile(file, deck.creatorid);
-
-    // Then create the deck with the file URL
-    const { data, error } = await supabase
+    // First create the deck to get its ID
+    const { data: newDeck, error: deckError } = await supabase
       .from("decks")
       .insert({
         ...deck,
-        flashcards_file_url: flashcardsFileUrl,
+        flashcards_file_url: null, // Will update this after file upload
       })
       .select()
       .single();
 
-    if (error) {
-      console.error("Error creating deck:", error);
-      throw error;
-    }
+    if (deckError) throw deckError;
 
-    return data;
+    // Then upload the file using both creator ID and deck ID
+    const { publicUrl, filePath } = await uploadFlashcardsFile(
+      file,
+      deck.creatorid,
+      newDeck.id,
+    );
+
+    // Update the deck with both the file URL and path
+    const { data: updatedDeck, error: updateError } = await supabase
+      .from("decks")
+      .update({
+        flashcards_file_url: publicUrl,
+      })
+      .eq("id", newDeck.id)
+      .select()
+      .single();
+
+    if (updateError) throw updateError;
+
+    return updatedDeck;
   } catch (error) {
     console.error("Error in createDeck:", error);
     throw error;
   }
 };
+
+// Rest of the file remains the same...
 
 // Get user profile by ID
 const getUserProfile = async (userId: string) => {
@@ -192,10 +247,10 @@ export const getUserDecks = async (userId: string): Promise<Deck[]> => {
 };
 
 export const deleteDeck = async (deckId: string): Promise<void> => {
-  // First get the deck to get the file URL
+  // First get the deck to get the file URL and creator ID
   const { data: deck, error: getDeckError } = await supabase
     .from("decks")
-    .select("flashcards_file_url")
+    .select("flashcards_file_url, creatorid")
     .eq("id", deckId)
     .single();
 
@@ -205,8 +260,8 @@ export const deleteDeck = async (deckId: string): Promise<void> => {
   }
 
   // If there's a file, delete it from storage
-  if (deck?.flashcards_file_url) {
-    const filePath = deck.flashcards_file_url.split("/").pop();
+  if (deck?.creatorid) {
+    const filePath = `${deck.creatorid}/${deckId}.txt`;
     const { error: deleteFileError } = await supabase.storage
       .from("flashcards-files")
       .remove([filePath]);
