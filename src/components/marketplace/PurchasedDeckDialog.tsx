@@ -11,6 +11,7 @@ import { getFlashcards } from "@/lib/api/decks";
 import type { DeckWithProfile, FlashCard } from "@/types/marketplace";
 import { useEffect, useState } from "react";
 import { FlashcardPreview } from "./FlashcardPreview";
+import { OverviewTab } from "./OverviewTab";
 
 interface PurchasedDeckDialogProps {
   isOpen: boolean;
@@ -69,24 +70,7 @@ export function PurchasedDeckDialog({
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
-            <div className="space-y-4">
-              <div>
-                <h4 className="font-semibold mb-2">Description</h4>
-                <p className="text-sm text-gray-600">{deck.description}</p>
-              </div>
-
-              <div>
-                <h4 className="font-semibold mb-2">Details</h4>
-                <ul className="text-sm text-gray-600 space-y-2">
-                  <li>Difficulty: {deck.difficulty}</li>
-                  <li>Total Cards: {deck.cardcount}</li>
-                  <li>
-                    Purchase Date:{" "}
-                    {new Date(purchaseDate || "").toLocaleDateString()}
-                  </li>
-                </ul>
-              </div>
-            </div>
+            <OverviewTab deck={deck} purchaseDate={purchaseDate} />
           </TabsContent>
 
           <TabsContent value="flashcards" className="space-y-4">

@@ -66,15 +66,6 @@ const PurchasedDecks = () => {
               creatorName={deck.profiles.username}
               creatorAvatar={deck.profiles.avatar_url || undefined}
             />
-            <div className="px-4 py-2 bg-white rounded-lg shadow-sm">
-              <p className="text-sm text-gray-600">
-                Purchased on:{" "}
-                {new Date(deck.created_at).toLocaleDateString("en-GB")}
-              </p>
-              <p className="text-sm font-semibold text-[#2B4C7E]">
-                Price paid: ${deck.price.toFixed(2)}
-              </p>
-            </div>
           </div>
         ))}
       </div>

@@ -24,6 +24,8 @@ import type { DeckWithProfile, FlashCard } from "@/types/marketplace";
 import { DollarSign, Trash2, TrendingUp, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 
+// 1) Import the new OverviewTab
+import { OverviewTab } from "./OverviewTab";
 import { FlashcardPreview } from "./FlashcardPreview";
 
 interface CreatorDeckDialogProps {
@@ -73,7 +75,7 @@ export function CreatorDeckDialog({
   const handleDelete = async () => {
     try {
       await onDelete();
-      onClose(); // Close the dialog after successful deletion
+      onClose(); // Close after successful deletion
     } catch (error) {
       console.error("Error deleting deck:", error);
     }
@@ -101,25 +103,9 @@ export function CreatorDeckDialog({
             <TabsTrigger value="stats">Statistics</TabsTrigger>
           </TabsList>
 
+          {/* 2) Use the new OverviewTab for the overview content */}
           <TabsContent value="overview" className="space-y-4">
-            <div className="space-y-4">
-              <div>
-                <h4 className="font-semibold mb-2">Description</h4>
-                <p className="text-sm text-gray-600">{deck.description}</p>
-              </div>
-
-              <div>
-                <h4 className="font-semibold mb-2">Details</h4>
-                <ul className="text-sm text-gray-600 space-y-2">
-                  <li>Difficulty: {deck.difficulty}</li>
-                  <li>Total Cards: {deck.cardcount}</li>
-                  <li>Price: ${deck.price.toFixed(2)}</li>
-                  <li>
-                    Created: {new Date(deck.created_at).toLocaleDateString()}
-                  </li>
-                </ul>
-              </div>
-            </div>
+            <OverviewTab deck={deck} />
           </TabsContent>
 
           <TabsContent value="flashcards" className="space-y-4">

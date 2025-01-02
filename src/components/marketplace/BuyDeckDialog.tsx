@@ -14,6 +14,7 @@ import type { BuyDeckDialogProps, FlashCard } from "@/types/marketplace";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FlashcardPreview } from "./FlashcardPreview";
+import { OverviewTab } from "./OverviewTab";
 
 export const BuyDeckDialog = ({
   isOpen,
@@ -107,21 +108,7 @@ export const BuyDeckDialog = ({
 
           {/* Overview tab */}
           <TabsContent value="overview" className="space-y-4">
-            <div className="space-y-4">
-              <div>
-                <h4 className="font-semibold mb-2">Description</h4>
-                <p className="text-sm text-gray-600">{deck.description}</p>
-              </div>
-
-              <div>
-                <h4 className="font-semibold mb-2">Details</h4>
-                <ul className="text-sm text-gray-600 space-y-2">
-                  <li>Difficulty: {deck.difficulty}</li>
-                  <li>Total Cards: {deck.cardcount}</li>
-                  <li>Price: ${deck.price.toFixed(2)}</li>
-                </ul>
-              </div>
-            </div>
+            <OverviewTab deck={deck} />
           </TabsContent>
 
           {/* Preview tab */}
