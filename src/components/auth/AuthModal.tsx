@@ -26,6 +26,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsLoading(true);
+    let success = false;
 
     const formData = new FormData(event.currentTarget);
     const email = formData.get("email") as string;
@@ -40,23 +41,25 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           title: "Account created",
           description: "Please check your email to verify your account.",
         });
-        onClose(); // Close modal after sign-up
+        success = true;
       } else {
         await signIn(email, password);
         toast({
           title: "Welcome back!",
           description: "You have successfully signed in.",
         });
-        onClose(); // Close modal after sign-in
+        success = true;
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Auth error:", error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "An error occurred during authentication",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
+      if (success) onClose();
     }
   };
 

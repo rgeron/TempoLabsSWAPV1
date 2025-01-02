@@ -34,7 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
+      if (session?.user?.id) {
         setUser(session.user);
         fetchProfile(session.user.id);
       }
@@ -44,7 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user) {
+      if (session?.user?.id) {
         setUser(session.user);
         fetchProfile(session.user.id);
       } else {
@@ -57,11 +57,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { data } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
-    if (data?.user) {
+    if (error) throw error;
+    if (data?.user?.id) {
       await fetchProfile(data.user.id);
       navigate("/app/home");
     }
