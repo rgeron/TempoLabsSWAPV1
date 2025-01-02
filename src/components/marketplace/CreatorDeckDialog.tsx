@@ -9,11 +9,21 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Loader2, Users, DollarSign, TrendingUp } from "lucide-react";
+import { Loader2, Users, DollarSign, TrendingUp, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { getFlashcards } from "@/lib/api/decks";
 import type { DeckWithProfile, FlashCard } from "@/types/marketplace";
-import DeleteDeckButton from "./DeleteDeckButton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface CreatorDeckDialogProps {
   isOpen: boolean;
@@ -57,6 +67,15 @@ export function CreatorDeckDialog({
     totalSales: 150,
     revenue: 1485,
     uniqueBuyers: 142,
+  };
+
+  const handleDelete = async () => {
+    try {
+      await onDelete();
+      onClose(); // Close the dialog after successful deletion
+    } catch (error) {
+      console.error("Error deleting deck:", error);
+    }
   };
 
   return (
@@ -172,8 +191,34 @@ export function CreatorDeckDialog({
           </TabsContent>
         </Tabs>
 
-        <div className="flex justify-between">
-          <DeleteDeckButton onDelete={onDelete} isDeleting={isDeleting} />
+        <div className="flex justify-between space-x-4">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" disabled={isDeleting}>
+                <Trash2 className="h-4 w-4 mr-2" />
+                {isDeleting ? "Deleting..." : "Delete Deck"}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete
+                  your deck and remove it from the marketplace.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDelete}
+                  className="bg-red-500 hover:bg-red-600"
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? "Deleting..." : "Delete"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
           <Button variant="outline" onClick={onClose}>
             Close
           </Button>
