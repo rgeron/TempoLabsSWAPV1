@@ -57,6 +57,7 @@ const ListedDecks = () => {
     try {
       if (!user) throw new Error("User not authenticated");
 
+      const selectedCategories = Array.from(formData.getAll("categories"));
       const file = formData.get("flashcardsFile") as File;
       if (!file) throw new Error("No file selected");
 
@@ -64,6 +65,7 @@ const ListedDecks = () => {
         title: formData.get("title") as string,
         description: formData.get("description") as string,
         price: parseFloat(formData.get("price") as string),
+        categories: selectedCategories,
         difficulty: formData.get("difficulty") as
           | "Beginner"
           | "Intermediate"

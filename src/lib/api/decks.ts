@@ -16,7 +16,7 @@ type PurchaseInfo = {
 export const uploadFlashcardsFile = async (
   file: File,
   userId: string,
-  deckId: string
+  deckId: string,
 ) => {
   // Always save as .txt regardless of original extension
   const filePath = `${userId}/${deckId}.txt`;
@@ -41,7 +41,7 @@ export const uploadFlashcardsFile = async (
 
 export const getFlashcards = async (
   deckId: string,
-  creatorId: string
+  creatorId: string,
 ): Promise<FlashCard[]> => {
   try {
     if (!creatorId) {
@@ -50,6 +50,7 @@ export const getFlashcards = async (
 
     // Use consistent .txt extension
     const filePath = `${creatorId}/${deckId}.txt`;
+    console.log("Attempting to download file from path:", filePath);
 
     // Download the file content
     const { data, error } = await supabase.storage
@@ -106,6 +107,7 @@ export const getFlashcards = async (
       }
     }
 
+    console.log(`Successfully parsed ${flashcards.length} flashcards`);
     return flashcards;
   } catch (error) {
     console.error("Error fetching flashcards:", error);
@@ -115,11 +117,15 @@ export const getFlashcards = async (
 
 export const createDeck = async (deck: NewDeck, file: File): Promise<Deck> => {
   try {
+    // Ensure categories is an array
+    const categories = Array.isArray(deck.categories) ? deck.categories : [];
+
     // First create the deck to get its ID
     const { data: newDeck, error: deckError } = await supabase
       .from("decks")
       .insert({
         ...deck,
+        categories: categories,
         flashcards_file_url: null, // Will update this after file upload
       })
       .select()
@@ -131,7 +137,7 @@ export const createDeck = async (deck: NewDeck, file: File): Promise<Deck> => {
     const { publicUrl, filePath } = await uploadFlashcardsFile(
       file,
       deck.creatorid,
-      newDeck.id
+      newDeck.id,
     );
 
     // Update the deck with both the file URL and path
@@ -152,8 +158,6 @@ export const createDeck = async (deck: NewDeck, file: File): Promise<Deck> => {
     throw error;
   }
 };
-
-// Rest of the file remains the same...
 
 // Get user profile by ID
 const getUserProfile = async (userId: string) => {
@@ -197,7 +201,7 @@ export const getAllDecks = async (): Promise<DeckWithProfile[]> => {
               }
             : null,
         };
-      })
+      }),
     );
 
     return decksWithProfiles;
@@ -209,7 +213,7 @@ export const getAllDecks = async (): Promise<DeckWithProfile[]> => {
 
 export const purchaseDeck = async (
   userId: string,
-  deckId: string
+  deckId: string,
 ): Promise<void> => {
   const purchaseDate = new Date().toISOString();
 
@@ -237,7 +241,7 @@ export const purchaseDeck = async (
 
 export const getPurchaseDate = async (
   userId: string,
-  deckId: string
+  deckId: string,
 ): Promise<string | null> => {
   const { data, error } = await supabase
     .from("profiles")
@@ -309,7 +313,7 @@ export const deleteDeck = async (deckId: string): Promise<void> => {
 
 export const likeDeck = async (
   userId: string,
-  deckId: string
+  deckId: string,
 ): Promise<void> => {
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
@@ -337,7 +341,7 @@ export const likeDeck = async (
 
 export const unlikeDeck = async (
   userId: string,
-  deckId: string
+  deckId: string,
 ): Promise<void> => {
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
@@ -351,7 +355,7 @@ export const unlikeDeck = async (
   }
 
   const likeddeckids = (profile?.likeddeckids || []).filter(
-    (id) => id !== deckId
+    (id) => id !== deckId,
   );
 
   const { error } = await supabase
