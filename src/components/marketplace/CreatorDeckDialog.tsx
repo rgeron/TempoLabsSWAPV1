@@ -1,4 +1,18 @@
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Loader2, Users, DollarSign, TrendingUp, Trash2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { getFlashcards } from "@/lib/api/decks";
+import type { DeckWithProfile, FlashCard } from "@/types/marketplace";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -9,24 +23,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getFlashcards } from "@/lib/api/decks";
-import type { DeckWithProfile, FlashCard } from "@/types/marketplace";
-import { DollarSign, Trash2, TrendingUp, Users } from "lucide-react";
-import { useEffect, useState } from "react";
-
-// 1) Import the new OverviewTab
-import { OverviewTab } from "./OverviewTab";
 import { FlashcardPreview } from "./FlashcardPreview";
+import { OverviewTab } from "./OverviewTab";
 
 interface CreatorDeckDialogProps {
   isOpen: boolean;
@@ -75,7 +73,7 @@ export function CreatorDeckDialog({
   const handleDelete = async () => {
     try {
       await onDelete();
-      onClose(); // Close after successful deletion
+      onClose(); // Close the dialog after successful deletion
     } catch (error) {
       console.error("Error deleting deck:", error);
     }
@@ -83,79 +81,96 @@ export function CreatorDeckDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="max-w-4xl min-h-[500px] max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>{deck.title}</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-2xl">{deck.title}</DialogTitle>
+          <DialogDescription className="text-base">
             Created by you • {deck.cardcount} cards
           </DialogDescription>
         </DialogHeader>
 
         <Tabs
           defaultValue="overview"
-          className="w-full"
+          className="flex-1 flex flex-col overflow-hidden"
           value={selectedTab}
           onValueChange={setSelectedTab}
         >
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="w-full grid grid-cols-3">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="flashcards">Flashcards</TabsTrigger>
             <TabsTrigger value="stats">Statistics</TabsTrigger>
           </TabsList>
 
-          {/* 2) Use the new OverviewTab for the overview content */}
-          <TabsContent value="overview" className="space-y-4">
-            <OverviewTab deck={deck} />
-          </TabsContent>
+          <div className="flex-1 overflow-y-auto py-4">
+            <TabsContent
+              value="overview"
+              className="mt-0 h-full"
+              forceMount={selectedTab === "overview"}
+            >
+              <OverviewTab deck={deck} />
+            </TabsContent>
 
-          <TabsContent value="flashcards" className="space-y-4">
-            <FlashcardPreview flashcards={flashcards} isLoading={isLoading} />
-          </TabsContent>
+            <TabsContent
+              value="flashcards"
+              className="mt-0 h-full"
+              forceMount={selectedTab === "flashcards"}
+            >
+              <FlashcardPreview flashcards={flashcards} isLoading={isLoading} />
+            </TabsContent>
 
-          <TabsContent value="stats" className="space-y-4">
-            <div className="grid grid-cols-3 gap-4">
-              <Card className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">
-                      Total Sales
-                    </p>
-                    <h3 className="text-2xl font-bold text-[#2B4C7E]">
-                      {stats.totalSales}
-                    </h3>
+            <TabsContent
+              value="stats"
+              className="mt-0 h-full"
+              forceMount={selectedTab === "stats"}
+            >
+              <div className="grid grid-cols-3 gap-4">
+                <Card className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">
+                        Total Sales
+                      </p>
+                      <h3 className="text-2xl font-bold text-[#2B4C7E]">
+                        {stats.totalSales}
+                      </h3>
+                    </div>
+                    <TrendingUp className="h-8 w-8 text-[#2B4C7E]" />
                   </div>
-                  <TrendingUp className="h-8 w-8 text-[#2B4C7E]" />
-                </div>
-              </Card>
+                </Card>
 
-              <Card className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Revenue</p>
-                    <h3 className="text-2xl font-bold text-[#2B4C7E]">
-                      ${stats.revenue}
-                    </h3>
+                <Card className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">
+                        Revenue
+                      </p>
+                      <h3 className="text-2xl font-bold text-[#2B4C7E]">
+                        ${stats.revenue}
+                      </h3>
+                    </div>
+                    <DollarSign className="h-8 w-8 text-[#2B4C7E]" />
                   </div>
-                  <DollarSign className="h-8 w-8 text-[#2B4C7E]" />
-                </div>
-              </Card>
+                </Card>
 
-              <Card className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Buyers</p>
-                    <h3 className="text-2xl font-bold text-[#2B4C7E]">
-                      {stats.uniqueBuyers}
-                    </h3>
+                <Card className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">
+                        Buyers
+                      </p>
+                      <h3 className="text-2xl font-bold text-[#2B4C7E]">
+                        {stats.uniqueBuyers}
+                      </h3>
+                    </div>
+                    <Users className="h-8 w-8 text-[#2B4C7E]" />
                   </div>
-                  <Users className="h-8 w-8 text-[#2B4C7E]" />
-                </div>
-              </Card>
-            </div>
-          </TabsContent>
+                </Card>
+              </div>
+            </TabsContent>
+          </div>
         </Tabs>
 
-        <div className="flex justify-between space-x-4">
+        <div className="flex justify-between space-x-4 pt-4 border-t">
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="destructive" disabled={isDeleting}>

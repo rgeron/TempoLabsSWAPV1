@@ -1,12 +1,15 @@
 import React, { useState } from "react";
-import { Loader2, ArrowLeft, ArrowRight } from "lucide-react";
+import { Loader2, ArrowLeft, ArrowRight, Repeat } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { FlashCard } from "@/types/marketplace";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Card } from "@/components/ui/card";
 
 interface FlashcardPreviewProps {
   flashcards: FlashCard[];
   isLoading: boolean;
-  limit?: number; // how many to show if you want a partial preview
+  limit?: number;
 }
 
 export function FlashcardPreview({
@@ -14,18 +17,14 @@ export function FlashcardPreview({
   isLoading,
   limit = 5,
 }: FlashcardPreviewProps) {
-  // Show only the first `limit` flashcards (if provided).
   const cardsToShow = limit ? flashcards.slice(0, limit) : flashcards;
-
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
 
-  // Flip the current card around the X-axis.
-  const handleFlip = () => {
-    setIsFlipped((prev) => !prev);
-  };
+  const progress = ((currentIndex + 1) / cardsToShow.length) * 100;
 
-  // Move to the previous card, resetting the flip state.
+  const handleFlip = () => setIsFlipped((prev) => !prev);
+
   const handlePrev = () => {
     if (currentIndex > 0) {
       setCurrentIndex((prev) => prev - 1);
@@ -33,7 +32,6 @@ export function FlashcardPreview({
     }
   };
 
-  // Move to the next card, resetting the flip state.
   const handleNext = () => {
     if (currentIndex < cardsToShow.length - 1) {
       setCurrentIndex((prev) => prev + 1);
@@ -43,24 +41,43 @@ export function FlashcardPreview({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-32">
+      <div className="flex items-center justify-center h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin text-[#2B4C7E]" />
       </div>
     );
   }
 
   if (cardsToShow.length === 0) {
-    return <p className="text-sm text-gray-500">No cards to preview.</p>;
+    return (
+      <div className="flex flex-col items-center justify-center h-[400px] text-center">
+        <p className="text-lg text-gray-500 mb-2">No cards to preview</p>
+        <p className="text-sm text-gray-400">
+          This deck doesn't have any flashcards yet
+        </p>
+      </div>
+    );
   }
 
   const currentCard = cardsToShow[currentIndex];
 
   return (
-    <div className="flex flex-col items-center space-y-4">
-      {/* Card display container */}
-      <div className="relative w-[250px] h-[150px] perspective-1000">
-        {/* AnimatePresence to animate the card in/out when changing index */}
-        <AnimatePresence mode="popLayout">
+    <div className="flex flex-col items-center space-y-6 p-4">
+      {/* Progress bar */}
+      <div className="w-full space-y-2">
+        <Progress value={progress} className="h-2" />
+        <div className="flex justify-between text-sm text-gray-500">
+          <span>
+            Card {currentIndex + 1} of {cardsToShow.length}
+          </span>
+          {flashcards.length > limit && (
+            <span>{flashcards.length - limit} more cards not shown</span>
+          )}
+        </div>
+      </div>
+
+      {/* Card display */}
+      <div className="relative w-full max-w-[500px] h-[300px] perspective-1000">
+        <AnimatePresence mode="wait">
           <motion.div
             key={currentIndex}
             className="absolute w-full h-full"
@@ -69,75 +86,79 @@ export function FlashcardPreview({
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.3 }}
           >
-            {/* Card flip motion */}
             <motion.div
-              className="w-full h-full relative"
+              className="w-full h-full relative cursor-pointer"
               style={{ transformStyle: "preserve-3d" }}
-              animate={{ rotateX: isFlipped ? 180 : 0 }}
-              transition={{ duration: 0.5 }}
+              animate={{ rotateY: isFlipped ? 180 : 0 }}
+              transition={{ duration: 0.6, type: "spring", stiffness: 50 }}
               onClick={handleFlip}
             >
-              {/* FRONT side */}
-              <div
-                className="absolute w-full h-full flex items-center justify-center bg-white rounded-md shadow-md p-4"
+              {/* Front */}
+              <Card className="absolute w-full h-full flex flex-col items-center justify-center p-8 backface-hidden bg-white">
+                <div className="text-center max-h-full w-full overflow-y-auto">
+                  <h4 className="text-sm font-medium text-gray-500 mb-4">
+                    Question
+                  </h4>
+                  <p className="text-xl">{currentCard.front}</p>
+                  {currentCard.tags && currentCard.tags.length > 0 && (
+                    <div className="mt-4 flex flex-wrap gap-2 justify-center">
+                      {currentCard.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="px-2 py-1 bg-gray-100 rounded-full text-xs text-gray-600"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </Card>
+
+              {/* Back */}
+              <Card
+                className="absolute w-full h-full flex flex-col items-center justify-center p-8 backface-hidden bg-white [transform:rotateY(180deg)]"
                 style={{ backfaceVisibility: "hidden" }}
               >
                 <div className="text-center max-h-full w-full overflow-y-auto">
-                  <h4 className="font-semibold">Front</h4>
-                  <p className="mt-1">{currentCard.front}</p>
-                  {currentCard.tags && currentCard.tags.length > 0 && (
-                    <p className="text-xs text-gray-500 mt-2">
-                      Tags: {currentCard.tags.join(", ")}
-                    </p>
-                  )}
+                  <h4 className="text-sm font-medium text-gray-500 mb-4">
+                    Answer
+                  </h4>
+                  <p className="text-xl">{currentCard.back}</p>
                 </div>
-              </div>
-
-              {/* BACK side */}
-              <div
-                className="absolute w-full h-full flex items-center justify-center bg-white rounded-md shadow-md p-4"
-                style={{
-                  backfaceVisibility: "hidden",
-                  transform: "rotateX(180deg)",
-                }}
-              >
-                <div className="text-center max-h-full w-full overflow-y-auto">
-                  <h4 className="font-semibold">Back</h4>
-                  <p className="mt-1">{currentCard.back}</p>
-                </div>
-              </div>
+              </Card>
             </motion.div>
           </motion.div>
         </AnimatePresence>
       </div>
 
-      {/* Arrow Buttons */}
-      <div className="flex space-x-4">
-        <button
+      {/* Controls */}
+      <div className="flex items-center space-x-4">
+        <Button
+          variant="outline"
+          size="icon"
           onClick={handlePrev}
           disabled={currentIndex === 0}
-          className="px-3 py-2 rounded-md bg-gray-200 disabled:opacity-50"
         >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <button
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={handleFlip}
+          className="rounded-full"
+        >
+          <Repeat className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
           onClick={handleNext}
           disabled={currentIndex === cardsToShow.length - 1}
-          className="px-3 py-2 rounded-md bg-gray-200 disabled:opacity-50"
         >
-          <ArrowRight className="h-5 w-5" />
-        </button>
+          <ArrowRight className="h-4 w-4" />
+        </Button>
       </div>
-
-      {/* Card indicator + leftover info */}
-      <p className="text-xs text-gray-500">
-        Card {currentIndex + 1} of {cardsToShow.length}
-      </p>
-      {flashcards.length > limit && (
-        <p className="text-xs text-gray-400">
-          ... and {flashcards.length - limit} more cards not shown
-        </p>
-      )}
     </div>
   );
 }
