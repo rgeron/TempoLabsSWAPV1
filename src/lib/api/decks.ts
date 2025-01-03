@@ -50,6 +50,7 @@ export const getFlashcards = async (
 
     // Use consistent .txt extension
     const filePath = `${creatorId}/${deckId}.txt`;
+    console.log("Attempting to download file from path:", filePath);
 
     // Download the file content
     const { data, error } = await supabase.storage
@@ -87,31 +88,26 @@ export const getFlashcards = async (
 
     // Parse the flashcards
     const flashcards: FlashCard[] = [];
-    let currentCard: Partial<FlashCard> = {};
-
     for (const line of contentLines) {
-      if (line.startsWith("FRONT:")) {
-        if (currentCard.front && currentCard.back) {
-          flashcards.push(currentCard as FlashCard);
-          currentCard = {};
+      const columns = line.split(separator);
+      if (columns.length >= 2) {
+        const flashcard: FlashCard = {
+          front: columns[0].trim(),
+          back: columns[1].trim(),
+        };
+
+        // Add tags if the tags column is specified
+        if (tagsColumn > 0 && tagsColumn <= columns.length) {
+          flashcard.tags = columns[tagsColumn - 1]
+            .split(",")
+            .map((tag) => tag.trim());
         }
-        currentCard.front = line.substring(6).trim();
-      } else if (line.startsWith("BACK:")) {
-        currentCard.back = line.substring(5).trim();
-      } else if (line.startsWith("TAGS:")) {
-        currentCard.tags = line
-          .substring(5)
-          .split(",")
-          .map((tag) => tag.trim())
-          .filter(Boolean);
+
+        flashcards.push(flashcard);
       }
     }
 
-    // Add the last card if complete
-    if (currentCard.front && currentCard.back) {
-      flashcards.push(currentCard as FlashCard);
-    }
-
+    console.log(`Successfully parsed ${flashcards.length} flashcards`);
     return flashcards;
   } catch (error) {
     console.error("Error fetching flashcards:", error);
