@@ -57,6 +57,9 @@ const AddDeckDialog = ({
       <DialogContent className="sm:max-w-[900px] h-[80vh] flex flex-col">
         <DialogHeader className="px-6 pt-2">
           <DialogTitle>Add New Deck to Store</DialogTitle>
+          <DialogDescription>
+            Create a new flashcard deck to share with the community.
+          </DialogDescription>
         </DialogHeader>
 
         <form
@@ -130,6 +133,8 @@ const AddDeckDialog = ({
                             >
                               <Checkbox
                                 id={`category-${category}`}
+                                name="categories"
+                                value={category}
                                 checked={selectedCategories.includes(category)}
                                 onCheckedChange={(checked) =>
                                   handleCategoryChange(
@@ -166,7 +171,13 @@ const AddDeckDialog = ({
                   <Upload className="h-5 w-5 text-gray-500" />
                 </div>
                 <p className="text-sm text-gray-500">
-                  Upload a .txt file with your flashcards
+                  Upload a .txt file with your flashcards in the format:
+                  <br />
+                  FRONT: Question
+                  <br />
+                  BACK: Answer
+                  <br />
+                  TAGS: tag1, tag2, tag3
                 </p>
               </div>
             </div>
