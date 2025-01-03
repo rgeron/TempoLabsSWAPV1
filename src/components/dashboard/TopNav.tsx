@@ -24,6 +24,7 @@ const TopNav = () => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/app/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery(""); // Clear the search after navigation
     }
   };
 

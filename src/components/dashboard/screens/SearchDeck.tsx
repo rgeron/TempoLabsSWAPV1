@@ -16,28 +16,39 @@ const SearchDeck = () => {
       try {
         setIsLoading(true);
 
-        // First get all decks with their creator profiles
+        // Search decks with creator profiles
         const { data: decksData, error } = await supabase
           .from("decks")
           .select(
             `
             *,
-            profiles:creatorid (username, avatar_url)
+            profiles!decks_creatorid_fkey (username, avatar_url)
           `,
           )
-          .or(
-            `title.ilike.%${query}%,description.ilike.%${query}%,categories.cs.{${query}}`,
-          )
+          .or(`title.ilike.%${query}%,` + `description.ilike.%${query}%`)
           .order("created_at", { ascending: false });
 
         if (error) throw error;
 
-        // Transform the data to match DeckWithProfile type
-        const decksWithProfiles = decksData.map((deck: any) => ({
-          ...deck,
-          creatorName: deck.profiles?.username || "Unknown Creator",
-          creatorAvatar: deck.profiles?.avatar_url,
-        }));
+        // Filter for categories match and transform data
+        const decksWithProfiles = decksData
+          .filter(
+            (deck) =>
+              deck.categories?.some(
+                (category) => category.toLowerCase() === query.toLowerCase(),
+              ) ||
+              deck.title.toLowerCase().includes(query.toLowerCase()) ||
+              deck.description.toLowerCase().includes(query.toLowerCase()),
+          )
+          .map((deck) => ({
+            ...deck,
+            creatorName: deck.profiles?.username || "Unknown Creator",
+            creatorAvatar: deck.profiles?.avatar_url,
+            profiles: {
+              username: deck.profiles?.username || "Unknown Creator",
+              avatar_url: deck.profiles?.avatar_url,
+            },
+          }));
 
         setDecks(decksWithProfiles);
       } catch (error) {
