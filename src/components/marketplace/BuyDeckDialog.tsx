@@ -87,42 +87,49 @@ export const BuyDeckDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="max-w-4xl min-h-[500px] max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>{deck.title}</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-2xl">{deck.title}</DialogTitle>
+          <DialogDescription className="text-base">
             Created by {deck.creatorName} • {deck.cardcount} cards
           </DialogDescription>
         </DialogHeader>
 
         <Tabs
           defaultValue="overview"
-          className="w-full"
+          className="flex-1 flex flex-col overflow-hidden"
           value={selectedTab}
           onValueChange={setSelectedTab}
         >
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="w-full grid grid-cols-2">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="preview">Preview Cards</TabsTrigger>
           </TabsList>
 
-          {/* Overview tab */}
-          <TabsContent value="overview" className="space-y-4">
-            <OverviewTab deck={deck} />
-          </TabsContent>
+          <div className="flex-1 overflow-y-auto py-4">
+            <TabsContent
+              value="overview"
+              className="mt-0 h-full"
+              forceMount={selectedTab === "overview"}
+            >
+              <OverviewTab deck={deck} />
+            </TabsContent>
 
-          {/* Preview tab */}
-          <TabsContent value="preview" className="space-y-4">
-            <FlashcardPreview
-              flashcards={flashcards}
-              isLoading={isLoading}
-              limit={5}
-            />
-          </TabsContent>
+            <TabsContent
+              value="preview"
+              className="mt-0 h-full"
+              forceMount={selectedTab === "preview"}
+            >
+              <FlashcardPreview
+                flashcards={flashcards}
+                isLoading={isLoading}
+                limit={5}
+              />
+            </TabsContent>
+          </div>
         </Tabs>
 
-        {/* Footer actions */}
-        <div className="flex justify-end space-x-4 mt-4">
+        <div className="flex justify-end space-x-4 pt-4 border-t">
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>

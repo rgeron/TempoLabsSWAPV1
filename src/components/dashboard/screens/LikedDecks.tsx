@@ -4,19 +4,12 @@ import { useAuth } from "@/lib/auth";
 import { getAllDecks, unlikeDeck } from "@/lib/api/decks";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import type { Database } from "@/types/supabase";
-
-type Deck = Database["public"]["Tables"]["decks"]["Row"] & {
-  profiles: {
-    username: string;
-    avatar_url: string | null;
-  };
-};
+import type { DeckWithProfile } from "@/types/marketplace";
 
 const LikedDecks = () => {
   const { user, profile } = useAuth();
   const { toast } = useToast();
-  const [likedDecks, setLikedDecks] = useState<Deck[]>([]);
+  const [likedDecks, setLikedDecks] = useState<DeckWithProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchLikedDecks = async () => {
@@ -28,9 +21,8 @@ const LikedDecks = () => {
     try {
       const allDecks = await getAllDecks();
       const liked = allDecks.filter((deck) =>
-        profile.likeddeckids.includes(deck.id)
-      ) as Deck[];
-      
+        profile.likeddeckids.includes(deck.id),
+      );
       setLikedDecks(liked);
     } catch (error) {
       console.error("Error fetching liked decks:", error);
@@ -76,15 +68,10 @@ const LikedDecks = () => {
         {likedDecks.map((deck) => (
           <DeckCard
             key={deck.id}
-            id={deck.id}
-            title={deck.title}
-            description={deck.description}
-            price={deck.price}
-            cardcount={deck.cardcount}
-            difficulty={deck.difficulty}
-            imageurl={deck.imageurl}
+            {...deck}
             creatorName={deck.profiles.username}
-            creatorAvatar={deck.profiles.avatar_url || undefined}
+            creatorAvatar={deck.profiles.avatar_url}
+            profiles={deck.profiles}
           />
         ))}
       </div>

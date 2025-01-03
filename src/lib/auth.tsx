@@ -1,6 +1,12 @@
 import type { Database } from "@/types/supabase";
 import type { User } from "@supabase/supabase-js";
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "./supabase";
 
@@ -13,6 +19,8 @@ type AuthContextType = {
   signUp: (email: string, password: string, username: string) => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<void>;
+  updateLikedDecks: (deckId: string, isLiking: boolean) => Promise<void>;
+  updateLocalProfile: (newProfile: Profile) => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -22,7 +30,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const navigate = useNavigate();
 
-  const fetchProfile = async (userId: string) => {
+  const updateLocalProfile = useCallback((newProfile: Profile) => {
+    setProfile(newProfile);
+  }, []);
+
+  const fetchProfile = useCallback(async (userId: string) => {
+    if (!userId) return;
+
     const { data } = await supabase
       .from("profiles")
       .select()
@@ -30,7 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .single();
 
     if (data) setProfile(data);
-  };
+  }, []);
 
   useEffect(() => {
     // Get initial session
@@ -163,6 +177,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await fetchProfile(user.id);
   };
 
+  const updateLikedDecks = useCallback(
+    async (deckId: string, isLiking: boolean) => {
+      if (!user || !profile) throw new Error("Not authenticated");
+
+      try {
+        let newLikedDeckIds: string[];
+
+        if (isLiking) {
+          // Add the deck to liked decks
+          newLikedDeckIds = [...(profile.likeddeckids || []), deckId];
+        } else {
+          // Remove the deck from liked decks
+          newLikedDeckIds = (profile.likeddeckids || []).filter(
+            (id) => id !== deckId,
+          );
+        }
+
+        const { error } = await supabase
+          .from("profiles")
+          .update({ likeddeckids: newLikedDeckIds })
+          .eq("id", user.id);
+
+        if (error) throw error;
+
+        // Update local profile state
+        setProfile((prev) =>
+          prev
+            ? {
+                ...prev,
+                likeddeckids: newLikedDeckIds,
+              }
+            : null,
+        );
+      } catch (error) {
+        console.error("Error updating liked decks:", error);
+        throw error;
+      }
+    },
+    [user, profile],
+  );
+
   const signOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
@@ -177,6 +232,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signUp,
     signOut,
     updateProfile,
+    updateLikedDecks,
+    updateLocalProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

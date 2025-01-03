@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   Card,
   CardContent,
@@ -41,7 +41,7 @@ const DeckCard = ({
   categories,
   profiles,
 }: DeckCardProps) => {
-  const { user, profile } = useAuth();
+  const { user, profile, updateLikedDecks } = useAuth();
   const { toast } = useToast();
   const [showDialog, setShowDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -51,6 +51,54 @@ const DeckCard = ({
   const isPurchased = profile?.purchaseddeckids?.includes(id);
   const isLiked = profile?.likeddeckids?.includes(id);
   const canLike = !isCreator && !isPurchased;
+
+  // Local state for optimistic updates
+  const [isOptimisticallyLiked, setIsOptimisticallyLiked] = useState(isLiked);
+
+  const handleLikeClick = useCallback(
+    async (e: React.MouseEvent) => {
+      e.stopPropagation(); // Prevent opening the deck dialog
+
+      if (!user) {
+        toast({
+          title: "Sign in required",
+          description: "Please sign in to like this deck",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      try {
+        setIsLiking(true);
+
+        // Optimistic update
+        setIsOptimisticallyLiked(!isOptimisticallyLiked);
+
+        // Update backend
+        await updateLikedDecks(id, !isOptimisticallyLiked);
+
+        toast({
+          title: isOptimisticallyLiked ? "Deck unliked" : "Deck liked",
+          description: isOptimisticallyLiked
+            ? "Deck removed from your liked decks"
+            : "Deck added to your liked decks",
+          variant: "default",
+        });
+      } catch (error) {
+        console.error("Error liking/unliking deck:", error);
+        // Revert optimistic update on error
+        setIsOptimisticallyLiked(!isOptimisticallyLiked);
+        toast({
+          title: "Error",
+          description: "Failed to update deck like status",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLiking(false);
+      }
+    },
+    [user, id, isOptimisticallyLiked, toast, updateLikedDecks],
+  );
 
   const handleDelete = async () => {
     try {
@@ -71,47 +119,6 @@ const DeckCard = ({
       });
     } finally {
       setIsDeleting(false);
-    }
-  };
-
-  const handleLikeClick = async (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent opening the deck dialog
-
-    if (!user) {
-      toast({
-        title: "Sign in required",
-        description: "Please sign in to like this deck",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      setIsLiking(true);
-      if (isLiked) {
-        await unlikeDeck(user.id, id);
-        toast({
-          title: "Deck unliked",
-          description: "Deck removed from your liked decks",
-        });
-      } else {
-        await likeDeck(user.id, id);
-        toast({
-          title: "Deck liked",
-          description: "Deck added to your liked decks",
-        });
-      }
-      // Force reload to update the UI
-      window.location.reload();
-    } catch (error) {
-      console.error("Error liking/unliking deck:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update deck like status",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLiking(false);
     }
   };
 
@@ -222,7 +229,7 @@ const DeckCard = ({
                   <Heart
                     className={cn(
                       "h-5 w-5 transition-colors duration-200",
-                      isLiked
+                      isOptimisticallyLiked
                         ? "fill-red-500 text-red-500"
                         : "fill-none text-gray-600 hover:text-red-500",
                     )}
