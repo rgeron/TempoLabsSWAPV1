@@ -89,7 +89,7 @@ export function FlashcardPreview({
             <motion.div
               className="w-full h-full relative cursor-pointer"
               style={{ transformStyle: "preserve-3d" }}
-              animate={{ rotateY: isFlipped ? 180 : 0 }}
+              animate={{ rotateX: isFlipped ? 180 : 0 }}
               transition={{ duration: 0.6, type: "spring", stiffness: 50 }}
               onClick={handleFlip}
             >
@@ -117,7 +117,7 @@ export function FlashcardPreview({
 
               {/* Back */}
               <Card
-                className="absolute w-full h-full flex flex-col items-center justify-center p-8 backface-hidden bg-white [transform:rotateY(180deg)]"
+                className="absolute w-full h-full flex flex-col items-center justify-center p-8 backface-hidden bg-white [transform:rotateX(180deg)]"
                 style={{ backfaceVisibility: "hidden" }}
               >
                 <div className="text-center max-h-full w-full overflow-y-auto">
