@@ -16,33 +16,46 @@ const SearchDeck = () => {
       try {
         setIsLoading(true);
 
-        // Get all decks that match either title, description, or have the category
+        // First get profiles matching the search query
+        const { data: matchingProfiles, error: profilesError } = await supabase
+          .from("profiles")
+          .select("id, username, avatar_url")
+          .ilike("username", `%${query}%`);
+
+        if (profilesError) throw profilesError;
+
+        // Get all decks that match the search criteria
         const { data: decksData, error: decksError } = await supabase
           .from("decks")
           .select("*")
           .or(
             `title.ilike.%${query}%,` +
               `description.ilike.%${query}%,` +
-              `categories.cs.{${query}}`,
+              `categories.cs.{${query}}` +
+              (matchingProfiles?.length > 0
+                ? `,creatorid.in.(${matchingProfiles.map((p) => p.id).join(",")})`
+                : ""),
           )
           .order("created_at", { ascending: false });
 
         if (decksError) throw decksError;
 
-        // Get creator profiles for filtered decks
+        // Get all unique creator IDs from the matching decks
         const creatorIds = [
           ...new Set(decksData.map((deck) => deck.creatorid)),
         ];
-        const { data: profiles, error: profilesError } = await supabase
+
+        // Get all creator profiles (including those who might not have matched by username)
+        const { data: allProfiles, error: allProfilesError } = await supabase
           .from("profiles")
           .select("id, username, avatar_url")
           .in("id", creatorIds);
 
-        if (profilesError) throw profilesError;
+        if (allProfilesError) throw allProfilesError;
 
         // Combine deck data with creator profiles
         const decksWithProfiles = decksData.map((deck) => {
-          const profile = profiles?.find((p) => p.id === deck.creatorid);
+          const profile = allProfiles?.find((p) => p.id === deck.creatorid);
           return {
             ...deck,
             creatorName: profile?.username || "Unknown Creator",
