@@ -39,6 +39,35 @@ export const uploadFlashcardsFile = async (
   return { publicUrl, filePath };
 };
 
+export const downloadFlashcardsFile = async (
+  deckId: string,
+  creatorId: string,
+) => {
+  try {
+    const filePath = `${creatorId}/${deckId}.txt`;
+
+    const { data, error } = await supabase.storage
+      .from("flashcards-files")
+      .download(filePath);
+
+    if (error) {
+      console.error("Error downloading flashcards file:", error);
+      throw error;
+    }
+
+    if (!data) {
+      throw new Error("No file data received");
+    }
+
+    // Convert blob to text
+    const text = await data.text();
+    return text;
+  } catch (error) {
+    console.error("Error in downloadFlashcardsFile:", error);
+    throw error;
+  }
+};
+
 export const getFlashcards = async (
   deckId: string,
   creatorId: string,

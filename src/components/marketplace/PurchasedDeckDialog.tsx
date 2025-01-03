@@ -7,11 +7,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getFlashcards } from "@/lib/api/decks";
+import { downloadFlashcardsFile, getFlashcards } from "@/lib/api/decks";
 import type { DeckWithProfile, FlashCard } from "@/types/marketplace";
+import { Download, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FlashcardPreview } from "./FlashcardPreview";
 import { OverviewTab } from "./OverviewTab";
+import { useToast } from "@/components/ui/use-toast";
 
 interface PurchasedDeckDialogProps {
   isOpen: boolean;
@@ -29,6 +31,8 @@ export function PurchasedDeckDialog({
   const [selectedTab, setSelectedTab] = useState("overview");
   const [flashcards, setFlashcards] = useState<FlashCard[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     const loadFlashcards = async () => {
@@ -47,6 +51,40 @@ export function PurchasedDeckDialog({
 
     loadFlashcards();
   }, [selectedTab, deck.id, deck.creatorid]);
+
+  const handleDownload = async () => {
+    try {
+      setIsDownloading(true);
+
+      // Download the raw file content
+      const fileContent = await downloadFlashcardsFile(deck.id, deck.creatorid);
+
+      // Create and download the file
+      const blob = new Blob([fileContent], { type: "text/plain" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${deck.title.toLowerCase().replace(/\s+/g, "-")}-flashcards.txt`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: "Download complete",
+        description: "Your flashcards file has been downloaded",
+      });
+    } catch (error) {
+      console.error("Error downloading flashcards:", error);
+      toast({
+        title: "Download failed",
+        description: "There was an error downloading your flashcards",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -88,7 +126,25 @@ export function PurchasedDeckDialog({
           </div>
         </Tabs>
 
-        <div className="flex justify-end pt-4 border-t">
+        <div className="flex justify-end space-x-4 pt-4 border-t">
+          <Button
+            variant="outline"
+            onClick={handleDownload}
+            disabled={isDownloading}
+            className="bg-[#2B4C7E] text-white hover:bg-[#1A365D]"
+          >
+            {isDownloading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Downloading...
+              </>
+            ) : (
+              <>
+                <Download className="mr-2 h-4 w-4" />
+                Download Flashcards
+              </>
+            )}
+          </Button>
           <Button variant="outline" onClick={onClose}>
             Close
           </Button>
