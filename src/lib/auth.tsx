@@ -20,6 +20,7 @@ type AuthContextType = {
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<void>;
   updateLikedDecks: (deckId: string, isLiking: boolean) => Promise<void>;
+  updatePurchasedDecks: (deckId: string) => Promise<void>;
   updateLocalProfile: (newProfile: Profile) => void;
 };
 
@@ -218,6 +219,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [user, profile],
   );
 
+  const updatePurchasedDecks = useCallback(
+    async (deckId: string) => {
+      if (!user || !profile) throw new Error("Not authenticated");
+
+      try {
+        const purchaseDate = new Date().toISOString();
+        const newPurchasedDeckIds = [
+          ...(profile.purchaseddeckids || []),
+          deckId,
+        ];
+        const newPurchaseInfo = [
+          ...(profile.purchaseinfo || []),
+          { deckId, purchaseDate },
+        ];
+
+        // Optimistically update local state
+        setProfile((prev) =>
+          prev
+            ? {
+                ...prev,
+                purchaseddeckids: newPurchasedDeckIds,
+                purchaseinfo: newPurchaseInfo,
+              }
+            : null,
+        );
+
+        // Update backend
+        const { error } = await supabase
+          .from("profiles")
+          .update({
+            purchaseddeckids: newPurchasedDeckIds,
+            purchaseinfo: newPurchaseInfo,
+          })
+          .eq("id", user.id);
+
+        if (error) throw error;
+      } catch (error) {
+        console.error("Error updating purchased decks:", error);
+        // Revert optimistic update on error
+        await fetchProfile(user.id);
+        throw error;
+      }
+    },
+    [user, profile, fetchProfile],
+  );
+
   const signOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
@@ -233,6 +280,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signOut,
     updateProfile,
     updateLikedDecks,
+    updatePurchasedDecks,
     updateLocalProfile,
   };
 
