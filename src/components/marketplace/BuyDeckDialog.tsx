@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
-import { getFlashcards, purchaseDeck } from "@/lib/api/decks";
+import { getFlashcards } from "@/lib/api/decks";
 import { useAuth } from "@/lib/auth";
 import type { BuyDeckDialogProps, FlashCard } from "@/types/marketplace";
 import { Loader2 } from "lucide-react";
@@ -21,7 +21,7 @@ export const BuyDeckDialog = ({
   onClose,
   deck,
 }: BuyDeckDialogProps) => {
-  const { user } = useAuth();
+  const { user, updatePurchasedDecks } = useAuth();
   const { toast } = useToast();
   const [selectedTab, setSelectedTab] = useState("overview");
   const [flashcards, setFlashcards] = useState<FlashCard[]>([]);
@@ -30,19 +30,21 @@ export const BuyDeckDialog = ({
 
   useEffect(() => {
     const loadFlashcards = async () => {
-      try {
-        setIsLoading(true);
-        const cards = await getFlashcards(deck.id, deck.creatorid);
-        setFlashcards(cards);
-      } catch (error) {
-        console.error("Error loading flashcards:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load flashcards preview",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
+      if (selectedTab === "preview" && deck.creatorid) {
+        try {
+          setIsLoading(true);
+          const cards = await getFlashcards(deck.id, deck.creatorid);
+          setFlashcards(cards);
+        } catch (error) {
+          console.error("Error loading flashcards:", error);
+          toast({
+            title: "Error",
+            description: "Failed to load flashcards preview",
+            variant: "destructive",
+          });
+        } finally {
+          setIsLoading(false);
+        }
       }
     };
 
@@ -63,15 +65,13 @@ export const BuyDeckDialog = ({
 
     try {
       setIsPurchasing(true);
-      await purchaseDeck(user.id, deck.id);
+      await updatePurchasedDecks(deck.id);
 
       toast({
         title: "Purchase successful!",
         description: "The deck has been added to your collection",
       });
       onClose();
-      // Force reload to update the UI
-      window.location.reload();
     } catch (error: any) {
       console.error("Purchase error:", error);
       toast({
