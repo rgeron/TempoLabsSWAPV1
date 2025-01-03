@@ -39,6 +39,11 @@ export function FlashcardPreview({
     }
   };
 
+  // Function to safely render HTML content
+  const renderHTML = (content: string) => {
+    return <div dangerouslySetInnerHTML={{ __html: content }} />;
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-[400px]">
@@ -99,7 +104,9 @@ export function FlashcardPreview({
                   <h4 className="text-sm font-medium text-gray-500 mb-4">
                     Question
                   </h4>
-                  <p className="text-xl">{currentCard.front}</p>
+                  <div className="text-xl prose prose-blue max-w-none">
+                    {renderHTML(currentCard.front)}
+                  </div>
                   {currentCard.tags && currentCard.tags.length > 0 && (
                     <div className="mt-4 flex flex-wrap gap-2 justify-center">
                       {currentCard.tags.map((tag) => (
@@ -124,7 +131,9 @@ export function FlashcardPreview({
                   <h4 className="text-sm font-medium text-gray-500 mb-4">
                     Answer
                   </h4>
-                  <p className="text-xl">{currentCard.back}</p>
+                  <div className="text-xl prose prose-blue max-w-none">
+                    {renderHTML(currentCard.back)}
+                  </div>
                 </div>
               </Card>
             </motion.div>
