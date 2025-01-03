@@ -3,7 +3,6 @@ import { Loader2, Upload } from "lucide-react";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -55,18 +54,12 @@ const AddDeckDialog = ({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[900px] h-[80vh] flex flex-col">
-        <DialogHeader className="px-6 pt-2">
+        <DialogHeader className="px-6 pt-6">
           <DialogTitle>Add New Deck to Store</DialogTitle>
-          <DialogDescription>
-            Create a new flashcard deck to share with the community.
-          </DialogDescription>
         </DialogHeader>
 
-        <form
-          onSubmit={handleSubmit}
-          className="flex-1 flex flex-col overflow-hidden px-6"
-        >
-          <div className="flex gap-6 flex-1 overflow-y-auto py-6">
+        <form onSubmit={handleSubmit} className="flex-1 flex flex-col px-6">
+          <div className="flex gap-6 flex-1">
             {/* Left Column */}
             <div className="flex-1 space-y-6">
               <div className="space-y-2">
@@ -133,8 +126,6 @@ const AddDeckDialog = ({
                             >
                               <Checkbox
                                 id={`category-${category}`}
-                                name="categories"
-                                value={category}
                                 checked={selectedCategories.includes(category)}
                                 onCheckedChange={(checked) =>
                                   handleCategoryChange(
@@ -171,19 +162,13 @@ const AddDeckDialog = ({
                   <Upload className="h-5 w-5 text-gray-500" />
                 </div>
                 <p className="text-sm text-gray-500">
-                  Upload a .txt file with your flashcards in the format:
-                  <br />
-                  FRONT: Question
-                  <br />
-                  BACK: Answer
-                  <br />
-                  TAGS: tag1, tag2, tag3
+                  Upload a .txt file with your flashcards
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="flex justify-end space-x-4 py-4 border-t bg-background">
+          <div className="flex justify-end space-x-4 py-4 mt-6 border-t bg-background">
             <Button
               variant="outline"
               type="button"

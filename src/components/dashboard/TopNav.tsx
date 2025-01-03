@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState, FormEvent } from "react";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -11,11 +11,21 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Search, Bell, Settings, LogOut, Wallet } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { useNavigate } from "react-router-dom";
 import { SettingsModal } from "../auth/SettingsModal";
 
 const TopNav = () => {
   const [showSettings, setShowSettings] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const { signOut, user, profile } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSearch = (e: FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/app/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -41,14 +51,16 @@ const TopNav = () => {
       <div className="h-20 w-full px-6 flex items-center justify-between bg-white shadow-sm">
         {/* Search Bar */}
         <div className="flex-1 max-w-2xl">
-          <div className="relative">
+          <form onSubmit={handleSearch} className="relative">
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#2B4C7E] h-5 w-5" />
             <Input
               type="search"
               placeholder="Search flashcard decks..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-12 pr-4 py-6 text-lg w-full rounded-full border-2 border-[#E6F3FF] focus:border-[#2B4C7E] focus:ring-2 focus:ring-[#2B4C7E]/20 bg-[#F8FAFF] placeholder-[#2B4C7E]/50"
             />
-          </div>
+          </form>
         </div>
 
         {/* Right Side Controls */}
