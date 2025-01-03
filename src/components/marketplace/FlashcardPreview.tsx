@@ -1,10 +1,10 @@
-import React, { useState } from "react";
-import { Loader2, ArrowLeft, ArrowRight, Repeat } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
-import type { FlashCard } from "@/types/marketplace";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { Card } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import type { FlashCard } from "@/types/marketplace";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowLeft, ArrowRight, Loader2, Repeat } from "lucide-react";
+import { useState } from "react";
 
 interface FlashcardPreviewProps {
   flashcards: FlashCard[];
@@ -39,9 +39,11 @@ export function FlashcardPreview({
     }
   };
 
-  // Function to safely render HTML content
   const renderHTML = (content: string) => {
-    return <div dangerouslySetInnerHTML={{ __html: content }} />;
+    // Replace escaped quotes with proper quotes
+    const sanitizedContent = content.replace(/""/g, '"');
+
+    return <div dangerouslySetInnerHTML={{ __html: sanitizedContent }} />;
   };
 
   if (isLoading) {
