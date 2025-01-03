@@ -16,6 +16,7 @@ const SearchDeck = () => {
       try {
         setIsLoading(true);
 
+        // First get all decks with their creator profiles
         const { data: decksData, error } = await supabase
           .from("decks")
           .select(
@@ -25,8 +26,7 @@ const SearchDeck = () => {
           `,
           )
           .or(
-            `title.ilike.%${query}%,
-             description.ilike.%${query}%`,
+            `title.ilike.%${query}%,description.ilike.%${query}%,categories.cs.{${query}}`,
           )
           .order("created_at", { ascending: false });
 
