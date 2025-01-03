@@ -15,6 +15,7 @@ import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FlashcardPreview } from "./FlashcardPreview";
 import { OverviewTab } from "./OverviewTab";
+import { DeckCategories } from "./DeckCategories";
 
 export const BuyDeckDialog = ({
   isOpen,
@@ -92,6 +93,7 @@ export const BuyDeckDialog = ({
           <DialogTitle className="text-2xl">{deck.title}</DialogTitle>
           <DialogDescription className="text-base">
             Created by {deck.creatorName} • {deck.cardcount} cards
+            <DeckCategories categories={deck.categories} className="mt-2" />
           </DialogDescription>
         </DialogHeader>
 

@@ -207,10 +207,15 @@ const getUserProfile = async (userId: string) => {
 // Define return type for getAllDecks
 export const getAllDecks = async (): Promise<DeckWithProfile[]> => {
   try {
-    // First, get all decks
+    // First, get all decks with their categories
     const { data: decks, error: decksError } = await supabase
       .from("decks")
-      .select("*")
+      .select(
+        `
+        *,
+        categories
+      `,
+      )
       .order("created_at", { ascending: false });
 
     if (decksError) throw decksError;
@@ -293,7 +298,7 @@ export const getUserDecks = async (userId: string): Promise<Deck[]> => {
 
   const { data, error } = await supabase
     .from("decks")
-    .select("*")
+    .select("*, categories")
     .eq("creatorid", userId)
     .order("created_at", { ascending: false });
 

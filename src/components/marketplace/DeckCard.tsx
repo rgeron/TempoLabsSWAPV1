@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -6,16 +6,16 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, BookOpen, Heart } from "lucide-react";
+import { Star, BookOpen, Heart, Tag } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/auth";
 import { BuyDeckDialog } from "./BuyDeckDialog";
 import { PurchasedDeckDialog } from "./PurchasedDeckDialog";
 import { CreatorDeckDialog } from "./CreatorDeckDialog";
-import { deleteDeck, likeDeck, unlikeDeck } from "@/lib/api/decks";
+import { deleteDeck } from "@/lib/api/decks";
 import { useToast } from "@/components/ui/use-toast";
-import type { DeckWithProfile } from "@/types/marketplace";
-import { getCategoryStyle } from "@/types/marketplace";
+import type { DeckWithProfile, DeckCategory } from "@/types/marketplace";
+import { getCategoryStyle, CATEGORY_DEFINITIONS } from "@/types/marketplace";
 import { cn } from "@/lib/utils";
 
 interface DeckCardProps extends DeckWithProfile {}
@@ -46,6 +46,10 @@ const DeckCard = ({
   const [showDialog, setShowDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
+  const [processedCategories, setProcessedCategories] = useState<
+    DeckCategory[]
+  >([]);
+  const [categoriesError, setCategoriesError] = useState<string | null>(null);
 
   const isCreator = user?.id === creatorid;
   const isPurchased = profile?.purchaseddeckids?.includes(id);
@@ -55,9 +59,30 @@ const DeckCard = ({
   // Local state for optimistic updates
   const [isOptimisticallyLiked, setIsOptimisticallyLiked] = useState(isLiked);
 
+  // Process categories when they change
+  useEffect(() => {
+    try {
+      // Ensure categories is an array and filter out invalid categories
+      const validCategories = Array.isArray(categories)
+        ? categories.filter((category): category is DeckCategory => {
+            return CATEGORY_DEFINITIONS.some((def) =>
+              def.subcategories.includes(category),
+            );
+          })
+        : [];
+
+      setProcessedCategories(validCategories);
+      setCategoriesError(null);
+    } catch (error) {
+      console.error("Error processing categories:", error);
+      setCategoriesError("Error loading categories");
+      setProcessedCategories([]);
+    }
+  }, [categories]);
+
   const handleLikeClick = useCallback(
     async (e: React.MouseEvent) => {
-      e.stopPropagation(); // Prevent opening the deck dialog
+      e.stopPropagation();
 
       if (!user) {
         toast({
@@ -70,11 +95,7 @@ const DeckCard = ({
 
       try {
         setIsLiking(true);
-
-        // Optimistic update
         setIsOptimisticallyLiked(!isOptimisticallyLiked);
-
-        // Update backend
         await updateLikedDecks(id, !isOptimisticallyLiked);
 
         toast({
@@ -86,7 +107,6 @@ const DeckCard = ({
         });
       } catch (error) {
         console.error("Error liking/unliking deck:", error);
-        // Revert optimistic update on error
         setIsOptimisticallyLiked(!isOptimisticallyLiked);
         toast({
           title: "Error",
@@ -109,7 +129,6 @@ const DeckCard = ({
         description: "Deck deleted successfully",
       });
       setShowDialog(false);
-      // You might want to trigger a refresh of the deck list here
     } catch (error) {
       console.error("Error deleting deck:", error);
       toast({
@@ -122,29 +141,80 @@ const DeckCard = ({
     }
   };
 
+  const renderCategories = () => {
+    if (categoriesError) {
+      return (
+        <div className="text-sm text-red-500 mt-2 flex items-center gap-1">
+          <Tag className="h-4 w-4" />
+          <span>Error loading categories</span>
+        </div>
+      );
+    }
+
+    if (!processedCategories.length) {
+      return null;
+    }
+
+    return (
+      <div className="flex flex-wrap gap-2 mt-3">
+        {processedCategories.map((category) => {
+          const parentCategory = CATEGORY_DEFINITIONS.find((cat) =>
+            cat.subcategories.includes(category),
+          );
+
+          if (!parentCategory) return null;
+
+          return (
+            <div
+              key={category}
+              className={cn(
+                "inline-flex items-center gap-1.5 px-2.5 py-1",
+                "rounded-full text-xs font-medium",
+                "transition-all duration-200",
+                "border border-transparent",
+                parentCategory.gradient,
+                parentCategory.hoverGradient,
+                "hover:shadow-md",
+              )}
+            >
+              <span className="text-base leading-none">
+                {parentCategory.icon}
+              </span>
+              <span>{category}</span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   const renderDialog = () => {
     if (!showDialog) return null;
+
+    const dialogProps = {
+      isOpen: showDialog,
+      onClose: () => setShowDialog(false),
+      deck: {
+        id,
+        title,
+        description,
+        price,
+        cardcount,
+        difficulty,
+        imageurl,
+        creatorid,
+        created_at,
+        creatorName,
+        creatorAvatar,
+        categories: processedCategories,
+        profiles,
+      },
+    };
 
     if (isCreator) {
       return (
         <CreatorDeckDialog
-          isOpen={showDialog}
-          onClose={() => setShowDialog(false)}
-          deck={{
-            id,
-            title,
-            description,
-            price,
-            cardcount,
-            difficulty,
-            imageurl,
-            creatorid,
-            created_at,
-            creatorName,
-            creatorAvatar,
-            categories,
-            profiles,
-          }}
+          {...dialogProps}
           onDelete={handleDelete}
           isDeleting={isDeleting}
         />
@@ -152,57 +222,16 @@ const DeckCard = ({
     }
 
     if (isPurchased) {
-      return (
-        <PurchasedDeckDialog
-          isOpen={showDialog}
-          onClose={() => setShowDialog(false)}
-          deck={{
-            id,
-            title,
-            description,
-            price,
-            cardcount,
-            difficulty,
-            imageurl,
-            creatorid,
-            created_at,
-            creatorName,
-            creatorAvatar,
-            categories,
-            profiles,
-          }}
-          purchaseDate={created_at}
-        />
-      );
+      return <PurchasedDeckDialog {...dialogProps} purchaseDate={created_at} />;
     }
 
-    return (
-      <BuyDeckDialog
-        isOpen={showDialog}
-        onClose={() => setShowDialog(false)}
-        deck={{
-          id,
-          title,
-          description,
-          price,
-          cardcount,
-          difficulty,
-          imageurl,
-          creatorid,
-          created_at,
-          creatorName,
-          creatorAvatar,
-          categories,
-          profiles,
-        }}
-      />
-    );
+    return <BuyDeckDialog {...dialogProps} />;
   };
 
   return (
     <>
       <Card
-        className="w-full overflow-hidden hover:shadow-lg transition-all duration-300 bg-white cursor-pointer relative"
+        className="w-full overflow-hidden hover:shadow-lg transition-all duration-300 bg-white cursor-pointer relative group"
         onClick={() => setShowDialog(true)}
       >
         <CardHeader className="p-0">
@@ -256,26 +285,13 @@ const DeckCard = ({
         </CardHeader>
 
         <CardContent className="p-4">
-          <h3 className="font-semibold text-lg truncate">{title}</h3>
-          <p className="text-sm text-gray-500 h-12 line-clamp-2">
-            {description}
-          </p>
-          {categories && categories.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-2">
-              {categories.map((category) => {
-                const style = getCategoryStyle(category);
-                return (
-                  <div
-                    key={category}
-                    className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium ${style?.gradient} transition-colors duration-200 ${style?.hoverGradient}`}
-                  >
-                    <span>{style?.icon}</span>
-                    {category}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          <div className="space-y-2">
+            <h3 className="font-semibold text-lg truncate">{title}</h3>
+            <p className="text-sm text-gray-500 h-12 line-clamp-2">
+              {description}
+            </p>
+            {renderCategories()}
+          </div>
         </CardContent>
 
         <CardFooter className="p-4 pt-0">
