@@ -16,28 +16,22 @@ const SearchDeck = () => {
       try {
         setIsLoading(true);
 
-        // First get matching decks
+        // Get all decks that match either title, description, or have the category
         const { data: decksData, error: decksError } = await supabase
           .from("decks")
           .select("*")
-          .or(`title.ilike.%${query}%,description.ilike.%${query}%`)
+          .or(
+            `title.ilike.%${query}%,` +
+              `description.ilike.%${query}%,` +
+              `categories.cs.{${query}}`,
+          )
           .order("created_at", { ascending: false });
 
         if (decksError) throw decksError;
 
-        // Filter for categories match
-        const filteredDecks = decksData.filter(
-          (deck) =>
-            deck.categories?.some(
-              (category) => category.toLowerCase() === query.toLowerCase(),
-            ) ||
-            deck.title.toLowerCase().includes(query.toLowerCase()) ||
-            deck.description.toLowerCase().includes(query.toLowerCase()),
-        );
-
         // Get creator profiles for filtered decks
         const creatorIds = [
-          ...new Set(filteredDecks.map((deck) => deck.creatorid)),
+          ...new Set(decksData.map((deck) => deck.creatorid)),
         ];
         const { data: profiles, error: profilesError } = await supabase
           .from("profiles")
@@ -47,7 +41,7 @@ const SearchDeck = () => {
         if (profilesError) throw profilesError;
 
         // Combine deck data with creator profiles
-        const decksWithProfiles = filteredDecks.map((deck) => {
+        const decksWithProfiles = decksData.map((deck) => {
           const profile = profiles?.find((p) => p.id === deck.creatorid);
           return {
             ...deck,
