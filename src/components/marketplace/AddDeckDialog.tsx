@@ -41,13 +41,6 @@ const AddDeckDialog = ({
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-
-    // Add selected categories to form data
-    selectedCategories.forEach((category) => {
-      formData.append("categories", category);
-    });
-
     await onSubmit(event);
   };
 
@@ -126,6 +119,8 @@ const AddDeckDialog = ({
                             >
                               <Checkbox
                                 id={`category-${category}`}
+                                name="categories"
+                                value={category}
                                 checked={selectedCategories.includes(category)}
                                 onCheckedChange={(checked) =>
                                   handleCategoryChange(
