@@ -20,6 +20,10 @@ type AuthContextType = {
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<void>;
   updateLikedDecks: (deckId: string, isLiking: boolean) => Promise<void>;
+  updateFollowedCreators: (
+    creatorId: string,
+    isFollowing: boolean,
+  ) => Promise<void>;
   updatePurchasedDecks: (deckId: string) => Promise<void>;
   updateLocalProfile: (newProfile: Profile) => void;
 };
@@ -70,7 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [fetchProfile]);
 
   const signIn = async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -219,6 +223,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [user, profile],
   );
 
+  const updateFollowedCreators = useCallback(
+    async (creatorId: string, isFollowing: boolean) => {
+      if (!user || !profile) throw new Error("Not authenticated");
+
+      try {
+        let newFollowedCreators: string[];
+
+        if (isFollowing) {
+          // Add the creator to followed creators
+          newFollowedCreators = [
+            ...(profile.followedcreators || []),
+            creatorId,
+          ];
+        } else {
+          // Remove the creator from followed creators
+          newFollowedCreators = (profile.followedcreators || []).filter(
+            (id) => id !== creatorId,
+          );
+        }
+
+        // Update backend
+        const { error } = await supabase
+          .from("profiles")
+          .update({ followedcreators: newFollowedCreators })
+          .eq("id", user.id);
+
+        if (error) throw error;
+
+        // Update local profile state
+        setProfile((prev) =>
+          prev
+            ? {
+                ...prev,
+                followedcreators: newFollowedCreators,
+              }
+            : null,
+        );
+      } catch (error) {
+        console.error("Error updating followed creators:", error);
+        throw error;
+      }
+    },
+    [user, profile],
+  );
+
   const updatePurchasedDecks = useCallback(
     async (deckId: string) => {
       if (!user || !profile) throw new Error("Not authenticated");
@@ -280,6 +329,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signOut,
     updateProfile,
     updateLikedDecks,
+    updateFollowedCreators,
     updatePurchasedDecks,
     updateLocalProfile,
   };

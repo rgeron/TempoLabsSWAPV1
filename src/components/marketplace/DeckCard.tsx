@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, MouseEvent } from "react";
 import {
   Card,
   CardContent,
@@ -12,10 +12,9 @@ import { useAuth } from "@/lib/auth";
 import { BuyDeckDialog } from "./BuyDeckDialog";
 import { PurchasedDeckDialog } from "./PurchasedDeckDialog";
 import { CreatorDeckDialog } from "./CreatorDeckDialog";
-import { deleteDeck, likeDeck, unlikeDeck } from "@/lib/api/decks";
 import { useToast } from "@/components/ui/use-toast";
 import type { DeckWithProfile } from "@/types/marketplace";
-import { getCategoryStyle } from "@/types/marketplace";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 interface DeckCardProps extends DeckWithProfile {}
@@ -43,6 +42,7 @@ const DeckCard = ({
 }: DeckCardProps) => {
   const { user, profile, updateLikedDecks } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [showDialog, setShowDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
@@ -54,6 +54,13 @@ const DeckCard = ({
 
   // Local state for optimistic updates
   const [isOptimisticallyLiked, setIsOptimisticallyLiked] = useState(isLiked);
+
+  const handleCreatorClick = (e: MouseEvent) => {
+    e.stopPropagation(); // Prevent opening the deck dialog
+    if (creatorid) {
+      navigate(`/app/creator/${creatorid}`);
+    }
+  };
 
   const handleLikeClick = useCallback(
     async (e: React.MouseEvent) => {
@@ -240,7 +247,11 @@ const DeckCard = ({
 
             {/* Bottom row: Creator profile */}
             {creatorName && (
-              <div className="absolute bottom-2 left-2 flex items-center space-x-2">
+              <button
+                onClick={handleCreatorClick}
+                className="absolute bottom-2 left-2 flex items-center space-x-2 hover:opacity-80 transition-opacity"
+                title={`View ${creatorName}'s profile`}
+              >
                 <Avatar className="h-6 w-6 border border-white/50">
                   <AvatarImage src={creatorAvatar} />
                   <AvatarFallback className="bg-white/10 text-white">
@@ -250,7 +261,7 @@ const DeckCard = ({
                 <span className="text-sm text-white font-medium">
                   {creatorName}
                 </span>
-              </div>
+              </button>
             )}
           </div>
         </CardHeader>
