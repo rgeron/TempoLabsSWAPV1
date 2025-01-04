@@ -1,4 +1,5 @@
 import React, { useState, useCallback, MouseEvent } from "react";
+import { AuthModal } from "../auth/AuthModal";
 import {
   Card,
   CardContent,
@@ -46,6 +47,7 @@ const DeckCard = ({
   const { toast } = useToast();
   const navigate = useNavigate();
   const [showDialog, setShowDialog] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
 
@@ -59,6 +61,12 @@ const DeckCard = ({
 
   const handleCreatorClick = (e: MouseEvent) => {
     e.stopPropagation(); // Prevent opening the deck dialog
+
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+
     if (creatorid) {
       navigate(`/app/creator/${creatorid}`);
     }
@@ -310,6 +318,10 @@ const DeckCard = ({
         </CardFooter>
       </Card>
       {renderDialog()}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
     </>
   );
 };
