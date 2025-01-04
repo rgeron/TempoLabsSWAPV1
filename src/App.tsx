@@ -7,6 +7,8 @@ import ListedDecks from "./components/dashboard/screens/ListedDecks";
 import PurchasedDecks from "./components/dashboard/screens/PurchasedDecks";
 import SalesAnalytics from "./components/dashboard/screens/SalesAnalytics";
 import SearchDeck from "./components/dashboard/screens/SearchDeck";
+import FollowedCreators from "./components/dashboard/screens/FollowedCreators";
+import CreatorProfile from "./components/dashboard/screens/CreatorProfile";
 import { Toaster } from "./components/ui/toaster";
 import { AuthProvider } from "./lib/auth";
 
@@ -25,6 +27,8 @@ const App = () => {
           <Route path="listed-decks" element={<ListedDecks />} />
           <Route path="sales-analytics" element={<SalesAnalytics />} />
           <Route path="search" element={<SearchDeck />} />
+          <Route path="followed-creators" element={<FollowedCreators />} />
+          <Route path="creator/:creatorId" element={<CreatorProfile />} />
           <Route path="*" element={<Navigate to="home" />} />
         </Route>
       </Routes>

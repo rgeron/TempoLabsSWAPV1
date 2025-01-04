@@ -1,4 +1,4 @@
-import { LucideIcon } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 export interface CategoryDefinition {
   name: string;
@@ -6,7 +6,7 @@ export interface CategoryDefinition {
   gradient: string;
   hoverGradient: string;
   icon: string;
-  subcategories: string[];
+  subcategories: DeckCategory[];
 }
 
 export const CATEGORY_DEFINITIONS: CategoryDefinition[] = [
@@ -73,6 +73,16 @@ export const getCategoryStyle = (category: DeckCategory) => {
     : null;
 };
 
+export interface Creator {
+  id: string;
+  username: string;
+  avatar_url: string | null;
+  bio?: string;
+  followersCount: number;
+  decksCount: number;
+  isFollowed?: boolean;
+}
+
 export interface Deck {
   id: string;
   title: string;
@@ -82,7 +92,7 @@ export interface Deck {
   difficulty: "Beginner" | "Intermediate" | "Advanced";
   imageurl: string;
   creatorid: string;
-  categories?: DeckCategory[];
+  categories?: DeckCategory[] | null;
   created_at: string;
 }
 
@@ -98,11 +108,18 @@ export interface DeckWithProfile extends Deck {
   profiles: {
     username: string;
     avatar_url: string | null;
-  };
+  } | null;
+  categories?: DeckCategory[] | null;
 }
 
 export interface BuyDeckDialogProps {
   isOpen: boolean;
   onClose: () => void;
   deck: DeckWithProfile;
+}
+
+export interface CreatorDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  creatorId: string;
 }
