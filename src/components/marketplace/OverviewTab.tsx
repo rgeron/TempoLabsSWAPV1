@@ -1,12 +1,9 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
 import type { DeckWithProfile } from "@/types/marketplace";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { BookOpen, Calendar, DollarSign, BarChart, User } from "lucide-react";
+import { BookOpen, Calendar, DollarSign, BarChart } from "lucide-react";
 import { getCategoryStyle } from "@/types/marketplace";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface OverviewTabProps {
   deck: DeckWithProfile;
@@ -20,38 +17,8 @@ const difficultyColors = {
 };
 
 export function OverviewTab({ deck, purchaseDate }: OverviewTabProps) {
-  const navigate = useNavigate();
-
-  const handleCreatorClick = () => {
-    navigate(`/app/creator/${deck.creatorid}`);
-  };
-
   return (
     <div className="space-y-6">
-      {/* Creator Card */}
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Creator</h3>
-        <Button
-          variant="ghost"
-          onClick={handleCreatorClick}
-          className="w-full flex items-center justify-start space-x-4 hover:bg-gray-50 h-auto p-4"
-        >
-          <Avatar className="h-12 w-12">
-            <AvatarImage src={deck.creatorAvatar || undefined} />
-            <AvatarFallback>
-              {deck.creatorName.slice(0, 2).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col items-start">
-            <span className="font-semibold text-lg">{deck.creatorName}</span>
-            <span className="text-sm text-gray-500 flex items-center">
-              <User className="h-4 w-4 mr-1" />
-              View Profile
-            </span>
-          </div>
-        </Button>
-      </Card>
-
       {/* Description Card */}
       <Card className="p-6">
         <h3 className="text-lg font-semibold mb-3">Description</h3>
