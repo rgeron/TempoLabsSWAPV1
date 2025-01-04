@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import DeckCard from "@/components/marketplace/DeckCard";
 import type { DeckWithProfile } from "@/types/marketplace";
+import { useAuth } from "@/lib/auth";
+import { useToast } from "@/components/ui/use-toast";
 
 interface Creator {
   id: string;
@@ -14,9 +17,14 @@ interface Creator {
 
 const CreatorProfile = () => {
   const { creatorId } = useParams();
-  const [creator, setCreator] = useState<Creator | null>(null);
+  const { user, profile, updateFollowedCreators } = useAuth();
+  const { toast } = useToast();
+  const [isUpdating, setIsUpdating] = useState(false);
   const [decks, setDecks] = useState<DeckWithProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [creator, setCreator] = useState<Creator | null>(null);
+
+  const isFollowed = profile?.followedcreators?.includes(creatorId);
 
   useEffect(() => {
     const fetchCreatorData = async () => {
@@ -66,6 +74,38 @@ const CreatorProfile = () => {
     fetchCreatorData();
   }, [creatorId]);
 
+  const handleFollowToggle = async () => {
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to follow creators",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsUpdating(true);
+      await updateFollowedCreators(creatorId, !isFollowed);
+
+      toast({
+        title: isFollowed ? "Unfollowed" : "Following",
+        description: isFollowed
+          ? `You are no longer following ${creator?.username}`
+          : `You are now following ${creator?.username}`,
+      });
+    } catch (error) {
+      console.error("Error updating follow status:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update follow status",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -85,19 +125,39 @@ const CreatorProfile = () => {
   return (
     <div className="p-6 space-y-8">
       {/* Creator Header */}
-      <div className="flex items-center space-x-6 bg-white p-6 rounded-lg shadow-sm">
-        <Avatar className="h-24 w-24">
-          <AvatarImage src={creator.avatar_url || undefined} />
-          <AvatarFallback>
-            {creator.username.slice(0, 2).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold text-[#2B4C7E]">
-            {creator.username}
-          </h1>
-          <p className="text-gray-500">{decks.length} decks created</p>
+      <div className="flex items-center justify-between bg-white p-6 rounded-lg shadow-sm">
+        <div className="flex items-center space-x-6">
+          <Avatar className="h-24 w-24">
+            <AvatarImage src={creator.avatar_url || undefined} />
+            <AvatarFallback>
+              {creator.username.slice(0, 2).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold text-[#2B4C7E]">
+              {creator.username}
+            </h1>
+            <p className="text-gray-500">{decks.length} decks created</p>
+          </div>
         </div>
+        {user?.id !== creator.id && (
+          <Button
+            onClick={handleFollowToggle}
+            disabled={isUpdating}
+            variant={isFollowed ? "outline" : "default"}
+            className={
+              isFollowed ? "" : "bg-[#2B4C7E] text-white hover:bg-[#1A365D]"
+            }
+          >
+            {isUpdating ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : isFollowed ? (
+              "Unfollow"
+            ) : (
+              "Follow"
+            )}
+          </Button>
+        )}
       </div>
 
       {/* Decks Grid */}
