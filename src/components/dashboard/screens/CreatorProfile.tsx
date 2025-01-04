@@ -13,6 +13,7 @@ interface Creator {
   id: string;
   username: string;
   avatar_url: string | null;
+  followers?: string[];
 }
 
 const CreatorProfile = () => {
@@ -33,10 +34,10 @@ const CreatorProfile = () => {
       try {
         setIsLoading(true);
 
-        // Fetch creator profile
+        // Fetch creator profile with followers
         const { data: creatorData, error: creatorError } = await supabase
           .from("profiles")
-          .select("id, username, avatar_url")
+          .select("id, username, avatar_url, followers")
           .eq("id", creatorId)
           .single();
 
@@ -88,6 +89,23 @@ const CreatorProfile = () => {
       setIsUpdating(true);
       await updateFollowedCreators(creatorId, !isFollowed);
 
+      // Update local creator state to reflect the new followers count
+      setCreator((prev) => {
+        if (!prev) return null;
+        const followers = prev.followers || [];
+        if (isFollowed) {
+          return {
+            ...prev,
+            followers: followers.filter((id) => id !== user.id),
+          };
+        } else {
+          return {
+            ...prev,
+            followers: [...followers, user.id],
+          };
+        }
+      });
+
       toast({
         title: isFollowed ? "Unfollowed" : "Following",
         description: isFollowed
@@ -137,7 +155,11 @@ const CreatorProfile = () => {
             <h1 className="text-3xl font-bold text-[#2B4C7E]">
               {creator.username}
             </h1>
-            <p className="text-gray-500">{decks.length} decks created</p>
+            <div className="flex items-center space-x-4 text-gray-500">
+              <p>{(creator.followers || []).length} followers</p>
+              <span>•</span>
+              <p>{decks.length} decks created</p>
+            </div>
           </div>
         </div>
         {user?.id !== creator.id && (
