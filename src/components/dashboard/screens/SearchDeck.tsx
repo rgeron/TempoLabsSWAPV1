@@ -4,90 +4,132 @@ import { supabase } from "@/lib/supabase";
 import type { DeckWithProfile } from "@/types/marketplace";
 import DeckCard from "@/components/marketplace/DeckCard";
 import { Loader2 } from "lucide-react";
+import { useAuth } from "@/lib/auth";
 
 const SearchDeck = () => {
   const [searchParams] = useSearchParams();
-  const query = searchParams.get("q") || "";
+  const query = searchParams.get("q");
+  const liked = searchParams.get("liked") === "true";
+  const purchased = searchParams.get("purchased") === "true";
+  const minRating = searchParams.get("minRating");
+  const categories = searchParams.get("categories")?.split(",");
+  const minPrice = searchParams.get("minPrice");
+  const maxPrice = searchParams.get("maxPrice");
+
   const [decks, setDecks] = useState<DeckWithProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { user, profile } = useAuth();
 
   useEffect(() => {
     const searchDecks = async () => {
       try {
         setIsLoading(true);
 
-        // First get profiles matching the search query
-        const { data: matchingProfiles, error: profilesError } = await supabase
-          .from("profiles")
-          .select("id, username, avatar_url")
-          .ilike("username", `%${query}%`);
+        // Start with a basic query
+        let queryBuilder = supabase.from("decks").select(`
+            id,
+            title,
+            description,
+            price,
+            cardcount,
+            difficulty,
+            imageurl,
+            creatorid,
+            categories,
+            created_at,
+            profiles!decks_creatorid_fkey (username, avatar_url)
+          `);
 
-        if (profilesError) throw profilesError;
+        // Build filter conditions array
+        const conditions = [];
 
-        // Get all decks that match the search criteria
-        const { data: decksData, error: decksError } = await supabase
-          .from("decks")
-          .select("*")
-          .or(
-            `title.ilike.%${query}%,` +
-              `description.ilike.%${query}%,` +
-              `categories.cs.{${query}}` +
-              (matchingProfiles?.length > 0
-                ? `,creatorid.in.(${matchingProfiles.map((p) => p.id).join(",")})`
-                : ""),
-          )
-          .order("created_at", { ascending: false });
+        // Text search
+        if (query) {
+          conditions.push(
+            `title.ilike.%${query}%`,
+            `description.ilike.%${query}%`,
+          );
+          queryBuilder = queryBuilder.or(conditions.join(","));
+        }
 
-        if (decksError) throw decksError;
+        // Category filter
+        if (categories?.length) {
+          queryBuilder = queryBuilder.contains("categories", categories);
+        }
 
-        // Get all unique creator IDs from the matching decks
-        const creatorIds = [
-          ...new Set(decksData.map((deck) => deck.creatorid)),
-        ];
+        // Price range
+        if (minPrice !== null) {
+          queryBuilder = queryBuilder.gte("price", Number(minPrice));
+        }
+        if (maxPrice !== null) {
+          queryBuilder = queryBuilder.lte("price", Number(maxPrice));
+        }
 
-        // Get all creator profiles (including those who might not have matched by username)
-        const { data: allProfiles, error: allProfilesError } = await supabase
-          .from("profiles")
-          .select("id, username, avatar_url")
-          .in("id", creatorIds);
+        // Rating filter
+        if (minRating !== null) {
+          queryBuilder = queryBuilder.gte("rating", Number(minRating));
+        }
 
-        if (allProfilesError) throw allProfilesError;
+        // Execute query
+        const { data: decksData, error: decksError } = await queryBuilder.order(
+          "created_at",
+          { ascending: false },
+        );
 
-        // Combine deck data with creator profiles
-        const decksWithProfiles = decksData.map((deck) => {
-          const profile = allProfiles?.find((p) => p.id === deck.creatorid);
-          return {
-            ...deck,
-            creatorName: profile?.username || "Unknown Creator",
-            creatorAvatar: profile?.avatar_url,
-            profiles: {
-              username: profile?.username || "Unknown Creator",
-              avatar_url: profile?.avatar_url,
-            },
-          };
-        });
+        if (decksError) {
+          console.error("Query error:", decksError);
+          throw decksError;
+        }
 
-        setDecks(decksWithProfiles);
+        // Transform the data
+        let processedDecks = (decksData || []).map((deck) => ({
+          ...deck,
+          creatorName: deck.profiles?.username || "Unknown Creator",
+          creatorAvatar: deck.profiles?.avatar_url,
+          profiles: deck.profiles || null,
+          categories: Array.isArray(deck.categories) ? deck.categories : [],
+        }));
+
+        // Apply client-side filters
+        if (liked && profile?.likeddeckids?.length) {
+          processedDecks = processedDecks.filter((deck) =>
+            profile.likeddeckids.includes(deck.id),
+          );
+        }
+
+        if (purchased && profile?.purchaseddeckids?.length) {
+          processedDecks = processedDecks.filter((deck) =>
+            profile.purchaseddeckids.includes(deck.id),
+          );
+        }
+
+        setDecks(processedDecks);
       } catch (error) {
-        console.error("Error searching decks:", error);
+        console.error("Error fetching decks:", error);
+        setDecks([]);
       } finally {
         setIsLoading(false);
       }
     };
 
-    if (query) {
-      searchDecks();
-    } else {
-      setDecks([]);
-      setIsLoading(false);
-    }
-  }, [query]);
+    // Always execute search to show all decks or filtered results
+    searchDecks();
+  }, [
+    query,
+    liked,
+    purchased,
+    minRating,
+    categories,
+    minPrice,
+    maxPrice,
+    profile,
+  ]);
 
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-[#2B4C7E]">
-          Search Results for "{query}"
+          {query ? `Search Results for "${query}"` : "All Decks"}
         </h1>
         <p className="text-gray-500">{decks.length} results found</p>
       </div>
@@ -106,7 +148,7 @@ const SearchDeck = () => {
         <div className="flex flex-col items-center justify-center h-64 space-y-2">
           <p className="text-lg text-gray-500">No decks found</p>
           <p className="text-sm text-gray-400">
-            Try searching with different keywords
+            Try adjusting your filters or search with different keywords
           </p>
         </div>
       )}
