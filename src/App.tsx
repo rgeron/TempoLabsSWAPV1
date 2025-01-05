@@ -10,6 +10,8 @@ import SearchDeck from "./components/dashboard/screens/SearchDeck";
 import FollowedCreators from "./components/dashboard/screens/FollowedCreators";
 import CreatorProfile from "./components/dashboard/screens/CreatorProfile";
 import CategoryDecks from "./components/dashboard/screens/CategoryDecks";
+import PurchaseSuccess from "./pages/PurchaseSuccess";
+import PurchaseCancelled from "./pages/PurchaseCancelled";
 import { Toaster } from "./components/ui/toaster";
 import { AuthProvider } from "./lib/auth";
 
@@ -20,6 +22,8 @@ const App = () => {
         {/* Public Routes */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/category/:category" element={<CategoryDecks />} />
+        <Route path="/purchase-success" element={<PurchaseSuccess />} />
+        <Route path="/purchase-cancelled" element={<PurchaseCancelled />} />
 
         {/* App Routes */}
         <Route path="/app" element={<DashboardLayout />}>
