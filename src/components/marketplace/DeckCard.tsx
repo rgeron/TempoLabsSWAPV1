@@ -7,7 +7,7 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, BookOpen, Heart } from "lucide-react";
+import { Star, BookOpen, Heart, MoreHorizontal } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/auth";
 import { BuyDeckDialog } from "./BuyDeckDialog";
@@ -27,6 +27,8 @@ const difficultyColors = {
   Intermediate: "bg-yellow-100 text-yellow-800",
   Advanced: "bg-red-100 text-red-800",
 };
+
+const MAX_VISIBLE_TAGS = 2;
 
 const DeckCard = ({
   id,
@@ -216,14 +218,44 @@ const DeckCard = ({
     );
   };
 
+  const renderCategories = () => {
+    if (!categories || categories.length === 0) return null;
+
+    const visibleTags = categories.slice(0, MAX_VISIBLE_TAGS);
+    const remainingCount = categories.length - MAX_VISIBLE_TAGS;
+
+    return (
+      <div className="flex flex-wrap gap-1">
+        {visibleTags.map((category) => {
+          const style = getCategoryStyle(category);
+          return (
+            <div
+              key={category}
+              className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium ${style?.gradient} transition-colors duration-200 ${style?.hoverGradient}`}
+            >
+              <span>{style?.icon}</span>
+              {category}
+            </div>
+          );
+        })}
+        {remainingCount > 0 && (
+          <div className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-600">
+            <MoreHorizontal className="h-3 w-3 mr-1" />
+            {remainingCount} more
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <>
       <Card
-        className="w-full overflow-hidden hover:shadow-lg transition-all duration-300 bg-white cursor-pointer relative"
+        className="w-full max-w-[280px] h-[360px] overflow-hidden hover:shadow-lg transition-all duration-300 bg-white cursor-pointer relative flex flex-col"
         onClick={() => setShowDialog(true)}
       >
         <CardHeader className="p-0">
-          <div className="relative h-40 w-full">
+          <div className="relative h-32 w-full">
             <img
               src={imageurl}
               alt={title}
@@ -276,30 +308,15 @@ const DeckCard = ({
           </div>
         </CardHeader>
 
-        <CardContent className="p-4">
+        <CardContent className="p-4 flex-1 flex flex-col">
           <h3 className="font-semibold text-lg truncate">{title}</h3>
-          <p className="text-sm text-gray-500 h-12 line-clamp-2">
+          <p className="text-sm text-gray-500 line-clamp-2 mb-3">
             {description}
           </p>
-          {categories && categories.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-2">
-              {categories.map((category) => {
-                const style = getCategoryStyle(category);
-                return (
-                  <div
-                    key={category}
-                    className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium ${style?.gradient} transition-colors duration-200 ${style?.hoverGradient}`}
-                  >
-                    <span>{style?.icon}</span>
-                    {category}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          {renderCategories()}
         </CardContent>
 
-        <CardFooter className="p-4 pt-0">
+        <CardFooter className="p-4 mt-auto border-t">
           <div className="flex justify-between items-center w-full">
             <div className="flex items-center space-x-4">
               <div className="flex items-center">
