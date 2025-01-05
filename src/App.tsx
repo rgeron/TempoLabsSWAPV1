@@ -21,9 +21,6 @@ const App = () => {
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<LandingPage />} />
-        <Route path="/category/:category" element={<CategoryDecks />} />
-        <Route path="/purchase-success" element={<PurchaseSuccess />} />
-        <Route path="/purchase-cancelled" element={<PurchaseCancelled />} />
 
         {/* App Routes */}
         <Route path="/app" element={<DashboardLayout />}>
@@ -36,6 +33,8 @@ const App = () => {
           <Route path="followed-creators" element={<FollowedCreators />} />
           <Route path="category/:category" element={<CategoryDecks />} />
           <Route path="creator/:creatorId" element={<CreatorProfile />} />
+          <Route path="purchase-success" element={<PurchaseSuccess />} />
+          <Route path="purchase-cancelled" element={<PurchaseCancelled />} />
           <Route path="*" element={<Navigate to="home" />} />
         </Route>
       </Routes>

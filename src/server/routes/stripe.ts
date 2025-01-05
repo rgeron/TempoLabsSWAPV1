@@ -31,8 +31,8 @@ router.post("/create-checkout-session", async (req, res) => {
         },
       ],
       mode: "payment",
-      success_url: `${process.env.CLIENT_URL}/purchase-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.CLIENT_URL}/purchase-cancelled`,
+      success_url: `${process.env.CLIENT_URL}/app/purchase-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.CLIENT_URL}/app/purchase-cancelled`,
       metadata: {
         deckId,
         userId,
