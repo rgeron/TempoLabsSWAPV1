@@ -21,7 +21,7 @@ export const BuyDeckDialog = ({
   onClose,
   deck,
 }: BuyDeckDialogProps) => {
-  const { user, updatePurchasedDecks } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [selectedTab, setSelectedTab] = useState("overview");
   const [flashcards, setFlashcards] = useState<FlashCard[]>([]);
@@ -53,7 +53,7 @@ export const BuyDeckDialog = ({
     }
   }, [isOpen, selectedTab, deck.id, deck.creatorid, toast]);
 
-  const handlePurchase = async () => {
+  const initiateCheckout = async () => {
     if (!user) {
       toast({
         title: "Sign in required",
@@ -65,19 +65,31 @@ export const BuyDeckDialog = ({
 
     try {
       setIsPurchasing(true);
-      await updatePurchasedDecks(deck.id);
 
-      toast({
-        title: "Purchase successful!",
-        description: "The deck has been added to your collection",
+      const response = await fetch("/api/create-checkout-session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          deckId: deck.id,
+          userId: user.id,
+          deckTitle: deck.title,
+          price: deck.price,
+        }),
       });
-      onClose();
-    } catch (error: any) {
+
+      if (!response.ok) {
+        throw new Error("Failed to create checkout session");
+      }
+
+      const { url } = await response.json();
+      window.location.href = url;
+    } catch (error) {
       console.error("Purchase error:", error);
       toast({
         title: "Purchase failed",
-        description:
-          error.message || "There was an error processing your purchase",
+        description: "There was an error initiating the checkout process",
         variant: "destructive",
       });
     } finally {
@@ -130,11 +142,11 @@ export const BuyDeckDialog = ({
         </Tabs>
 
         <div className="flex justify-end space-x-4 pt-4 border-t">
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={isPurchasing}>
             Cancel
           </Button>
           <Button
-            onClick={handlePurchase}
+            onClick={initiateCheckout}
             className="bg-[#2B4C7E] text-white hover:bg-[#1A365D]"
             disabled={isPurchasing}
           >
