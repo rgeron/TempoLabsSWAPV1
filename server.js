@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 const Stripe = require("stripe");
@@ -11,6 +13,8 @@ app.use(cors());
 app.use(express.json());
 
 // Initialize Stripe
+console.log("Stripe Secret Key:", process.env.STRIPE_SECRET_KEY);
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // Create a checkout session

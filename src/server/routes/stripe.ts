@@ -1,7 +1,8 @@
+require("dotenv").config();
+
 import express from "express";
 import Stripe from "stripe";
 import { purchaseDeck } from "../lib/api/decks";
-require("dotenv").config();
 
 const router = express.Router();
 
