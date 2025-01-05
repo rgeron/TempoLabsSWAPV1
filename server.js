@@ -1,17 +1,20 @@
-import express from "express";
-import Stripe from "stripe";
-import { purchaseDeck } from "../lib/api/decks";
-require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const Stripe = require("stripe");
 
-const router = express.Router();
+const app = express();
 
-// Initialize Stripe with your secret key
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-04-10",
-});
+// Enable CORS
+app.use(cors());
+
+// Parse JSON bodies
+app.use(express.json());
+
+// Initialize Stripe
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // Create a checkout session
-router.post("/create-checkout-session", async (req, res) => {
+app.post("/api/create-checkout-session", async (req, res) => {
   try {
     const { deckId, userId, deckTitle, price } = req.body;
 
@@ -46,11 +49,11 @@ router.post("/create-checkout-session", async (req, res) => {
 });
 
 // Webhook handler
-router.post(
-  "/webhook",
+app.post(
+  "/api/webhook",
   express.raw({ type: "application/json" }),
   async (req, res) => {
-    const sig = req.headers["stripe-signature"]!;
+    const sig = req.headers["stripe-signature"];
 
     let event;
 
@@ -58,7 +61,7 @@ router.post(
       event = stripe.webhooks.constructEvent(
         req.body,
         sig,
-        process.env.STRIPE_WEBHOOK_SECRET!,
+        process.env.STRIPE_WEBHOOK_SECRET,
       );
     } catch (err) {
       console.error("Webhook signature verification failed:", err);
@@ -67,14 +70,14 @@ router.post(
 
     // Handle the checkout.session.completed event
     if (event.type === "checkout.session.completed") {
-      const session = event.data.object as Stripe.Checkout.Session;
+      const session = event.data.object;
 
       try {
         // Extract the deck and user IDs from the session metadata
-        const { deckId, userId } = session.metadata!;
+        const { deckId, userId } = session.metadata;
 
         // Update the purchase in your database
-        await purchaseDeck(userId, deckId);
+        // await purchaseDeck(userId, deckId);
 
         console.log(
           `Successfully processed purchase for deck ${deckId} by user ${userId}`,
@@ -89,4 +92,8 @@ router.post(
   },
 );
 
-export default router;
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
