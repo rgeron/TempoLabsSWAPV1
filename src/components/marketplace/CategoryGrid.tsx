@@ -1,4 +1,6 @@
 import { Card } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/lib/auth";
 
 interface Category {
   name: string;
@@ -79,6 +81,15 @@ const categories: Category[] = [
 ];
 
 const CategoryGrid = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const handleCategoryClick = (category: string) => {
+    // If user is logged in, use app route, otherwise use public route
+    const basePath = user ? "/app" : "";
+    navigate(`${basePath}/category/${category}`);
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6 w-full">
       {categories.map((category) => (
@@ -102,9 +113,7 @@ const CategoryGrid = () => {
                     className={`text-left px-4 py-3 bg-white/80 rounded-xl transition-all duration-200 shadow-sm
                       ${category.hoverGradient} hover:shadow-md
                       text-gray-700 hover:text-gray-900 font-medium`}
-                    onClick={() =>
-                      console.log(`Navigate to ${category.name} - ${subcategory}`)
-                    }
+                    onClick={() => handleCategoryClick(subcategory)}
                   >
                     {subcategory}
                   </button>

@@ -9,6 +9,7 @@ import SalesAnalytics from "./components/dashboard/screens/SalesAnalytics";
 import SearchDeck from "./components/dashboard/screens/SearchDeck";
 import FollowedCreators from "./components/dashboard/screens/FollowedCreators";
 import CreatorProfile from "./components/dashboard/screens/CreatorProfile";
+import CategoryDecks from "./components/dashboard/screens/CategoryDecks";
 import { Toaster } from "./components/ui/toaster";
 import { AuthProvider } from "./lib/auth";
 
@@ -18,6 +19,7 @@ const App = () => {
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<LandingPage />} />
+        <Route path="/category/:category" element={<CategoryDecks />} />
 
         {/* App Routes */}
         <Route path="/app" element={<DashboardLayout />}>
@@ -28,6 +30,7 @@ const App = () => {
           <Route path="sales-analytics" element={<SalesAnalytics />} />
           <Route path="search" element={<SearchDeck />} />
           <Route path="followed-creators" element={<FollowedCreators />} />
+          <Route path="category/:category" element={<CategoryDecks />} />
           <Route path="creator/:creatorId" element={<CreatorProfile />} />
           <Route path="*" element={<Navigate to="home" />} />
         </Route>
