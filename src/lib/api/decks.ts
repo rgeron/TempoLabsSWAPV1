@@ -146,7 +146,10 @@ export const getFlashcards = async (
 
 export const createDeck = async (deck: NewDeck, file: File): Promise<Deck> => {
   try {
-    // Ensure categories is an array
+    // Ensure categories is an array and set default image URL
+    const defaultImageUrl =
+      "https://images.unsplash.com/photo-1532094349884-543bc11b234d";
+    const imageUrl = deck.imageurl || deck.cover_image_url || defaultImageUrl;
     const categories = Array.isArray(deck.categories) ? deck.categories : [];
 
     // First create the deck to get its ID
@@ -155,6 +158,8 @@ export const createDeck = async (deck: NewDeck, file: File): Promise<Deck> => {
       .insert({
         ...deck,
         categories: categories,
+        imageurl: imageUrl,
+        cover_image_url: imageUrl,
         flashcards_file_url: null, // Will update this after file upload
       })
       .select()

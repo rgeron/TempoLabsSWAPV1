@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Loader2, Upload } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Loader2, Upload, Image as ImageIcon, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CATEGORY_DEFINITIONS, DeckCategory } from "@/types/marketplace";
 import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth";
+import { createDeck } from "@/lib/api/decks";
 
 interface AddDeckDialogProps {
   isOpen: boolean;
@@ -21,15 +25,54 @@ interface AddDeckDialogProps {
   isSubmitting: boolean;
 }
 
+const countFlashcardsInFile = async (file: File): Promise<number> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const text = e.target?.result as string;
+        // Split by newlines and filter out empty lines and comments
+        const lines = text.split("\n").filter((line) => {
+          const trimmed = line.trim();
+          return trimmed && !trimmed.startsWith("#");
+        });
+        resolve(lines.length);
+      } catch (error) {
+        reject(error);
+      }
+    };
+    reader.onerror = (error) => reject(error);
+    reader.readAsText(file);
+  });
+};
+
 const AddDeckDialog = ({
   isOpen,
   onOpenChange,
   onSubmit,
   isSubmitting,
 }: AddDeckDialogProps) => {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [selectedCategories, setSelectedCategories] = useState<DeckCategory[]>(
     [],
   );
+  const [selectedFileName, setSelectedFileName] = useState("");
+  const [coverImage, setCoverImage] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
+  const [flashcardsFile, setFlashcardsFile] = useState<File | null>(null);
+
+  // Reset states when dialog closes
+  useEffect(() => {
+    if (!isOpen) {
+      setCoverImage(null);
+      setCoverPreview(null);
+      setSelectedFileName("");
+      setSelectedCategories([]);
+      setFlashcardsFile(null);
+    }
+  }, [isOpen]);
 
   const handleCategoryChange = (category: DeckCategory, checked: boolean) => {
     if (checked) {
@@ -39,129 +82,302 @@ const AddDeckDialog = ({
     }
   };
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedFileName(file.name);
+      setFlashcardsFile(file);
+    }
+  };
+
+  const handleCoverImageChange = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Invalid file type",
+        description: "Please select an image file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Image size should be less than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Create preview URL
+    const previewUrl = URL.createObjectURL(file);
+    setCoverPreview(previewUrl);
+    setCoverImage(file);
+
+    // Clean up preview URL when component unmounts
+    return () => URL.revokeObjectURL(previewUrl);
+  };
+
+  const handleRemoveCover = () => {
+    setCoverImage(null);
+    setCoverPreview(null);
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    await onSubmit(event);
+    if (!user || !flashcardsFile) return;
+
+    try {
+      setIsUploadingCover(true);
+      const form = event.currentTarget;
+
+      // Count flashcards in the file
+      const cardcount = await countFlashcardsInFile(flashcardsFile);
+
+      // Upload cover image if selected
+      let coverImageUrl = null;
+      if (coverImage) {
+        const fileExt = coverImage.name.split(".").pop();
+        const fileName = `${user.id}/${Date.now()}_cover.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("deck-covers")
+          .upload(fileName, coverImage, {
+            contentType: coverImage.type,
+            upsert: true,
+          });
+
+        if (uploadError) throw uploadError;
+
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("deck-covers").getPublicUrl(fileName);
+
+        coverImageUrl = publicUrl;
+      }
+
+      // Create deck data object
+      const deckData = {
+        title: form.title.value,
+        description: form.description.value,
+        price: parseFloat(form.price.value),
+        difficulty: form.difficulty.value as
+          | "Beginner"
+          | "Intermediate"
+          | "Advanced",
+        categories: selectedCategories,
+        creatorid: user.id,
+        imageurl: coverImageUrl, // Set both imageurl and cover_image_url
+        cover_image_url: coverImageUrl,
+        cardcount,
+      };
+
+      // Create the deck
+      await createDeck(deckData, flashcardsFile);
+
+      // Close the dialog
+      onOpenChange(false);
+
+      toast({
+        title: "Success",
+        description: "Deck created successfully",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create deck",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingCover(false);
+    }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[900px] h-[80vh] flex flex-col">
+      <DialogContent className="sm:max-w-[900px] max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader className="px-6 pt-6">
           <DialogTitle>Add New Deck to Store</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="flex-1 flex flex-col px-6">
-          <div className="flex gap-6 flex-1">
-            {/* Left Column */}
-            <div className="flex-1 space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="title">Deck Title</Label>
-                <Input id="title" name="title" required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <textarea
-                  id="description"
-                  name="description"
-                  required
-                  className="w-full h-32 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+        <form
+          onSubmit={handleSubmit}
+          className="flex-1 flex flex-col overflow-hidden px-6"
+        >
+          <ScrollArea className="flex-1 -mx-6 px-6">
+            <div className="flex gap-6">
+              {/* Left Column */}
+              <div className="flex-1 space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="price">Price ($)</Label>
-                  <Input
-                    id="price"
-                    name="price"
-                    type="number"
-                    step="0.01"
-                    min="0"
+                  <Label htmlFor="title">Deck Title</Label>
+                  <Input id="title" name="title" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <textarea
+                    id="description"
+                    name="description"
                     required
+                    className="w-full h-32 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="difficulty">Difficulty</Label>
-                  <select
-                    id="difficulty"
-                    name="difficulty"
-                    className="w-full rounded-md border border-input bg-background px-3 py-2"
-                    required
-                  >
-                    <option value="Beginner">Beginner</option>
-                    <option value="Intermediate">Intermediate</option>
-                    <option value="Advanced">Advanced</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* Separator */}
-            <Separator orientation="vertical" />
-
-            {/* Right Column */}
-            <div className="flex-1 space-y-6">
-              <div className="space-y-2">
-                <Label>Categories</Label>
-                <ScrollArea className="h-[300px] w-full rounded-md border">
-                  <div className="p-4 space-y-6">
-                    {CATEGORY_DEFINITIONS.map((categoryGroup) => (
-                      <div key={categoryGroup.name} className="space-y-2">
-                        <h4 className="font-medium text-sm text-gray-700 flex items-center gap-2">
-                          <span>{categoryGroup.icon}</span>
-                          {categoryGroup.name}
-                        </h4>
-                        <div className="grid grid-cols-2 gap-2">
-                          {categoryGroup.subcategories.map((category) => (
-                            <div
-                              key={category}
-                              className={`flex items-center space-x-2 p-2 rounded-md ${categoryGroup.gradient} transition-colors duration-200 ${categoryGroup.hoverGradient}`}
-                            >
-                              <Checkbox
-                                id={`category-${category}`}
-                                name="categories"
-                                value={category}
-                                checked={selectedCategories.includes(category)}
-                                onCheckedChange={(checked) =>
-                                  handleCategoryChange(
-                                    category,
-                                    checked as boolean,
-                                  )
-                                }
-                              />
-                              <label
-                                htmlFor={`category-${category}`}
-                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer select-none"
-                              >
-                                {category}
-                              </label>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="price">Price ($)</Label>
+                    <Input
+                      id="price"
+                      name="price"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      required
+                    />
                   </div>
-                </ScrollArea>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="flashcardsFile">Flashcards File (.txt)</Label>
-                <div className="flex items-center space-x-2">
-                  <Input
-                    id="flashcardsFile"
-                    name="flashcardsFile"
-                    type="file"
-                    accept=".txt"
-                    required
-                    className="flex-1"
-                  />
-                  <Upload className="h-5 w-5 text-gray-500" />
+                  <div className="space-y-2">
+                    <Label htmlFor="difficulty">Difficulty</Label>
+                    <select
+                      id="difficulty"
+                      name="difficulty"
+                      className="w-full rounded-md border border-input bg-background px-3 py-2"
+                      required
+                    >
+                      <option value="Beginner">Beginner</option>
+                      <option value="Intermediate">Intermediate</option>
+                      <option value="Advanced">Advanced</option>
+                    </select>
+                  </div>
                 </div>
-                <p className="text-sm text-gray-500">
-                  Upload a .txt file with your flashcards
-                </p>
+                <div className="space-y-2">
+                  <Label>Cover Image</Label>
+                  <div className="flex flex-col space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <Label
+                        htmlFor="cover-upload"
+                        className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background bg-white text-black hover:bg-gray-100 h-10 py-2 px-4 border border-input flex-1"
+                      >
+                        <ImageIcon className="h-4 w-4 mr-2" />
+                        {coverImage
+                          ? "Change Cover Image"
+                          : "Upload Cover Image"}
+                      </Label>
+                      <Input
+                        id="cover-upload"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleCoverImageChange}
+                        disabled={isUploadingCover}
+                      />
+                    </div>
+                    {coverPreview && (
+                      <div className="relative w-40 h-40 rounded-lg overflow-hidden border border-input">
+                        <img
+                          src={coverPreview}
+                          alt="Cover preview"
+                          className="w-full h-full object-cover"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-2 right-2 h-6 w-6 bg-black/50 hover:bg-black/70"
+                          onClick={handleRemoveCover}
+                        >
+                          <X className="h-4 w-4 text-white" />
+                        </Button>
+                      </div>
+                    )}
+                    <p className="text-sm text-gray-500">
+                      Upload a cover image (max 5MB). Supported formats: JPEG,
+                      PNG
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Separator */}
+              <Separator orientation="vertical" className="h-auto" />
+
+              {/* Right Column */}
+              <div className="flex-1 space-y-6">
+                <div className="space-y-2">
+                  <Label>Categories</Label>
+                  <ScrollArea className="h-[300px] w-full rounded-md border">
+                    <div className="p-4 space-y-6">
+                      {CATEGORY_DEFINITIONS.map((categoryGroup) => (
+                        <div key={categoryGroup.name} className="space-y-2">
+                          <h4 className="font-medium text-sm text-gray-700 flex items-center gap-2">
+                            <span>{categoryGroup.icon}</span>
+                            {categoryGroup.name}
+                          </h4>
+                          <div className="grid grid-cols-2 gap-2">
+                            {categoryGroup.subcategories.map((category) => (
+                              <div
+                                key={category}
+                                className={`flex items-center space-x-2 p-2 rounded-md ${categoryGroup.gradient} transition-colors duration-200 ${categoryGroup.hoverGradient}`}
+                              >
+                                <Checkbox
+                                  id={`category-${category}`}
+                                  name="categories"
+                                  value={category}
+                                  checked={selectedCategories.includes(
+                                    category,
+                                  )}
+                                  onCheckedChange={(checked) =>
+                                    handleCategoryChange(
+                                      category,
+                                      checked as boolean,
+                                    )
+                                  }
+                                />
+                                <label
+                                  htmlFor={`category-${category}`}
+                                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer select-none"
+                                >
+                                  {category}
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="flashcardsFile">Flashcards File (.txt)</Label>
+                  <div className="flex items-center space-x-2">
+                    <Label
+                      htmlFor="file-upload"
+                      className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background bg-white text-black hover:bg-gray-100 h-10 py-2 px-4 border border-input flex-1"
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      {selectedFileName || "Choose File"}
+                    </Label>
+                    <Input
+                      id="file-upload"
+                      name="flashcardsFile"
+                      type="file"
+                      accept=".txt"
+                      required
+                      className="hidden"
+                      onChange={handleFileChange}
+                    />
+                  </div>
+                  <p className="text-sm text-gray-500">
+                    Upload a .txt file with your flashcards
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          </ScrollArea>
 
           <div className="flex justify-end space-x-4 py-4 mt-6 border-t bg-background">
             <Button
@@ -173,13 +389,13 @@ const AddDeckDialog = ({
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isUploadingCover}
               className="bg-[#2B4C7E] text-white hover:bg-[#1A365D]"
             >
-              {isSubmitting ? (
+              {isSubmitting || isUploadingCover ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Adding Deck...
+                  {isUploadingCover ? "Uploading..." : "Adding Deck..."}
                 </>
               ) : (
                 "Add Deck"
