@@ -2,41 +2,44 @@ import type { Deck, DeckWithProfile } from "@/types/marketplace";
 import { supabase } from "../supabase";
 import { getUserBalance, transferBalance } from "./balance";
 import { updatePurchasedDecks } from "./profile";
+import { uploadFlashcardsFile } from "./flashcards";
 
 export const createDeck = async (
   deck: Partial<Deck>,
   file: File,
 ): Promise<Deck> => {
   try {
-    // Upload flashcards file first
-    const filePath = `${deck.creatorid}/${Date.now()}.txt`;
-    const { error: uploadError } = await supabase.storage
-      .from("flashcards-files")
-      .upload(filePath, file, {
-        contentType: "text/plain",
-        upsert: true,
-      });
-
-    if (uploadError) throw uploadError;
-
-    // Get the public URL for the uploaded file
-    const {
-      data: { publicUrl: flashcardsFileUrl },
-    } = supabase.storage.from("flashcards-files").getPublicUrl(filePath);
-
-    // Create deck record with file URL
+    // First create the deck to get its ID
     const { data: newDeck, error: deckError } = await supabase
       .from("decks")
       .insert({
         ...deck,
-        flashcards_file_url: flashcardsFileUrl,
-        purchase_history: [], // Initialize empty purchase history
       })
       .select()
       .single();
 
     if (deckError) throw deckError;
-    return newDeck;
+
+    // Now upload the flashcards file using the new deck's ID
+    const { publicUrl } = await uploadFlashcardsFile(
+      file,
+      deck.creatorid,
+      newDeck.id,
+    );
+
+    // Update the deck with the file URL
+    const { data: updatedDeck, error: updateError } = await supabase
+      .from("decks")
+      .update({
+        flashcards_file_url: publicUrl,
+      })
+      .eq("id", newDeck.id)
+      .select()
+      .single();
+
+    if (updateError) throw updateError;
+
+    return updatedDeck;
   } catch (error) {
     console.error("Error in createDeck:", error);
     throw error;
