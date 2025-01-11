@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
 import DeckCard from "@/components/marketplace/DeckCard";
-import { useAuth } from "@/lib/auth";
-import { getAllDecks, unlikeDeck } from "@/lib/api/decks";
-import { Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { getAllDecks } from "@/lib/api/decks";
+import { useAuth } from "@/lib/auth";
 import type { DeckWithProfile } from "@/types/marketplace";
+import { Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 const LikedDecks = () => {
   const { user, profile } = useAuth();
@@ -21,7 +21,7 @@ const LikedDecks = () => {
     try {
       const allDecks = await getAllDecks();
       const liked = allDecks.filter((deck) =>
-        profile.likeddeckids.includes(deck.id),
+        profile.likeddeckids.includes(deck.id)
       );
       setLikedDecks(liked);
     } catch (error) {
@@ -34,24 +34,6 @@ const LikedDecks = () => {
   useEffect(() => {
     fetchLikedDecks();
   }, [user, profile]);
-
-  const handleUnlike = async (deckId: string) => {
-    try {
-      await unlikeDeck(user.id, deckId);
-      setLikedDecks((prev) => prev.filter((deck) => deck.id !== deckId));
-      toast({
-        title: "Deck unliked",
-        description: "The deck has been removed from your liked decks",
-      });
-    } catch (error) {
-      console.error("Error unliking deck:", error);
-      toast({
-        title: "Error",
-        description: "Failed to unlike the deck",
-        variant: "destructive",
-      });
-    }
-  };
 
   if (isLoading) {
     return (

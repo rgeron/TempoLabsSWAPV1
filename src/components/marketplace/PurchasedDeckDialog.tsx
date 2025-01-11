@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { downloadFlashcardsFile, getFlashcards } from "@/lib/api/decks";
+import { downloadFlashcardsFile, getFlashcards } from "@/lib/api/flashcards";
 import type { DeckWithProfile, FlashCard } from "@/types/marketplace";
 import { Download, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";

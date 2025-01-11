@@ -1,10 +1,11 @@
 import { supabase } from "../supabase";
 
+// Get user profile
 export const getUserProfile = async (userId: string) => {
   const { data, error } = await supabase
     .from("profiles")
     .select(
-      "username, avatar_url, balance, purchaseddeckids, likeddeckids, followedcreators",
+      "username, avatar_url, balance, purchaseddeckids, likeddeckids, followedcreators"
     )
     .eq("id", userId)
     .single();
@@ -13,9 +14,10 @@ export const getUserProfile = async (userId: string) => {
   return data;
 };
 
+// Update purchased decks
 export const updatePurchasedDecks = async (
   userId: string,
-  deckId: string,
+  deckId: string
 ): Promise<void> => {
   const purchaseDate = new Date().toISOString();
 
@@ -30,7 +32,7 @@ export const updatePurchasedDecks = async (
   const purchaseddeckids = [...(profile?.purchaseddeckids || []), deckId];
   const purchaseinfo = [
     ...(profile?.purchaseinfo || []),
-    { deckId, purchaseDate },
+    { deckId, purchaseDate }
   ];
 
   const { error: updateError } = await supabase
@@ -41,10 +43,10 @@ export const updatePurchasedDecks = async (
   if (updateError) throw updateError;
 };
 
-export const updateLikedDecks = async (
+// Simplified likeDeck function
+export const likeDeck = async (
   userId: string,
-  deckId: string,
-  isLiking: boolean,
+  deckId: string
 ): Promise<void> => {
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
@@ -52,27 +54,60 @@ export const updateLikedDecks = async (
     .eq("id", userId)
     .single();
 
-  if (profileError) throw profileError;
-
-  let likeddeckids: string[];
-  if (isLiking) {
-    likeddeckids = [...(profile?.likeddeckids || []), deckId];
-  } else {
-    likeddeckids = (profile?.likeddeckids || []).filter((id) => id !== deckId);
+  if (profileError) {
+    console.error("Error getting profile:", profileError);
+    throw profileError;
   }
 
-  const { error: updateError } = await supabase
+  const likeddeckids = [...(profile?.likeddeckids || []), deckId];
+
+  const { error } = await supabase
     .from("profiles")
     .update({ likeddeckids })
     .eq("id", userId);
 
-  if (updateError) throw updateError;
+  if (error) {
+    console.error("Error updating liked decks:", error);
+    throw error;
+  }
 };
 
+// Simplified unlikeDeck function
+export const unlikeDeck = async (
+  userId: string,
+  deckId: string
+): Promise<void> => {
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("likeddeckids")
+    .eq("id", userId)
+    .single();
+
+  if (profileError) {
+    console.error("Error getting profile:", profileError);
+    throw profileError;
+  }
+
+  const likeddeckids = (profile?.likeddeckids || []).filter(
+    (id) => id !== deckId
+  );
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ likeddeckids })
+    .eq("id", userId);
+
+  if (error) {
+    console.error("Error updating liked decks:", error);
+    throw error;
+  }
+};
+
+// Update followed creators
 export const updateFollowedCreators = async (
   userId: string,
   creatorId: string,
-  isFollowing: boolean,
+  isFollowing: boolean
 ): Promise<void> => {
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
@@ -87,7 +122,7 @@ export const updateFollowedCreators = async (
     followedcreators = [...(profile?.followedcreators || []), creatorId];
   } else {
     followedcreators = (profile?.followedcreators || []).filter(
-      (id) => id !== creatorId,
+      (id) => id !== creatorId
     );
   }
 

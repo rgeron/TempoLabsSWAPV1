@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Loader2, Users, DollarSign, TrendingUp, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { getFlashcards } from "@/lib/api/decks";
+import { getFlashcards } from "@/lib/api/flashcards";
 import type { DeckWithProfile, FlashCard } from "@/types/marketplace";
 import {
   AlertDialog,
