@@ -1,4 +1,4 @@
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -12,13 +12,30 @@ import {
 import { Search, Bell, Settings, LogOut, Wallet } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
+import { getUserBalance } from "@/lib/api/balance";
 import { SettingsModal } from "../auth/SettingsModal";
 
 const TopNav = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [userBalance, setUserBalance] = useState<number>(0);
   const { signOut, user, profile } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const loadUserBalance = async () => {
+      if (user) {
+        try {
+          const balance = await getUserBalance(user.id);
+          setUserBalance(balance);
+        } catch (error) {
+          console.error("Error loading user balance:", error);
+        }
+      }
+    };
+
+    loadUserBalance();
+  }, [user]);
 
   const handleSearch = (e: FormEvent) => {
     e.preventDefault();
@@ -89,7 +106,7 @@ const TopNav = () => {
                     {profile?.username || user?.email}
                   </span>
                   <span className="text-xs text-[#2B4C7E]/70">
-                    ${(250).toFixed(2)}
+                    ${userBalance.toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -104,7 +121,7 @@ const TopNav = () => {
               <DropdownMenuSeparator className="bg-[#E6F3FF]" />
               <DropdownMenuItem className="text-[#2B4C7E] focus:bg-[#E6F3FF] focus:text-[#2B4C7E]">
                 <Wallet className="mr-2 h-4 w-4" />
-                <span>Balance: ${(250).toFixed(2)}</span>
+                <span>Balance: ${userBalance.toFixed(2)}</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="text-[#2B4C7E] focus:bg-[#E6F3FF] focus:text-[#2B4C7E] cursor-pointer"
