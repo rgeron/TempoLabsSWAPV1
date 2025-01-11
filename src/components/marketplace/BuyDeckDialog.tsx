@@ -8,7 +8,9 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
-import { getFlashcards, getUserBalance, purchaseDeck } from "@/lib/api/decks";
+import { getFlashcards } from "@/lib/api/flashcards";
+import { getUserBalance } from "@/lib/api/balance";
+import { purchaseDeck } from "@/lib/api/decks";
 import { useAuth } from "@/lib/auth";
 import type { BuyDeckDialogProps, FlashCard } from "@/types/marketplace";
 import { Loader2 } from "lucide-react";
@@ -92,15 +94,27 @@ export const BuyDeckDialog = ({
 
       // Check if user has enough balance
       if (userBalance < deck.price) {
-        toast({
-          title: "Insufficient balance",
-          description: `You need $${(deck.price - userBalance).toFixed(2)} more to purchase this deck. Please refill your balance.`,
-          variant: "destructive",
+        // Create Stripe checkout session for recharging balance
+        const response = await fetch("/api/create-checkout-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            deckId: deck.id,
+            userId: user.id,
+            deckTitle: `Balance recharge for ${deck.title}`,
+            price: deck.price - userBalance, // Only charge the difference needed
+          }),
         });
-        return;
+
+        const { url } = await response.json();
+        if (url) {
+          window.location.href = url;
+          return;
+        }
+        throw new Error("Failed to create checkout session");
       }
 
-      // Process the purchase
+      // Process the purchase using balance
       await purchaseDeck(user.id, deck.id, deck.price);
 
       toast({
@@ -116,7 +130,8 @@ export const BuyDeckDialog = ({
       console.error("Purchase error:", error);
       toast({
         title: "Purchase failed",
-        description: "There was an error processing your purchase",
+        description:
+          error instanceof Error ? error.message : "Failed to process purchase",
         variant: "destructive",
       });
     } finally {
@@ -186,6 +201,8 @@ export const BuyDeckDialog = ({
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Processing...
                 </>
+              ) : userBalance < deck.price ? (
+                `Recharge $${(deck.price - userBalance).toFixed(2)} to buy`
               ) : (
                 `Purchase for $${deck.price.toFixed(2)}`
               )}

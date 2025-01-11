@@ -1,322 +1,48 @@
 import type { Deck, DeckWithProfile } from "@/types/marketplace";
-import { FlashCard } from "@/types/marketplace";
-import type { Database } from "@/types/supabase";
-import type { PostgrestError } from "@supabase/supabase-js";
 import { supabase } from "../supabase";
+import { getUserBalance, transferBalance } from "./balance";
+import { updatePurchasedDecks } from "./profile";
 
-type NewDeck = Omit<
-  Database["public"]["Tables"]["decks"]["Insert"],
-  "id" | "created_at" | "updated_at"
->;
-
-type PurchaseInfo = {
-  deckId: string;
-  purchaseDate: string;
-};
-
-export const uploadFlashcardsFile = async (
+export const createDeck = async (
+  deck: Partial<Deck>,
   file: File,
-  userId: string,
-  deckId: string,
-) => {
-  // Always save as .txt regardless of original extension
-  const filePath = `${userId}/${deckId}.txt`;
-
-  const { data, error } = await supabase.storage
-    .from("flashcards-files")
-    .upload(filePath, file, {
-      upsert: true, // Replace if exists
-    });
-
-  if (error) {
-    console.error("Error uploading file:", error);
-    throw error;
-  }
-
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from("flashcards-files").getPublicUrl(filePath);
-
-  return { publicUrl, filePath };
-};
-
-export const downloadFlashcardsFile = async (
-  deckId: string,
-  creatorId: string,
-) => {
+): Promise<Deck> => {
   try {
-    const filePath = `${creatorId}/${deckId}.txt`;
-
-    const { data, error } = await supabase.storage
-      .from("flashcards-files")
-      .download(filePath);
-
-    if (error) {
-      console.error("Error downloading flashcards file:", error);
-      throw error;
-    }
-
-    if (!data) {
-      throw new Error("No file data received");
-    }
-
-    // Convert blob to text
-    const text = await data.text();
-    return text;
-  } catch (error) {
-    console.error("Error in downloadFlashcardsFile:", error);
-    throw error;
-  }
-};
-
-export const getFlashcards = async (
-  deckId: string,
-  creatorId: string,
-): Promise<FlashCard[]> => {
-  try {
-    if (!creatorId) {
-      throw new Error("Creator ID is required");
-    }
-
-    // Use consistent .txt extension
-    const filePath = `${creatorId}/${deckId}.txt`;
-    console.log("Attempting to download file from path:", filePath);
-
-    // Download the file content
-    const { data, error } = await supabase.storage
-      .from("flashcards-files")
-      .download(filePath);
-
-    if (error) {
-      console.error("Error downloading file:", error);
-      throw error;
-    }
-
-    if (!data) {
-      throw new Error("No file data received");
-    }
-
-    // Parse the text file content
-    const text = await data.text();
-    const lines = text.split("\n").filter((line) => line.trim());
-
-    // Extract metadata
-    const metadata = {};
-    const contentLines: string[] = [];
-    lines.forEach((line) => {
-      if (line.startsWith("#")) {
-        const [key, value] = line.slice(1).split(":");
-        metadata[key.trim()] = value ? value.trim() : null;
-      } else {
-        contentLines.push(line);
-      }
-    });
-
-    // Check for required metadata
-    const separator = metadata["separator"] === "tab" ? "\t" : ",";
-    const tagsColumn = parseInt(metadata["tags column"], 10) || -1;
-
-    // Parse the flashcards
-    const flashcards: FlashCard[] = [];
-    for (const line of contentLines) {
-      const columns = line.split(separator);
-      if (columns.length >= 2) {
-        const flashcard: FlashCard = {
-          front: columns[0].trim(),
-          back: columns[1].trim(),
-        };
-
-        // Add tags if the tags column is specified
-        if (tagsColumn > 0 && tagsColumn <= columns.length) {
-          flashcard.tags = columns[tagsColumn - 1]
-            .split(",")
-            .map((tag) => tag.trim());
-        }
-
-        flashcards.push(flashcard);
-      }
-    }
-
-    console.log(`Successfully parsed ${flashcards.length} flashcards`);
-    return flashcards;
-  } catch (error) {
-    console.error("Error fetching flashcards:", error);
-    throw error;
-  }
-};
-
-export const createDeck = async (deck: NewDeck, file: File): Promise<Deck> => {
-  try {
-    // Ensure categories is an array and set default image URL
-    const defaultImageUrl =
-      "https://images.unsplash.com/photo-1532094349884-543bc11b234d";
-    const imageUrl = deck.imageurl || deck.cover_image_url || defaultImageUrl;
-    const categories = Array.isArray(deck.categories) ? deck.categories : [];
-
-    // First create the deck to get its ID
     const { data: newDeck, error: deckError } = await supabase
       .from("decks")
       .insert({
         ...deck,
-        categories: categories,
-        imageurl: imageUrl,
-        cover_image_url: imageUrl,
-        flashcards_file_url: null, // Will update this after file upload
         purchase_history: [], // Initialize empty purchase history
       })
       .select()
       .single();
 
     if (deckError) throw deckError;
-
-    // Then upload the file using both creator ID and deck ID
-    const { publicUrl, filePath } = await uploadFlashcardsFile(
-      file,
-      deck.creatorid,
-      newDeck.id,
-    );
-
-    // Update the deck with both the file URL and path
-    const { data: updatedDeck, error: updateError } = await supabase
-      .from("decks")
-      .update({
-        flashcards_file_url: publicUrl,
-      })
-      .eq("id", newDeck.id)
-      .select()
-      .single();
-
-    if (updateError) throw updateError;
-
-    return updatedDeck;
+    return newDeck;
   } catch (error) {
     console.error("Error in createDeck:", error);
     throw error;
   }
 };
 
-// Get user profile by ID
-const getUserProfile = async (userId: string) => {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("username, avatar_url, balance")
-    .eq("id", userId)
-    .single();
-
-  if (error) {
-    console.error("Error fetching user profile:", error);
-    return null;
-  }
-
-  return data;
-};
-
-// Define return type for getAllDecks
 export const getAllDecks = async (): Promise<DeckWithProfile[]> => {
   try {
-    // First, get all decks
     const { data: decks, error: decksError } = await supabase
       .from("decks")
-      .select("*")
+      .select("*, profiles(username, avatar_url)")
       .order("created_at", { ascending: false });
 
     if (decksError) throw decksError;
 
-    // Then, fetch creator profiles for each deck
-    const decksWithProfiles = await Promise.all(
-      decks.map(async (deck) => {
-        const profile = await getUserProfile(deck.creatorid);
-        return {
-          ...deck,
-          creatorName: profile?.username || "Unknown Creator",
-          creatorAvatar: profile?.avatar_url,
-          profiles: profile
-            ? {
-                username: profile.username,
-                avatar_url: profile.avatar_url,
-              }
-            : null,
-        };
-      }),
-    );
-
-    return decksWithProfiles;
+    return decks.map((deck) => ({
+      ...deck,
+      creatorName: deck.profiles?.username || "Unknown Creator",
+      creatorAvatar: deck.profiles?.avatar_url,
+    }));
   } catch (error) {
     console.error("Error in getAllDecks:", error);
     throw error;
   }
-};
-
-export const purchaseDeck = async (
-  userId: string,
-  deckId: string,
-  amount: number,
-): Promise<void> => {
-  const purchaseDate = new Date().toISOString();
-
-  try {
-    // Call the RPC function to handle the purchase
-    const { error } = await supabase.rpc("add_purchase_record", {
-      p_deck_id: deckId,
-      p_buyer_id: userId,
-      p_amount: amount,
-    });
-
-    if (error) throw error;
-
-    // Update the user's purchased decks list
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("purchaseddeckids, purchaseinfo")
-      .eq("id", userId)
-      .single();
-
-    if (profileError) throw profileError;
-
-    const purchaseddeckids = [...(profile?.purchaseddeckids || []), deckId];
-    const purchaseinfo = [
-      ...(profile?.purchaseinfo || []),
-      { deckId, purchaseDate },
-    ];
-
-    const { error: updateError } = await supabase
-      .from("profiles")
-      .update({ purchaseddeckids, purchaseinfo })
-      .eq("id", userId);
-
-    if (updateError) throw updateError;
-  } catch (error) {
-    console.error("Error in purchaseDeck:", error);
-    throw error;
-  }
-};
-
-export const getUserBalance = async (userId: string): Promise<number> => {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("balance")
-    .eq("id", userId)
-    .single();
-
-  if (error) throw error;
-  return data.balance;
-};
-
-export const getPurchaseDate = async (
-  userId: string,
-  deckId: string,
-): Promise<string | null> => {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("purchaseinfo")
-    .eq("id", userId)
-    .single();
-
-  if (error) throw error;
-
-  const purchaseInfo = data?.purchaseinfo as PurchaseInfo[];
-  const purchase = purchaseInfo?.find((p) => p.deckId === deckId);
-  return purchase?.purchaseDate || null;
 };
 
 export const getUserDecks = async (userId: string): Promise<Deck[]> => {
@@ -331,103 +57,85 @@ export const getUserDecks = async (userId: string): Promise<Deck[]> => {
     .eq("creatorid", userId)
     .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("Error getting user decks:", error);
-    throw error;
-  }
-
+  if (error) throw error;
   return data || [];
 };
 
 export const deleteDeck = async (deckId: string): Promise<void> => {
-  // First get the deck to get the file URL and creator ID
-  const { data: deck, error: getDeckError } = await supabase
-    .from("decks")
-    .select("flashcards_file_url, creatorid")
-    .eq("id", deckId)
-    .single();
-
-  if (getDeckError) {
-    console.error("Error getting deck:", getDeckError);
-    throw getDeckError;
-  }
-
-  // If there's a file, delete it from storage
-  if (deck?.creatorid) {
-    const filePath = `${deck.creatorid}/${deckId}.txt`;
-    const { error: deleteFileError } = await supabase.storage
-      .from("flashcards-files")
-      .remove([filePath]);
-
-    if (deleteFileError) {
-      console.error("Error deleting file:", deleteFileError);
-      throw deleteFileError;
-    }
-  }
-
-  // Then delete the deck
   const { error } = await supabase.from("decks").delete().eq("id", deckId);
+  if (error) throw error;
+};
 
-  if (error) {
-    console.error("Error deleting deck:", error);
+export const recordPurchase = async (
+  deckId: string,
+  buyerId: string,
+  amount: number,
+): Promise<void> => {
+  const purchaseRecord = {
+    date: new Date().toISOString(),
+    buyerId,
+    amount,
+  };
+
+  const { error } = await supabase.rpc("record_deck_purchase", {
+    p_deck_id: deckId,
+    p_purchase_record: purchaseRecord,
+  });
+
+  if (error) throw error;
+};
+
+export const purchaseDeck = async (
+  userId: string,
+  deckId: string,
+  amount: number,
+): Promise<void> => {
+  try {
+    // Get deck info to get creator ID
+    const { data: deck, error: deckError } = await supabase
+      .from("decks")
+      .select("creatorid, price")
+      .eq("id", deckId)
+      .single();
+
+    if (deckError) throw deckError;
+
+    // Check user's balance
+    const balance = await getUserBalance(userId);
+    if (balance < amount) {
+      throw new Error(`Insufficient balance. Need ${amount - balance} more.`);
+    }
+
+    // Transfer balance from buyer to seller
+    await transferBalance(userId, deck.creatorid, amount);
+
+    // Record the purchase in deck's history
+    await recordPurchase(deckId, userId, amount);
+
+    // Update user's purchased decks list
+    await updatePurchasedDecks(userId, deckId);
+  } catch (error) {
+    console.error("Error in purchaseDeck:", error);
     throw error;
   }
 };
 
-export const likeDeck = async (
+export const getPurchaseDate = async (
   userId: string,
   deckId: string,
-): Promise<void> => {
-  const { data: profile, error: profileError } = await supabase
+): Promise<string | null> => {
+  const { data, error } = await supabase
     .from("profiles")
-    .select("likeddeckids")
+    .select("purchaseinfo")
     .eq("id", userId)
     .single();
 
-  if (profileError) {
-    console.error("Error getting profile:", profileError);
-    throw profileError;
-  }
+  if (error) throw error;
 
-  const likeddeckids = [...(profile?.likeddeckids || []), deckId];
-
-  const { error } = await supabase
-    .from("profiles")
-    .update({ likeddeckids })
-    .eq("id", userId);
-
-  if (error) {
-    console.error("Error updating liked decks:", error);
-    throw error;
-  }
-};
-
-export const unlikeDeck = async (
-  userId: string,
-  deckId: string,
-): Promise<void> => {
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("likeddeckids")
-    .eq("id", userId)
-    .single();
-
-  if (profileError) {
-    console.error("Error getting profile:", profileError);
-    throw profileError;
-  }
-
-  const likeddeckids = (profile?.likeddeckids || []).filter(
-    (id) => id !== deckId,
-  );
-
-  const { error } = await supabase
-    .from("profiles")
-    .update({ likeddeckids })
-    .eq("id", userId);
-
-  if (error) {
-    console.error("Error updating liked decks:", error);
-    throw error;
-  }
+  const purchaseInfo = data?.purchaseinfo as Array<{
+    deckId: string;
+    purchaseDate: string;
+  }>;
+  const purchase = purchaseInfo?.find((p) => p.deckId === deckId);
+  return purchase?.purchaseDate || null;
 };
