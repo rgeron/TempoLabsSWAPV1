@@ -66,18 +66,21 @@ export const BuyDeckDialog = ({
     try {
       setIsPurchasing(true);
 
-      const response = await fetch("/api/create-checkout-session", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          deckId: deck.id,
-          userId: user.id,
-          deckTitle: deck.title,
-          price: deck.price,
-        }),
-      });
+      const response = await fetch(
+        "http://localhost:5001/api/create-checkout-session",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            deckId: deck.id,
+            userId: user.id,
+            deckTitle: deck.title,
+            price: deck.price,
+          }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to create checkout session");
