@@ -49,7 +49,6 @@ const countFlashcardsInFile = async (file: File): Promise<number> => {
 const AddDeckDialog = ({
   isOpen,
   onOpenChange,
-  onSubmit,
   isSubmitting,
 }: AddDeckDialogProps) => {
   const { user } = useAuth();
@@ -179,7 +178,7 @@ const AddDeckDialog = ({
         cardcount,
       };
 
-      // Create the deck
+      // Create the deck and upload flashcards file
       await createDeck(deckData, flashcardsFile);
 
       // Close the dialog

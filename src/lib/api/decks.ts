@@ -8,10 +8,28 @@ export const createDeck = async (
   file: File,
 ): Promise<Deck> => {
   try {
+    // Upload flashcards file first
+    const filePath = `${deck.creatorid}/${Date.now()}.txt`;
+    const { error: uploadError } = await supabase.storage
+      .from("flashcards-files")
+      .upload(filePath, file, {
+        contentType: "text/plain",
+        upsert: true,
+      });
+
+    if (uploadError) throw uploadError;
+
+    // Get the public URL for the uploaded file
+    const {
+      data: { publicUrl: flashcardsFileUrl },
+    } = supabase.storage.from("flashcards-files").getPublicUrl(filePath);
+
+    // Create deck record with file URL
     const { data: newDeck, error: deckError } = await supabase
       .from("decks")
       .insert({
         ...deck,
+        flashcards_file_url: flashcardsFileUrl,
         purchase_history: [], // Initialize empty purchase history
       })
       .select()
