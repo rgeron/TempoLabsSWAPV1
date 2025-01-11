@@ -1,12 +1,10 @@
 import type { Deck, DeckWithProfile } from "@/types/marketplace";
 import { supabase } from "../supabase";
-import { getUserBalance, transferBalance } from "./balance";
-import { updatePurchasedDecks } from "./profile";
 import { uploadFlashcardsFile } from "./flashcards";
 
 export const createDeck = async (
   deck: Partial<Deck>,
-  file: File,
+  file: File
 ): Promise<Deck> => {
   try {
     // First create the deck to get its ID
@@ -24,7 +22,7 @@ export const createDeck = async (
     const { publicUrl } = await uploadFlashcardsFile(
       file,
       deck.creatorid,
-      newDeck.id,
+      newDeck.id
     );
 
     // Update the deck with the file URL
@@ -90,7 +88,7 @@ export const deleteDeck = async (deckId: string): Promise<void> => {
 export const recordPurchase = async (
   deckId: string,
   buyerId: string,
-  amount: number,
+  amount: number
 ): Promise<void> => {
   const purchaseRecord = {
     date: new Date().toISOString(),
@@ -109,32 +107,23 @@ export const recordPurchase = async (
 export const purchaseDeck = async (
   userId: string,
   deckId: string,
-  amount: number,
+  amount: number
 ): Promise<void> => {
   try {
-    // Get deck info to get creator ID
-    const { data: deck, error: deckError } = await supabase
-      .from("decks")
-      .select("creatorid, price")
-      .eq("id", deckId)
-      .single();
+    const purchaseDate = new Date().toISOString();
 
-    if (deckError) throw deckError;
+    // Call the database function to handle the purchase
+    const { error } = await supabase.rpc("process_deck_purchase", {
+      p_buyer_id: userId,
+      p_deck_id: deckId,
+      p_amount: amount,
+      p_purchase_date: purchaseDate,
+    });
 
-    // Check user's balance
-    const balance = await getUserBalance(userId);
-    if (balance < amount) {
-      throw new Error(`Insufficient balance. Need ${amount - balance} more.`);
+    if (error) {
+      console.error("Error processing deck purchase:", error);
+      throw new Error("Deck purchase failed. Please try again.");
     }
-
-    // Transfer balance from buyer to seller
-    await transferBalance(userId, deck.creatorid, amount);
-
-    // Record the purchase in deck's history
-    await recordPurchase(deckId, userId, amount);
-
-    // Update user's purchased decks list
-    await updatePurchasedDecks(userId, deckId);
   } catch (error) {
     console.error("Error in purchaseDeck:", error);
     throw error;
@@ -143,7 +132,7 @@ export const purchaseDeck = async (
 
 export const getPurchaseDate = async (
   userId: string,
-  deckId: string,
+  deckId: string
 ): Promise<string | null> => {
   const { data, error } = await supabase
     .from("profiles")

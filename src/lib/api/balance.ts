@@ -1,5 +1,6 @@
 import { supabase } from "../supabase";
 
+// Fetch user balance
 export const getUserBalance = async (userId: string): Promise<number> => {
   const { data, error } = await supabase
     .from("profiles")
@@ -7,33 +8,26 @@ export const getUserBalance = async (userId: string): Promise<number> => {
     .eq("id", userId)
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error("Error fetching user balance:", error);
+    throw error;
+  }
+
   return data.balance;
 };
 
+// Update user balance (used for recharges or admin adjustments)
 export const updateUserBalance = async (
   userId: string,
-  newBalance: number,
+  newBalance: number
 ): Promise<void> => {
   const { error } = await supabase
     .from("profiles")
     .update({ balance: newBalance })
     .eq("id", userId);
 
-  if (error) throw error;
-};
-
-export const transferBalance = async (
-  fromUserId: string,
-  toUserId: string,
-  amount: number,
-): Promise<void> => {
-  // Use a database function to ensure atomic transaction
-  const { error } = await supabase.rpc("transfer_balance", {
-    from_user_id: fromUserId,
-    to_user_id: toUserId,
-    transfer_amount: amount,
-  });
-
-  if (error) throw error;
+  if (error) {
+    console.error("Error updating user balance:", error);
+    throw error;
+  }
 };

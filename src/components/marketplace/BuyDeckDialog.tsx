@@ -8,9 +8,9 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
-import { getFlashcards } from "@/lib/api/flashcards";
 import { getUserBalance } from "@/lib/api/balance";
 import { purchaseDeck } from "@/lib/api/decks";
+import { getFlashcards } from "@/lib/api/flashcards";
 import { useAuth } from "@/lib/auth";
 import type { BuyDeckDialogProps, FlashCard } from "@/types/marketplace";
 import { Loader2 } from "lucide-react";
@@ -89,32 +89,23 @@ export const BuyDeckDialog = ({
 
       // Validate price
       if (!deck.price || deck.price <= 0) {
-        throw new Error("Invalid price");
+        throw new Error("Invalid deck price");
       }
 
       // Check if user has enough balance
       if (userBalance < deck.price) {
-        // Create Stripe checkout session for recharging balance
-        const response = await fetch("/api/create-checkout-session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            deckId: deck.id,
-            userId: user.id,
-            deckTitle: `Balance recharge for ${deck.title}`,
-            price: deck.price - userBalance, // Only charge the difference needed
-          }),
+        // If balance is insufficient, prompt to recharge
+        toast({
+          title: "Insufficient balance",
+          description: `You need $${(deck.price - userBalance).toFixed(
+            2
+          )} more to buy this deck`,
+          variant: "destructive",
         });
-
-        const { url } = await response.json();
-        if (url) {
-          window.location.href = url;
-          return;
-        }
-        throw new Error("Failed to create checkout session");
+        return;
       }
 
-      // Process the purchase using balance
+      // Process the purchase
       await purchaseDeck(user.id, deck.id, deck.price);
 
       toast({
@@ -127,7 +118,7 @@ export const BuyDeckDialog = ({
 
       onClose();
     } catch (error) {
-      console.error("Purchase error:", error);
+      console.error("Error during purchase:", error);
       toast({
         title: "Purchase failed",
         description:
@@ -136,6 +127,48 @@ export const BuyDeckDialog = ({
       });
     } finally {
       setIsPurchasing(false);
+    }
+  };
+
+  const handleRecharge = async () => {
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to recharge your balance",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const amountToRecharge = deck.price - userBalance;
+
+      // Create Stripe checkout session
+      const response = await fetch("/api/create-checkout-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user.id,
+          deckTitle: `Balance recharge for ${deck.title}`,
+          amount: amountToRecharge,
+        }),
+      });
+
+      const { url } = await response.json();
+
+      if (url) {
+        window.location.href = url; // Redirect to Stripe checkout
+      } else {
+        throw new Error("Failed to create checkout session");
+      }
+    } catch (error) {
+      console.error("Error during recharge:", error);
+      toast({
+        title: "Recharge failed",
+        description:
+          error instanceof Error ? error.message : "Failed to recharge balance",
+        variant: "destructive",
+      });
     }
   };
 
@@ -192,7 +225,9 @@ export const BuyDeckDialog = ({
               Cancel
             </Button>
             <Button
-              onClick={handlePurchase}
+              onClick={
+                userBalance < deck.price ? handleRecharge : handlePurchase
+              }
               className="bg-[#2B4C7E] text-white hover:bg-[#1A365D]"
               disabled={isPurchasing}
             >
@@ -202,7 +237,7 @@ export const BuyDeckDialog = ({
                   Processing...
                 </>
               ) : userBalance < deck.price ? (
-                `Recharge $${(deck.price - userBalance).toFixed(2)} to buy`
+                `Recharge $${(deck.price - userBalance).toFixed(2)}`
               ) : (
                 `Purchase for $${deck.price.toFixed(2)}`
               )}
