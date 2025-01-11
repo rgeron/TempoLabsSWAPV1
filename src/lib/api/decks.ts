@@ -1,6 +1,7 @@
 import type { Deck, DeckWithProfile } from "@/types/marketplace";
 import { FlashCard } from "@/types/marketplace";
 import type { Database } from "@/types/supabase";
+import type { PostgrestError } from "@supabase/supabase-js";
 import { supabase } from "../supabase";
 
 type NewDeck = Omit<
@@ -161,6 +162,7 @@ export const createDeck = async (deck: NewDeck, file: File): Promise<Deck> => {
         imageurl: imageUrl,
         cover_image_url: imageUrl,
         flashcards_file_url: null, // Will update this after file upload
+        purchase_history: [], // Initialize empty purchase history
       })
       .select()
       .single();
@@ -197,7 +199,7 @@ export const createDeck = async (deck: NewDeck, file: File): Promise<Deck> => {
 const getUserProfile = async (userId: string) => {
   const { data, error } = await supabase
     .from("profiles")
-    .select("username, avatar_url")
+    .select("username, avatar_url, balance")
     .eq("id", userId)
     .single();
 
@@ -248,29 +250,56 @@ export const getAllDecks = async (): Promise<DeckWithProfile[]> => {
 export const purchaseDeck = async (
   userId: string,
   deckId: string,
+  amount: number,
 ): Promise<void> => {
   const purchaseDate = new Date().toISOString();
 
-  const { data: profile, error: profileError } = await supabase
+  try {
+    // Call the RPC function to handle the purchase
+    const { error } = await supabase.rpc("add_purchase_record", {
+      p_deck_id: deckId,
+      p_buyer_id: userId,
+      p_amount: amount,
+    });
+
+    if (error) throw error;
+
+    // Update the user's purchased decks list
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("purchaseddeckids, purchaseinfo")
+      .eq("id", userId)
+      .single();
+
+    if (profileError) throw profileError;
+
+    const purchaseddeckids = [...(profile?.purchaseddeckids || []), deckId];
+    const purchaseinfo = [
+      ...(profile?.purchaseinfo || []),
+      { deckId, purchaseDate },
+    ];
+
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({ purchaseddeckids, purchaseinfo })
+      .eq("id", userId);
+
+    if (updateError) throw updateError;
+  } catch (error) {
+    console.error("Error in purchaseDeck:", error);
+    throw error;
+  }
+};
+
+export const getUserBalance = async (userId: string): Promise<number> => {
+  const { data, error } = await supabase
     .from("profiles")
-    .select("purchaseddeckids, purchaseinfo")
+    .select("balance")
     .eq("id", userId)
     .single();
 
-  if (profileError) throw profileError;
-
-  const purchaseddeckids = [...(profile?.purchaseddeckids || []), deckId];
-  const purchaseinfo = [
-    ...(profile?.purchaseinfo || []),
-    { deckId, purchaseDate },
-  ];
-
-  const { error } = await supabase
-    .from("profiles")
-    .update({ purchaseddeckids, purchaseinfo })
-    .eq("id", userId);
-
   if (error) throw error;
+  return data.balance;
 };
 
 export const getPurchaseDate = async (

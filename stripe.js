@@ -12,8 +12,17 @@ if (!process.env.STRIPE_SECRET_KEY) {
 
 // Initialize the Stripe client
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2024-04-10",
+  apiVersion: "2023-10-16",
 });
+
+// Import the purchaseDeck function
+const { createClient } = require("@supabase/supabase-js");
+
+// Initialize Supabase client
+const supabase = createClient(
+  process.env.VITE_SUPABASE_URL,
+  process.env.VITE_SUPABASE_ANON_KEY,
+);
 
 // Create a checkout session
 router.post("/create-checkout-session", async (req, res) => {
@@ -44,6 +53,7 @@ router.post("/create-checkout-session", async (req, res) => {
       metadata: {
         deckId,
         userId,
+        price: price.toString(), // Store original price in metadata
       },
     });
 
@@ -73,7 +83,7 @@ router.post(
       event = stripe.webhooks.constructEvent(
         req.body,
         sig,
-        process.env.STRIPE_WEBHOOK_SECRET
+        process.env.STRIPE_WEBHOOK_SECRET,
       );
     } catch (err) {
       console.error("Webhook signature verification failed:", err);
@@ -85,13 +95,34 @@ router.post(
       const session = event.data.object;
       try {
         // Extract the deck and user IDs from session metadata
-        const { deckId, userId } = session.metadata;
+        const { deckId, userId, price } = session.metadata;
+        const amount = parseFloat(price); // Use the original price from metadata
 
-        // Example: update the purchase in your database
-        // await purchaseDeck(userId, deckId);
+        // Update the purchase in the database using the RPC function
+        const { error } = await supabase.rpc("add_purchase_record", {
+          p_deck_id: deckId,
+          p_buyer_id: userId,
+          p_amount: amount,
+        });
+
+        if (error) {
+          console.error("Error updating purchase record:", error);
+          return res.status(500).send("Failed to update purchase record");
+        }
+
+        // Update the user's purchased decks list
+        const { error: purchaseError } = await supabase.rpc("purchase_deck", {
+          p_user_id: userId,
+          p_deck_id: deckId,
+        });
+
+        if (purchaseError) {
+          console.error("Error updating purchased decks:", purchaseError);
+          return res.status(500).send("Failed to update purchased decks");
+        }
 
         console.log(
-          `Successfully processed purchase for deck ${deckId} by user ${userId}`
+          `Successfully processed purchase for deck ${deckId} by user ${userId}`,
         );
       } catch (error) {
         console.error("Error processing purchase:", error);
@@ -100,7 +131,7 @@ router.post(
     }
 
     res.json({ received: true });
-  }
+  },
 );
 
 // Export the router to be used in server.js

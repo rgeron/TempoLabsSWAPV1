@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
-import { getFlashcards } from "@/lib/api/decks";
+import { getFlashcards, getUserBalance, purchaseDeck } from "@/lib/api/decks";
 import { useAuth } from "@/lib/auth";
 import type { BuyDeckDialogProps, FlashCard } from "@/types/marketplace";
 import { Loader2 } from "lucide-react";
@@ -27,6 +27,7 @@ export const BuyDeckDialog = ({
   const [flashcards, setFlashcards] = useState<FlashCard[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isPurchasing, setIsPurchasing] = useState(false);
+  const [userBalance, setUserBalance] = useState<number>(0);
 
   useEffect(() => {
     const loadFlashcards = async () => {
@@ -53,7 +54,25 @@ export const BuyDeckDialog = ({
     }
   }, [isOpen, selectedTab, deck.id, deck.creatorid, toast]);
 
-  const initiateCheckout = async () => {
+  // Load user balance when dialog opens
+  useEffect(() => {
+    const loadUserBalance = async () => {
+      if (user) {
+        try {
+          const balance = await getUserBalance(user.id);
+          setUserBalance(balance);
+        } catch (error) {
+          console.error("Error loading user balance:", error);
+        }
+      }
+    };
+
+    if (isOpen) {
+      loadUserBalance();
+    }
+  }, [isOpen, user]);
+
+  const handlePurchase = async () => {
     if (!user) {
       toast({
         title: "Sign in required",
@@ -66,33 +85,38 @@ export const BuyDeckDialog = ({
     try {
       setIsPurchasing(true);
 
-      const response = await fetch(
-        "http://localhost:5001/api/create-checkout-session",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            deckId: deck.id,
-            userId: user.id,
-            deckTitle: deck.title,
-            price: deck.price,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to create checkout session");
+      // Validate price
+      if (!deck.price || deck.price <= 0) {
+        throw new Error("Invalid price");
       }
 
-      const { url } = await response.json();
-      window.location.href = url;
+      // Check if user has enough balance
+      if (userBalance < deck.price) {
+        toast({
+          title: "Insufficient balance",
+          description: `You need $${(deck.price - userBalance).toFixed(2)} more to purchase this deck. Please refill your balance.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Process the purchase
+      await purchaseDeck(user.id, deck.id, deck.price);
+
+      toast({
+        title: "Purchase successful",
+        description: "The deck has been added to your library",
+      });
+
+      // Update local balance
+      setUserBalance((prev) => prev - deck.price);
+
+      onClose();
     } catch (error) {
       console.error("Purchase error:", error);
       toast({
         title: "Purchase failed",
-        description: "There was an error initiating the checkout process",
+        description: "There was an error processing your purchase",
         variant: "destructive",
       });
     } finally {
@@ -144,24 +168,29 @@ export const BuyDeckDialog = ({
           </div>
         </Tabs>
 
-        <div className="flex justify-end space-x-4 pt-4 border-t">
-          <Button variant="outline" onClick={onClose} disabled={isPurchasing}>
-            Cancel
-          </Button>
-          <Button
-            onClick={initiateCheckout}
-            className="bg-[#2B4C7E] text-white hover:bg-[#1A365D]"
-            disabled={isPurchasing}
-          >
-            {isPurchasing ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              `Purchase for $${deck.price.toFixed(2)}`
-            )}
-          </Button>
+        <div className="flex justify-between items-center space-x-4 pt-4 border-t">
+          <div className="text-sm text-gray-500">
+            Your balance: ${userBalance.toFixed(2)}
+          </div>
+          <div className="flex space-x-4">
+            <Button variant="outline" onClick={onClose} disabled={isPurchasing}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handlePurchase}
+              className="bg-[#2B4C7E] text-white hover:bg-[#1A365D]"
+              disabled={isPurchasing}
+            >
+              {isPurchasing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                `Purchase for $${deck.price.toFixed(2)}`
+              )}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
