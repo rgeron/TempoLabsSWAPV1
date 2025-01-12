@@ -27,9 +27,9 @@ const supabase = createClient(
 // Create a checkout session
 router.post("/create-checkout-session", async (req, res) => {
   try {
-    const { deckId, userId, deckTitle, price } = req.body;
+    const { userId, deckTitle, price } = req.body;
 
-    if (!deckId || !userId || !deckTitle || !price) {
+    if (!userId || !price) {
       throw new Error("Missing required parameters");
     }
 
@@ -40,7 +40,7 @@ router.post("/create-checkout-session", async (req, res) => {
           price_data: {
             currency: "usd",
             product_data: {
-              name: deckTitle,
+              name: deckTitle || "Balance Recharge",
             },
             unit_amount: Math.round(price * 100), // Convert dollars to cents
           },
@@ -51,9 +51,9 @@ router.post("/create-checkout-session", async (req, res) => {
       success_url: `${process.env.CLIENT_URL}/app/purchase-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.CLIENT_URL}/app/purchase-cancelled`,
       metadata: {
-        deckId,
         userId,
-        price: price.toString(), // Store original price in metadata
+        isRecharge: "true",
+        amount: price.toString(),
       },
     });
 
@@ -94,43 +94,32 @@ router.post(
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
       try {
-        // Extract the deck and user IDs from session metadata
-        const { deckId, userId, price } = session.metadata;
-        const amount = parseFloat(price); // Use the original price from metadata
+        const { userId, isRecharge, amount } = session.metadata;
+        const amountInDollars = parseFloat(amount);
 
-        // Update the purchase in the database using the RPC function
-        const { error } = await supabase.rpc("add_purchase_record", {
-          p_deck_id: deckId,
-          p_buyer_id: userId,
-          p_amount: amount,
-        });
+        if (isRecharge === "true") {
+          // Handle balance recharge
+          const { error: balanceError } = await supabase
+            .from("profiles")
+            .update({ balance: supabase.sql`balance + ${amountInDollars}` })
+            .eq("id", userId);
 
-        if (error) {
-          console.error("Error updating purchase record:", error);
-          return res.status(500).send("Failed to update purchase record");
+          if (balanceError) {
+            console.error("Error updating balance:", balanceError);
+            return res.status(500).send("Failed to update balance");
+          }
+
+          console.log(
+            `Successfully recharged balance for user ${userId} with amount $${amountInDollars}`,
+          );
         }
 
-        // Update the user's purchased decks list
-        const { error: purchaseError } = await supabase.rpc("purchase_deck", {
-          p_user_id: userId,
-          p_deck_id: deckId,
-        });
-
-        if (purchaseError) {
-          console.error("Error updating purchased decks:", purchaseError);
-          return res.status(500).send("Failed to update purchased decks");
-        }
-
-        console.log(
-          `Successfully processed purchase for deck ${deckId} by user ${userId}`,
-        );
+        res.json({ received: true });
       } catch (error) {
-        console.error("Error processing purchase:", error);
-        return res.status(500).send("Failed to process purchase");
+        console.error("Error processing webhook:", error);
+        return res.status(500).send("Failed to process webhook");
       }
     }
-
-    res.json({ received: true });
   },
 );
 

@@ -10,10 +10,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Search, Bell, Settings, LogOut, Wallet } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
 import { getUserBalance } from "@/lib/api/balance";
 import { SettingsModal } from "../auth/SettingsModal";
+import { RechargeDialog } from "../auth/RechargeDialog";
 
 const TopNav = () => {
   const [showSettings, setShowSettings] = useState(false);
@@ -21,6 +23,7 @@ const TopNav = () => {
   const [userBalance, setUserBalance] = useState<number>(0);
   const { signOut, user, profile } = useAuth();
   const navigate = useNavigate();
+  const [showRecharge, setShowRecharge] = useState(false);
 
   useEffect(() => {
     const loadUserBalance = async () => {
@@ -105,9 +108,14 @@ const TopNav = () => {
                   <span className="text-sm font-medium text-[#2B4C7E]">
                     {profile?.username || user?.email}
                   </span>
-                  <span className="text-xs text-[#2B4C7E]/70">
-                    ${userBalance.toFixed(2)}
-                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowRecharge(true)}
+                    className="text-xs text-[#2B4C7E]/70 p-0 h-auto hover:bg-transparent"
+                  >
+                    Balance: ${userBalance.toFixed(2)}
+                  </Button>
                 </div>
               </div>
             </DropdownMenuTrigger>
@@ -146,6 +154,11 @@ const TopNav = () => {
       <SettingsModal
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
+      />
+
+      <RechargeDialog
+        isOpen={showRecharge}
+        onClose={() => setShowRecharge(false)}
       />
     </>
   );
