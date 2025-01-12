@@ -1,6 +1,7 @@
 import type { Deck, DeckWithProfile } from "@/types/marketplace";
 import { supabase } from "../supabase";
 import { uploadFlashcardsFile } from "./flashcards";
+import { transferBalance } from "./balance";
 
 export const createDeck = async (
   deck: Partial<Deck>,
@@ -85,13 +86,45 @@ export const deleteDeck = async (deckId: string): Promise<void> => {
   if (error) throw error;
 };
 
+const recordPurchase = async (
+  deckId: string,
+  buyerId: string,
+  amount: number,
+): Promise<void> => {
+  // First get current purchase history
+  const { data: deck, error: fetchError } = await supabase
+    .from("decks")
+    .select("purchase_history")
+    .eq("id", deckId)
+    .single();
+
+  if (fetchError) throw fetchError;
+
+  // Create new purchase record
+  const newPurchase = {
+    buyerId,
+    purchaseDate: new Date().toISOString(),
+    amount,
+  };
+
+  // Update with new purchase history
+  const { error: updateError } = await supabase
+    .from("decks")
+    .update({
+      purchase_history: [...(deck?.purchase_history || []), newPurchase],
+    })
+    .eq("id", deckId);
+
+  if (updateError) throw updateError;
+};
+
 export const purchaseDeck = async (
   userId: string,
   deckId: string,
   amount: number,
 ): Promise<void> => {
   try {
-    // Get deck and creator info
+    // First get deck info to get creator ID
     const { data: deck, error: deckError } = await supabase
       .from("decks")
       .select("creatorid, purchase_history")
@@ -101,84 +134,45 @@ export const purchaseDeck = async (
     if (deckError) throw deckError;
     if (!deck) throw new Error("Deck not found");
 
-    // Get buyer's current balance
-    const { data: buyer, error: buyerError } = await supabase
+    // Check if already purchased
+    const isPurchased = deck.purchase_history?.some(
+      (purchase) => purchase.buyerId === userId,
+    );
+    if (isPurchased) {
+      throw new Error("You have already purchased this deck");
+    }
+
+    // Get the creator ID from the deck and transfer the balance
+    const sellerId = deck.creatorid;
+    if (!sellerId) throw new Error("Creator ID not found");
+
+    await transferBalance(userId, sellerId, amount);
+
+    // Record purchase in deck's history
+    await recordPurchase(deckId, userId, amount);
+
+    // Get current user profile
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("balance, purchaseddeckids, purchaseinfo")
+      .select("purchaseddeckids, purchaseinfo")
       .eq("id", userId)
       .single();
 
-    if (buyerError) throw buyerError;
-    if (!buyer) throw new Error("Buyer profile not found");
+    if (profileError) throw profileError;
 
-    // Check if already purchased
-    if (buyer.purchaseddeckids?.includes(deckId)) {
-      throw new Error("Deck already purchased");
-    }
-
-    // Check sufficient balance
-    if ((buyer.balance || 0) < amount) {
-      throw new Error(
-        `Insufficient balance. Required: ${amount}, Available: ${buyer.balance}`,
-      );
-    }
-
-    // Get seller's current balance
-    const { data: seller, error: sellerError } = await supabase
-      .from("profiles")
-      .select("balance")
-      .eq("id", deck.creatorid)
-      .single();
-
-    if (sellerError) throw sellerError;
-    if (!seller) throw new Error("Seller profile not found");
-
-    // Update buyer's balance and purchased decks
-    const { error: buyerUpdateError } = await supabase
+    // Update user's purchased decks list
+    const { error: updateError } = await supabase
       .from("profiles")
       .update({
-        balance: (buyer.balance || 0) - amount,
-        purchaseddeckids: [...(buyer.purchaseddeckids || []), deckId],
+        purchaseddeckids: [...(profile?.purchaseddeckids || []), deckId],
         purchaseinfo: [
-          ...(buyer.purchaseinfo || []),
-          {
-            deckId,
-            purchaseDate: new Date().toISOString(),
-          },
+          ...(profile?.purchaseinfo || []),
+          { deckId, purchaseDate: new Date().toISOString() },
         ],
       })
       .eq("id", userId);
 
-    if (buyerUpdateError) throw buyerUpdateError;
-
-    // Update seller's balance
-    const { error: sellerUpdateError } = await supabase
-      .from("profiles")
-      .update({
-        balance: (seller.balance || 0) + amount,
-      })
-      .eq("id", deck.creatorid);
-
-    if (sellerUpdateError) throw sellerUpdateError;
-
-    // Update deck's purchase history
-    const newPurchaseHistory = [
-      ...(deck.purchase_history || []),
-      {
-        buyerId: userId,
-        purchaseDate: new Date().toISOString(),
-        amount,
-      },
-    ];
-
-    const { error: deckUpdateError } = await supabase
-      .from("decks")
-      .update({
-        purchase_history: newPurchaseHistory,
-      })
-      .eq("id", deckId);
-
-    if (deckUpdateError) throw deckUpdateError;
+    if (updateError) throw updateError;
   } catch (error) {
     console.error("Error in purchaseDeck:", error);
     throw error;
@@ -213,22 +207,5 @@ export const downloadFlashcardsFile = async (
   } catch (error) {
     console.error("Error downloading flashcards file:", error);
     throw error;
-  }
-};
-
-export const getFlashcards = async (deckId: string, creatorId: string) => {
-  try {
-    const fileContent = await downloadFlashcardsFile(deckId, creatorId);
-    const lines = fileContent
-      .split("\n")
-      .filter((line) => line.trim() && !line.startsWith("#"));
-
-    return lines.map((line) => {
-      const [front, back] = line.split("|").map((part) => part.trim());
-      return { front, back };
-    });
-  } catch (error) {
-    console.error("Error getting flashcards:", error);
-    return [];
   }
 };
