@@ -144,15 +144,18 @@ export const BuyDeckDialog = ({
       const amountToRecharge = deck.price - userBalance;
 
       // Create Stripe checkout session
-      const response = await fetch("/api/create-checkout-session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: user.id,
-          deckTitle: `Balance recharge for ${deck.title}`,
-          amount: amountToRecharge,
-        }),
-      });
+      const response = await fetch(
+        "http://localhost:5001/api/create-checkout-session",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: user.id,
+            deckTitle: `Balance recharge for ${deck.title}`,
+            amount: amountToRecharge,
+          }),
+        }
+      );
 
       const { url } = await response.json();
 

@@ -3,6 +3,7 @@ const express = require("express");
 const Stripe = require("stripe");
 
 const router = express.Router();
+router.use(express.json());
 
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error("Missing Stripe secret key in environment variables");
@@ -25,7 +26,7 @@ router.post("/create-checkout-session", async (req, res) => {
     const { userId, amount } = req.body;
 
     if (!userId || !amount) {
-      throw new Error("Missing required parameters");
+      throw new Error("Missing required parameters: userId and amount are required");
     }
 
     const session = await stripe.checkout.sessions.create({
