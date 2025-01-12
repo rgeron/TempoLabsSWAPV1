@@ -108,14 +108,15 @@ const TopNav = () => {
                   <span className="text-sm font-medium text-[#2B4C7E]">
                     {profile?.username || user?.email}
                   </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowRecharge(true)}
-                    className="text-xs text-[#2B4C7E]/70 p-0 h-auto hover:bg-transparent"
+                  <div
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowRecharge(true);
+                    }}
+                    className="text-xs text-[#2B4C7E]/70 cursor-pointer hover:text-[#2B4C7E] flex items-center gap-1"
                   >
-                    Balance: ${userBalance.toFixed(2)}
-                  </Button>
+                    <Wallet className="h-3 w-3" />${userBalance.toFixed(2)}
+                  </div>
                 </div>
               </div>
             </DropdownMenuTrigger>
@@ -127,7 +128,13 @@ const TopNav = () => {
                 {profile?.username || user?.email}
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-[#E6F3FF]" />
-              <DropdownMenuItem className="text-[#2B4C7E] focus:bg-[#E6F3FF] focus:text-[#2B4C7E]">
+              <DropdownMenuItem
+                className="text-[#2B4C7E] focus:bg-[#E6F3FF] focus:text-[#2B4C7E] cursor-pointer"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setShowRecharge(true);
+                }}
+              >
                 <Wallet className="mr-2 h-4 w-4" />
                 <span>Balance: ${userBalance.toFixed(2)}</span>
               </DropdownMenuItem>
