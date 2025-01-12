@@ -4,7 +4,7 @@ import { uploadFlashcardsFile } from "./flashcards";
 
 export const createDeck = async (
   deck: Partial<Deck>,
-  file: File
+  file: File,
 ): Promise<Deck> => {
   try {
     // First create the deck to get its ID
@@ -22,7 +22,7 @@ export const createDeck = async (
     const { publicUrl } = await uploadFlashcardsFile(
       file,
       deck.creatorid,
-      newDeck.id
+      newDeck.id,
     );
 
     // Update the deck with the file URL
@@ -85,67 +85,150 @@ export const deleteDeck = async (deckId: string): Promise<void> => {
   if (error) throw error;
 };
 
-export const recordPurchase = async (
-  deckId: string,
-  buyerId: string,
-  amount: number
-): Promise<void> => {
-  const purchaseRecord = {
-    date: new Date().toISOString(),
-    buyerId,
-    amount,
-  };
-
-  const { error } = await supabase.rpc("record_deck_purchase", {
-    p_deck_id: deckId,
-    p_purchase_record: purchaseRecord,
-  });
-
-  if (error) throw error;
-};
-
 export const purchaseDeck = async (
   userId: string,
   deckId: string,
-  amount: number
+  amount: number,
 ): Promise<void> => {
   try {
-    const purchaseDate = new Date().toISOString();
+    // Get deck and creator info
+    const { data: deck, error: deckError } = await supabase
+      .from("decks")
+      .select("creatorid, purchase_history")
+      .eq("id", deckId)
+      .single();
 
-    // Call the database function to handle the purchase
-    const { error } = await supabase.rpc("process_deck_purchase", {
-      p_buyer_id: userId,
-      p_deck_id: deckId,
-      p_amount: amount,
-      p_purchase_date: purchaseDate,
-    });
+    if (deckError) throw deckError;
+    if (!deck) throw new Error("Deck not found");
 
-    if (error) {
-      console.error("Error processing deck purchase:", error);
-      throw new Error("Deck purchase failed. Please try again.");
+    // Get buyer's current balance
+    const { data: buyer, error: buyerError } = await supabase
+      .from("profiles")
+      .select("balance, purchaseddeckids, purchaseinfo")
+      .eq("id", userId)
+      .single();
+
+    if (buyerError) throw buyerError;
+    if (!buyer) throw new Error("Buyer profile not found");
+
+    // Check if already purchased
+    if (buyer.purchaseddeckids?.includes(deckId)) {
+      throw new Error("Deck already purchased");
     }
+
+    // Check sufficient balance
+    if ((buyer.balance || 0) < amount) {
+      throw new Error(
+        `Insufficient balance. Required: ${amount}, Available: ${buyer.balance}`,
+      );
+    }
+
+    // Get seller's current balance
+    const { data: seller, error: sellerError } = await supabase
+      .from("profiles")
+      .select("balance")
+      .eq("id", deck.creatorid)
+      .single();
+
+    if (sellerError) throw sellerError;
+    if (!seller) throw new Error("Seller profile not found");
+
+    // Update buyer's balance and purchased decks
+    const { error: buyerUpdateError } = await supabase
+      .from("profiles")
+      .update({
+        balance: (buyer.balance || 0) - amount,
+        purchaseddeckids: [...(buyer.purchaseddeckids || []), deckId],
+        purchaseinfo: [
+          ...(buyer.purchaseinfo || []),
+          {
+            deckId,
+            purchaseDate: new Date().toISOString(),
+          },
+        ],
+      })
+      .eq("id", userId);
+
+    if (buyerUpdateError) throw buyerUpdateError;
+
+    // Update seller's balance
+    const { error: sellerUpdateError } = await supabase
+      .from("profiles")
+      .update({
+        balance: (seller.balance || 0) + amount,
+      })
+      .eq("id", deck.creatorid);
+
+    if (sellerUpdateError) throw sellerUpdateError;
+
+    // Update deck's purchase history
+    const newPurchaseHistory = [
+      ...(deck.purchase_history || []),
+      {
+        buyerId: userId,
+        purchaseDate: new Date().toISOString(),
+        amount,
+      },
+    ];
+
+    const { error: deckUpdateError } = await supabase
+      .from("decks")
+      .update({
+        purchase_history: newPurchaseHistory,
+      })
+      .eq("id", deckId);
+
+    if (deckUpdateError) throw deckUpdateError;
   } catch (error) {
     console.error("Error in purchaseDeck:", error);
     throw error;
   }
 };
 
-export const getPurchaseDate = async (
-  userId: string,
-  deckId: string
-): Promise<string | null> => {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("purchaseinfo")
-    .eq("id", userId)
-    .single();
+export const downloadFlashcardsFile = async (
+  deckId: string,
+  creatorId: string,
+): Promise<string> => {
+  try {
+    // First get the deck to get the file URL
+    const { data: deck, error: deckError } = await supabase
+      .from("decks")
+      .select("flashcards_file_url")
+      .eq("id", deckId)
+      .eq("creatorid", creatorId)
+      .single();
 
-  if (error) throw error;
+    if (deckError) throw deckError;
+    if (!deck?.flashcards_file_url)
+      throw new Error("Flashcards file not found");
 
-  const purchaseInfo = data?.purchaseinfo as Array<{
-    deckId: string;
-    purchaseDate: string;
-  }>;
-  const purchase = purchaseInfo?.find((p) => p.deckId === deckId);
-  return purchase?.purchaseDate || null;
+    // Download the file content
+    const response = await fetch(deck.flashcards_file_url);
+    if (!response.ok) {
+      throw new Error(`Failed to download file: ${response.statusText}`);
+    }
+
+    const content = await response.text();
+    return content;
+  } catch (error) {
+    console.error("Error downloading flashcards file:", error);
+    throw error;
+  }
+};
+
+export const getFlashcards = async (deckId: string, creatorId: string) => {
+  try {
+    const fileContent = await downloadFlashcardsFile(deckId, creatorId);
+    const lines = fileContent
+      .split("\n")
+      .filter((line) => line.trim() && !line.startsWith("#"));
+
+    return lines.map((line) => {
+      const [front, back] = line.split("|").map((part) => part.trim());
+      return { front, back };
+    });
+  } catch (error) {
+    console.error("Error getting flashcards:", error);
+    return [];
+  }
 };
