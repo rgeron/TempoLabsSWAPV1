@@ -7,6 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/auth";
 import { Loader2 } from "lucide-react";
@@ -23,12 +24,15 @@ export function RechargeDialog({ isOpen, onClose }: RechargeDialogProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
+  const [customAmount, setCustomAmount] = useState<string>("");
 
   const handleRecharge = async () => {
-    if (!user || !selectedAmount) {
+    const amount = selectedAmount || parseFloat(customAmount);
+
+    if (!user || !amount || isNaN(amount) || amount <= 0) {
       toast({
         title: "Error",
-        description: "Please select an amount to recharge",
+        description: "Please enter a valid amount to recharge",
         variant: "destructive",
       });
       return;
@@ -43,8 +47,8 @@ export function RechargeDialog({ isOpen, onClose }: RechargeDialogProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: user.id,
-          deckTitle: `Balance recharge ($${selectedAmount})`,
-          price: selectedAmount,
+          deckTitle: `Balance recharge ($${amount}`,
+          price: amount,
         }),
       });
 
@@ -71,13 +75,28 @@ export function RechargeDialog({ isOpen, onClose }: RechargeDialogProps) {
     }
   };
 
+  const handleCustomAmountChange = (value: string) => {
+    // Clear selected preset amount
+    setSelectedAmount(null);
+    // Only allow numbers and one decimal point
+    const regex = /^\d*\.?\d{0,2}$/;
+    if (regex.test(value) || value === "") {
+      setCustomAmount(value);
+    }
+  };
+
+  const handlePresetAmountClick = (amount: number) => {
+    setSelectedAmount(amount);
+    setCustomAmount(""); // Clear custom amount
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Recharge Balance</DialogTitle>
           <DialogDescription>
-            Select an amount to add to your balance
+            Select an amount or enter a custom value to add to your balance
           </DialogDescription>
         </DialogHeader>
 
@@ -87,11 +106,27 @@ export function RechargeDialog({ isOpen, onClose }: RechargeDialogProps) {
               key={amount}
               variant={selectedAmount === amount ? "default" : "outline"}
               className={selectedAmount === amount ? "bg-[#2B4C7E]" : ""}
-              onClick={() => setSelectedAmount(amount)}
+              onClick={() => handlePresetAmountClick(amount)}
             >
               ${amount}
             </Button>
           ))}
+        </div>
+
+        <div className="space-y-2">
+          <div className="text-sm text-gray-500">Or enter a custom amount:</div>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+              $
+            </span>
+            <Input
+              type="text"
+              value={customAmount}
+              onChange={(e) => handleCustomAmountChange(e.target.value)}
+              className="pl-6"
+              placeholder="Enter amount"
+            />
+          </div>
         </div>
 
         <div className="flex justify-end space-x-4 pt-4 border-t">
@@ -100,7 +135,11 @@ export function RechargeDialog({ isOpen, onClose }: RechargeDialogProps) {
           </Button>
           <Button
             onClick={handleRecharge}
-            disabled={!selectedAmount || isLoading}
+            disabled={
+              isLoading ||
+              (!selectedAmount &&
+                (!customAmount || parseFloat(customAmount) <= 0))
+            }
             className="bg-[#2B4C7E] text-white hover:bg-[#1A365D]"
           >
             {isLoading ? (
@@ -109,7 +148,7 @@ export function RechargeDialog({ isOpen, onClose }: RechargeDialogProps) {
                 Processing...
               </>
             ) : (
-              `Recharge $${selectedAmount || 0}`
+              `Recharge $${selectedAmount || customAmount || 0}`
             )}
           </Button>
         </div>
