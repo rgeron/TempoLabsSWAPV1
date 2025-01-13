@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState, FormEvent, useEffect } from "react";
 import { Loader2, Upload, Image as ImageIcon, X } from "lucide-react";
 import {
   Dialog,
@@ -17,6 +17,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { createDeck } from "@/lib/api/decks";
+import { LocalizedEducationCategories } from "./LocalizedEducationCategories";
 
 interface AddDeckDialogProps {
   isOpen: boolean;
@@ -316,35 +317,55 @@ const AddDeckDialog = ({
                             <span>{categoryGroup.icon}</span>
                             {categoryGroup.name}
                           </h4>
-                          <div className="grid grid-cols-2 gap-2">
-                            {categoryGroup.subcategories.map((category) => (
-                              <div
-                                key={category}
-                                className={`flex items-center space-x-2 p-2 rounded-md ${categoryGroup.gradient} transition-colors duration-200 ${categoryGroup.hoverGradient}`}
-                              >
-                                <Checkbox
-                                  id={`category-${category}`}
-                                  name="categories"
-                                  value={category}
-                                  checked={selectedCategories.includes(
+                          {categoryGroup.name === "Education" ? (
+                            <LocalizedEducationCategories
+                              onSelect={(category) => {
+                                // Si la catégorie est déjà sélectionnée, la retirer
+                                if (selectedCategories.includes(category)) {
+                                  setSelectedCategories((prev) =>
+                                    prev.filter((c) => c !== category),
+                                  );
+                                } else {
+                                  // Sinon, l'ajouter
+                                  setSelectedCategories((prev) => [
+                                    ...prev,
                                     category,
-                                  )}
-                                  onCheckedChange={(checked) =>
-                                    handleCategoryChange(
-                                      category,
-                                      checked as boolean,
-                                    )
-                                  }
-                                />
-                                <label
-                                  htmlFor={`category-${category}`}
-                                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer select-none"
+                                  ]);
+                                }
+                              }}
+                              className="w-full"
+                            />
+                          ) : (
+                            <div className="grid grid-cols-2 gap-2">
+                              {categoryGroup.subcategories.map((category) => (
+                                <div
+                                  key={category}
+                                  className={`flex items-center space-x-2 p-2 rounded-md ${categoryGroup.gradient} transition-colors duration-200 ${categoryGroup.hoverGradient}`}
                                 >
-                                  {category}
-                                </label>
-                              </div>
-                            ))}
-                          </div>
+                                  <Checkbox
+                                    id={`category-${category}`}
+                                    name="categories"
+                                    value={category}
+                                    checked={selectedCategories.includes(
+                                      category,
+                                    )}
+                                    onCheckedChange={(checked) =>
+                                      handleCategoryChange(
+                                        category,
+                                        checked as boolean,
+                                      )
+                                    }
+                                  />
+                                  <label
+                                    htmlFor={`category-${category}`}
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer select-none"
+                                  >
+                                    {category}
+                                  </label>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
