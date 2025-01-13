@@ -10,7 +10,9 @@ import {
 import { useNavigate } from "react-router-dom";
 import { supabase } from "./supabase";
 
-type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+type Profile = Database["public"]["Tables"]["profiles"]["Row"] & {
+  country?: string;
+};
 
 type AuthContextType = {
   user: User | null;
@@ -88,6 +90,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const signOut = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      navigate("/");
+    } catch (error) {
+      console.error("Error signing out:", error);
+      throw error;
+    }
+  };
+
   const signUp = async (email: string, password: string, username: string) => {
     try {
       // Check if username is already taken
@@ -105,7 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error("Username is already taken");
       }
 
-      // First sign up the user
+      // Sign up the user with metadata
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -119,28 +132,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (authError) throw authError;
       if (!authData.user) throw new Error("No user returned from sign up");
 
-      // Check if profile already exists
-      const { data: existingProfile } = await supabase
-        .from("profiles")
-        .select()
-        .eq("id", authData.user.id)
-        .single();
+      // Wait for Supabase's trigger to create the profile
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      if (existingProfile) {
-        setUser(authData.user);
-        setProfile(existingProfile);
-        navigate("/app/home");
-        return;
-      }
-
-      // If no profile exists, create one
-      const { error: profileError } = await supabase.rpc("create_new_profile", {
-        user_id: authData.user.id,
-        user_username: username,
-      });
-
-      if (profileError) throw profileError;
-
+      // Set the user and fetch their profile
       setUser(authData.user);
       await fetchProfile(authData.user.id);
       navigate("/app/home");
@@ -182,143 +177,86 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await fetchProfile(user.id);
   };
 
-  const updateLikedDecks = useCallback(
-    async (deckId: string, isLiking: boolean) => {
-      if (!user || !profile) throw new Error("Not authenticated");
+  const updateLikedDecks = async (deckId: string, isLiking: boolean) => {
+    if (!user) throw new Error("Not authenticated");
 
-      try {
-        let newLikedDeckIds: string[];
+    const { data: currentProfile, error: fetchError } = await supabase
+      .from("profiles")
+      .select("likeddeckids")
+      .eq("id", user.id)
+      .single();
 
-        if (isLiking) {
-          // Add the deck to liked decks
-          newLikedDeckIds = [...(profile.likeddeckids || []), deckId];
-        } else {
-          // Remove the deck from liked decks
-          newLikedDeckIds = (profile.likeddeckids || []).filter(
-            (id) => id !== deckId,
-          );
-        }
+    if (fetchError) throw fetchError;
 
-        const { error } = await supabase
-          .from("profiles")
-          .update({ likeddeckids: newLikedDeckIds })
-          .eq("id", user.id);
+    const currentLikedDecks = currentProfile?.likeddeckids || [];
+    const newLikedDecks = isLiking
+      ? [...currentLikedDecks, deckId]
+      : currentLikedDecks.filter((id) => id !== deckId);
 
-        if (error) throw error;
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({ likeddeckids: newLikedDecks })
+      .eq("id", user.id);
 
-        // Update local profile state
-        setProfile((prev) =>
-          prev
-            ? {
-                ...prev,
-                likeddeckids: newLikedDeckIds,
-              }
-            : null,
-        );
-      } catch (error) {
-        console.error("Error updating liked decks:", error);
-        throw error;
-      }
-    },
-    [user, profile],
-  );
+    if (updateError) throw updateError;
 
-  const updateFollowedCreators = useCallback(
-    async (creatorId: string, isFollowing: boolean) => {
-      if (!user || !profile) throw new Error("Not authenticated");
+    // Refresh the profile
+    await fetchProfile(user.id);
+  };
 
-      try {
-        let newFollowedCreators: string[];
+  const updateFollowedCreators = async (
+    creatorId: string,
+    isFollowing: boolean,
+  ) => {
+    if (!user) throw new Error("Not authenticated");
 
-        if (isFollowing) {
-          // Add the creator to followed creators
-          newFollowedCreators = [
-            ...(profile.followedcreators || []),
-            creatorId,
-          ];
-        } else {
-          // Remove the creator from followed creators
-          newFollowedCreators = (profile.followedcreators || []).filter(
-            (id) => id !== creatorId,
-          );
-        }
+    const { data: currentProfile, error: fetchError } = await supabase
+      .from("profiles")
+      .select("followedcreators")
+      .eq("id", user.id)
+      .single();
 
-        // Update backend
-        const { error } = await supabase
-          .from("profiles")
-          .update({ followedcreators: newFollowedCreators })
-          .eq("id", user.id);
+    if (fetchError) throw fetchError;
 
-        if (error) throw error;
+    const currentFollowed = currentProfile?.followedcreators || [];
+    const newFollowed = isFollowing
+      ? [...currentFollowed, creatorId]
+      : currentFollowed.filter((id) => id !== creatorId);
 
-        // Update local profile state
-        setProfile((prev) =>
-          prev
-            ? {
-                ...prev,
-                followedcreators: newFollowedCreators,
-              }
-            : null,
-        );
-      } catch (error) {
-        console.error("Error updating followed creators:", error);
-        throw error;
-      }
-    },
-    [user, profile],
-  );
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({ followedcreators: newFollowed })
+      .eq("id", user.id);
 
-  const updatePurchasedDecks = useCallback(
-    async (deckId: string) => {
-      if (!user || !profile) throw new Error("Not authenticated");
+    if (updateError) throw updateError;
 
-      try {
-        const purchaseDate = new Date().toISOString();
-        const newPurchasedDeckIds = [
-          ...(profile.purchaseddeckids || []),
-          deckId,
-        ];
-        const newPurchaseInfo = [
-          ...(profile.purchaseinfo || []),
-          { deckId, purchaseDate },
-        ];
+    // Refresh the profile
+    await fetchProfile(user.id);
+  };
 
-        // Optimistically update local state
-        setProfile((prev) =>
-          prev
-            ? {
-                ...prev,
-                purchaseddeckids: newPurchasedDeckIds,
-                purchaseinfo: newPurchaseInfo,
-              }
-            : null,
-        );
+  const updatePurchasedDecks = async (deckId: string) => {
+    if (!user) throw new Error("Not authenticated");
 
-        // Update backend
-        const { error } = await supabase
-          .from("profiles")
-          .update({
-            purchaseddeckids: newPurchasedDeckIds,
-            purchaseinfo: newPurchaseInfo,
-          })
-          .eq("id", user.id);
+    const { data: currentProfile, error: fetchError } = await supabase
+      .from("profiles")
+      .select("purchaseddeckids")
+      .eq("id", user.id)
+      .single();
 
-        if (error) throw error;
-      } catch (error) {
-        console.error("Error updating purchased decks:", error);
-        // Revert optimistic update on error
-        await fetchProfile(user.id);
-        throw error;
-      }
-    },
-    [user, profile, fetchProfile],
-  );
+    if (fetchError) throw fetchError;
 
-  const signOut = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setProfile(null);
-    navigate("/");
+    const currentPurchased = currentProfile?.purchaseddeckids || [];
+    const newPurchased = [...currentPurchased, deckId];
+
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({ purchaseddeckids: newPurchased })
+      .eq("id", user.id);
+
+    if (updateError) throw updateError;
+
+    // Refresh the profile
+    await fetchProfile(user.id);
   };
 
   const value = {

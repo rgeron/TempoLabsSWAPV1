@@ -14,6 +14,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Check, Image } from "lucide-react";
+import { CountrySelector } from "@/components/settings/CountrySelector";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -33,6 +34,9 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [selectedAvatar, setSelectedAvatar] = useState<string | null>(
     profile?.avatar_url || null,
   );
+  const [selectedCountry, setSelectedCountry] = useState<string | null>(
+    profile?.country || null,
+  );
 
   const { toast } = useToast();
 
@@ -50,6 +54,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       await updateProfile({
         username: newUsername,
         avatar_url: selectedAvatar || profile?.avatar_url,
+        country: selectedCountry || profile?.country,
       });
 
       toast({
@@ -164,10 +169,13 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   pattern="^[a-zA-Z0-9_-]+$"
                   title="Username can only contain letters, numbers, underscores, and hyphens"
                 />
-                <p className="text-sm text-gray-500">
-                  Username must be between 3 and 20 characters and can only
-                  contain letters, numbers, underscores, and hyphens.
-                </p>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="country">Country</Label>
+                <CountrySelector
+                  value={selectedCountry || undefined}
+                  onChange={(country) => setSelectedCountry(country)}
+                />
               </div>
             </div>
             <div className="flex justify-end space-x-4">
