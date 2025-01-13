@@ -1,4 +1,4 @@
-import type { LucideIcon } from "lucide-react";
+import { useLocalizedEducationCategories } from "@/lib/hooks/useLocalizedEducationCategories";
 
 export interface CategoryDefinition {
   name: string;
@@ -84,6 +84,7 @@ export const CATEGORY_DEFINITIONS: CategoryDefinition[] = [
       "hover:bg-gradient-to-br hover:from-emerald-100 hover:to-teal-100",
     icon: "🎓",
     subcategories: [
+      // These will be replaced dynamically based on country
       "Elementary",
       "Middle School",
       "High School",

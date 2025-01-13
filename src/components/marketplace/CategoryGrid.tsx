@@ -1,84 +1,8 @@
 import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
-
-interface Category {
-  name: string;
-  color: string;
-  gradient: string;
-  hoverGradient: string;
-  icon: string;
-  subcategories: string[];
-}
-
-const categories: Category[] = [
-  {
-    name: "Languages",
-    color: "from-violet-500 to-purple-500",
-    gradient: "bg-gradient-to-br from-violet-50 to-purple-50",
-    hoverGradient:
-      "hover:bg-gradient-to-br hover:from-violet-100 hover:to-purple-100",
-    icon: "🌎",
-    subcategories: [
-      "Spanish",
-      "French",
-      "German",
-      "Japanese",
-      "Chinese",
-      "Italian",
-      "Korean",
-      "Russian",
-      "Portuguese",
-      "Arabic",
-      "Hindi",
-      "Vietnamese",
-    ],
-  },
-  {
-    name: "Sciences",
-    color: "from-cyan-500 to-blue-500",
-    gradient: "bg-gradient-to-br from-cyan-50 to-blue-50",
-    hoverGradient:
-      "hover:bg-gradient-to-br hover:from-cyan-100 hover:to-blue-100",
-    icon: "🔬",
-    subcategories: [
-      "Physics",
-      "Chemistry",
-      "Biology",
-      "Mathematics",
-      "Computer Science",
-      "Astronomy",
-      "Environmental Science",
-      "Geology",
-      "Statistics",
-      "Engineering",
-      "Medicine",
-      "Psychology",
-    ],
-  },
-  {
-    name: "Arts",
-    color: "from-rose-500 to-pink-500",
-    gradient: "bg-gradient-to-br from-rose-50 to-pink-50",
-    hoverGradient:
-      "hover:bg-gradient-to-br hover:from-rose-100 hover:to-pink-100",
-    icon: "🎨",
-    subcategories: [
-      "Literature",
-      "History",
-      "Music",
-      "Visual Arts",
-      "Theater",
-      "Film Studies",
-      "Architecture",
-      "Photography",
-      "Dance",
-      "Creative Writing",
-      "Art History",
-      "Design",
-    ],
-  },
-];
+import { LocalizedEducationCategories } from "./LocalizedEducationCategories";
+import { CATEGORY_DEFINITIONS } from "@/types/marketplace";
 
 const CategoryGrid = () => {
   const navigate = useNavigate();
@@ -91,8 +15,8 @@ const CategoryGrid = () => {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6 w-full">
-      {categories.map((category) => (
+    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6 p-6 w-full">
+      {CATEGORY_DEFINITIONS.map((category) => (
         <div key={category.name} className="flex">
           <Card
             className={`flex flex-col shadow-md ${category.gradient} border-0 w-full`}
@@ -106,19 +30,26 @@ const CategoryGrid = () => {
                   {category.name}
                 </h3>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {category.subcategories.map((subcategory) => (
-                  <button
-                    key={subcategory}
-                    className={`text-left px-4 py-3 bg-white/80 rounded-xl transition-all duration-200 shadow-sm
-                      ${category.hoverGradient} hover:shadow-md
-                      text-gray-700 hover:text-gray-900 font-medium`}
-                    onClick={() => handleCategoryClick(subcategory)}
-                  >
-                    {subcategory}
-                  </button>
-                ))}
-              </div>
+              {category.name === "Education" ? (
+                <LocalizedEducationCategories
+                  onSelect={handleCategoryClick}
+                  className="w-full"
+                />
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {category.subcategories.map((subcategory) => (
+                    <button
+                      key={subcategory}
+                      className={`text-left px-4 py-3 bg-white/80 rounded-xl transition-all duration-200 shadow-sm
+                        ${category.hoverGradient} hover:shadow-md
+                        text-gray-700 hover:text-gray-900 font-medium`}
+                      onClick={() => handleCategoryClick(subcategory)}
+                    >
+                      {subcategory}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </Card>
         </div>
