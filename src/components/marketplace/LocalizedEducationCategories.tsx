@@ -1,14 +1,17 @@
 import { useLocalizedEducationCategories } from "@/lib/hooks/useLocalizedEducationCategories";
 import { Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface LocalizedEducationCategoriesProps {
   onSelect?: (category: string) => void;
   className?: string;
+  selectedCategories?: string[];
 }
 
 export function LocalizedEducationCategories({
   onSelect,
   className = "",
+  selectedCategories = [],
 }: LocalizedEducationCategoriesProps) {
   const { categories, isLoading, error } = useLocalizedEducationCategories();
 
@@ -32,9 +35,13 @@ export function LocalizedEducationCategories({
         <button
           key={category.key}
           onClick={() => onSelect?.(category.key)}
-          className="text-left px-4 py-3 bg-white/80 rounded-xl transition-all duration-200 shadow-sm
-            hover:bg-gradient-to-br hover:from-emerald-100 hover:to-teal-100 hover:shadow-md
-            text-gray-700 hover:text-gray-900 font-medium"
+          className={cn(
+            `text-left px-4 py-3 rounded-xl transition-all duration-200 shadow-sm
+            text-gray-700 hover:text-gray-900 font-medium`,
+            selectedCategories.includes(category.key)
+              ? `bg-gradient-to-br from-emerald-100 to-teal-100 shadow-md`
+              : `bg-white/80 hover:bg-gradient-to-br hover:from-emerald-100 hover:to-teal-100 hover:shadow-md`,
+          )}
         >
           <span className="block text-sm">{category.localizedLabel}</span>
           {category.localizedLabel !== category.label && (
