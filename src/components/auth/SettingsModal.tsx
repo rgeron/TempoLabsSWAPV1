@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Check, Image } from "lucide-react";
 import { CountrySelector } from "@/components/settings/CountrySelector";
+import { EducationLevelSelector } from "@/components/settings/EducationLevelSelector";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -37,6 +38,9 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [selectedCountry, setSelectedCountry] = useState<string | null>(
     profile?.country || null,
   );
+  const [selectedEducationLevel, setSelectedEducationLevel] = useState<
+    number | null
+  >(profile?.education_level_id || null);
 
   const { toast } = useToast();
 
@@ -55,6 +59,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         username: newUsername,
         avatar_url: selectedAvatar || profile?.avatar_url,
         country: selectedCountry || profile?.country,
+        education_level_id:
+          selectedEducationLevel || profile?.education_level_id,
       });
 
       toast({
@@ -175,6 +181,14 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <CountrySelector
                   value={selectedCountry || undefined}
                   onChange={(country) => setSelectedCountry(country)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="education">Education Level</Label>
+                <EducationLevelSelector
+                  countryCode={selectedCountry || undefined}
+                  value={selectedEducationLevel || undefined}
+                  onChange={setSelectedEducationLevel}
                 />
               </div>
             </div>

@@ -12,6 +12,7 @@ import { supabase } from "./supabase";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"] & {
   country?: string;
+  education_level_id?: number;
 };
 
 type AuthContextType = {
