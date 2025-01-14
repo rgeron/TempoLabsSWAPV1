@@ -6,7 +6,7 @@ import { CATEGORY_DEFINITIONS, DeckWithProfile } from "@/types/marketplace";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import DeckCard from "./DeckCard";
-import { Loader2 } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const CategoryGrid = () => {
@@ -136,14 +136,29 @@ const CategoryGrid = () => {
                     key={subcategory}
                     onClick={() => handleCategoryClick(subcategory)}
                     className={cn(
-                      `text-left px-4 py-3 rounded-xl transition-all duration-200 shadow-sm
-                      text-gray-700 hover:text-gray-900 font-medium`,
+                      `relative text-left px-4 py-3 rounded-xl transition-all duration-200 shadow-sm
+                      text-gray-700 hover:text-gray-900 font-medium group`,
                       selectedCategories.includes(subcategory)
                         ? `${category.gradient} shadow-md`
                         : `bg-white/80 ${category.hoverGradient} hover:shadow-md`,
                     )}
                   >
-                    {subcategory}
+                    <div className="flex items-center justify-between">
+                      <span>{subcategory}</span>
+                      {selectedCategories.includes(subcategory) && (
+                        <Check
+                          className="h-4 w-4 text-emerald-600 ml-2
+                            animate-in zoom-in duration-200"
+                        />
+                      )}
+                    </div>
+                    {/* Ripple effect overlay */}
+                    <div className="absolute inset-0 rounded-xl overflow-hidden">
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-200" />
+                      {selectedCategories.includes(subcategory) && (
+                        <div className="absolute inset-0 bg-emerald-500/10 animate-in fade-in duration-200" />
+                      )}
+                    </div>
                   </button>
                 ))}
               </div>
