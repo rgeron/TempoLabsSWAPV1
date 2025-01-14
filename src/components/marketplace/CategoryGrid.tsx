@@ -2,17 +2,19 @@ import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { LocalizedEducationCategories } from "./LocalizedEducationCategories";
-import { CATEGORY_DEFINITIONS } from "@/types/marketplace";
+import { CATEGORY_DEFINITIONS, DeckWithProfile } from "@/types/marketplace";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import DeckCard from "./DeckCard";
+import { Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const CategoryGrid = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-
-  const handleCategoryClick = (category: string) => {
-    // If user is logged in, use app route, otherwise use public route
-    const basePath = user ? "/app" : "";
-    navigate(`${basePath}/category/${category}`);
-  };
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [decks, setDecks] = useState<DeckWithProfile[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Séparer les catégories d'éducation des autres
   const educationCategory = CATEGORY_DEFINITIONS.find(
@@ -21,6 +23,73 @@ const CategoryGrid = () => {
   const otherCategories = CATEGORY_DEFINITIONS.filter(
     (cat) => cat.name !== "Education",
   );
+
+  const handleCategoryClick = (category: string) => {
+    setSelectedCategories((prev) => {
+      if (prev.includes(category)) {
+        return prev.filter((c) => c !== category);
+      } else {
+        return [...prev, category];
+      }
+    });
+  };
+
+  useEffect(() => {
+    const fetchDecks = async () => {
+      if (selectedCategories.length === 0) {
+        setDecks([]);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+
+        // Fetch decks that contain ALL selected categories
+        const { data: decksData, error: decksError } = await supabase
+          .from("decks")
+          .select("*")
+          .contains("categories", selectedCategories)
+          .order("created_at", { ascending: false });
+
+        if (decksError) throw decksError;
+
+        // Get all unique creator IDs
+        const creatorIds = [
+          ...new Set(decksData.map((deck) => deck.creatorid)),
+        ];
+
+        // Fetch all creator profiles
+        const { data: profiles, error: profilesError } = await supabase
+          .from("profiles")
+          .select("id, username, avatar_url")
+          .in("id", creatorIds);
+
+        if (profilesError) throw profilesError;
+
+        // Combine deck data with creator profiles
+        const decksWithProfiles = decksData.map((deck) => {
+          const profile = profiles?.find((p) => p.id === deck.creatorid);
+          return {
+            ...deck,
+            creatorName: profile?.username || "Unknown Creator",
+            creatorAvatar: profile?.avatar_url,
+            profiles: {
+              username: profile?.username || "Unknown Creator",
+              avatar_url: profile?.avatar_url,
+            },
+          };
+        });
+
+        setDecks(decksWithProfiles);
+      } catch (error) {
+        console.error("Error fetching decks:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDecks();
+  }, [selectedCategories]);
 
   return (
     <div className="space-y-6">
@@ -38,6 +107,7 @@ const CategoryGrid = () => {
             </div>
             <LocalizedEducationCategories
               onSelect={handleCategoryClick}
+              selectedCategories={selectedCategories}
               className="grid grid-cols-4 md:grid-cols-6 gap-2"
             />
           </div>
@@ -64,10 +134,14 @@ const CategoryGrid = () => {
                 {category.subcategories.map((subcategory) => (
                   <button
                     key={subcategory}
-                    className={`text-left px-4 py-3 bg-white/80 rounded-xl transition-all duration-200 shadow-sm
-                      ${category.hoverGradient} hover:shadow-md
-                      text-gray-700 hover:text-gray-900 font-medium`}
                     onClick={() => handleCategoryClick(subcategory)}
+                    className={cn(
+                      `text-left px-4 py-3 rounded-xl transition-all duration-200 shadow-sm
+                      text-gray-700 hover:text-gray-900 font-medium`,
+                      selectedCategories.includes(subcategory)
+                        ? `${category.gradient} shadow-md`
+                        : `bg-white/80 ${category.hoverGradient} hover:shadow-md`,
+                    )}
                   >
                     {subcategory}
                   </button>
@@ -77,6 +151,44 @@ const CategoryGrid = () => {
           </Card>
         ))}
       </div>
+
+      {/* Results Section */}
+      {selectedCategories.length > 0 && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-[#2B4C7E]">
+              Results for {selectedCategories.join(", ")}
+            </h2>
+            <button
+              onClick={() => setSelectedCategories([])}
+              className="text-sm text-gray-500 hover:text-gray-700"
+            >
+              Clear selection
+            </button>
+          </div>
+
+          {isLoading ? (
+            <div className="flex items-center justify-center h-64">
+              <Loader2 className="h-8 w-8 animate-spin text-[#2B4C7E]" />
+            </div>
+          ) : decks.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {decks.map((deck) => (
+                <DeckCard key={deck.id} {...deck} />
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-64 space-y-2">
+              <p className="text-lg text-gray-500">
+                No decks found with all selected categories
+              </p>
+              <p className="text-sm text-gray-400">
+                Try selecting different categories
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
