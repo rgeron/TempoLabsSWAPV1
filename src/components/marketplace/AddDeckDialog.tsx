@@ -320,19 +320,20 @@ const AddDeckDialog = ({
                           {categoryGroup.name === "Education" ? (
                             <LocalizedEducationCategories
                               onSelect={(category) => {
-                                // Si la catégorie est déjà sélectionnée, la retirer
-                                if (selectedCategories.includes(category)) {
+                                const isSelected =
+                                  selectedCategories.includes(category);
+                                if (isSelected) {
                                   setSelectedCategories((prev) =>
                                     prev.filter((c) => c !== category),
                                   );
                                 } else {
-                                  // Sinon, l'ajouter
                                   setSelectedCategories((prev) => [
                                     ...prev,
                                     category,
                                   ]);
                                 }
                               }}
+                              selectedCategories={selectedCategories}
                               className="w-full"
                             />
                           ) : (
