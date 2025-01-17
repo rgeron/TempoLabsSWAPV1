@@ -27,15 +27,11 @@ export const createDeck = async (
       newDeck.id,
     );
 
-    // Get file content for plagiarism check
-    const fileContent = await file.text();
-
-    // Update the deck with the file URL and content
+    // Update the deck with the file URL
     const { data: updatedDeck, error: updateError } = await supabase
       .from("decks")
       .update({
         flashcards_file_url: publicUrl,
-        content: fileContent, // Store the content for plagiarism checks
       })
       .eq("id", newDeck.id)
       .select()
