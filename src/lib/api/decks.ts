@@ -1,6 +1,7 @@
 import type { Deck, DeckWithProfile } from "@/types/marketplace";
 import { supabase } from "../supabase";
 import { uploadFlashcardsFile } from "./flashcards";
+import { getFlashcards } from "./flashcards";
 import { transferBalance } from "./balance";
 
 export const createDeck = async (
@@ -26,11 +27,15 @@ export const createDeck = async (
       newDeck.id,
     );
 
-    // Update the deck with the file URL
+    // Get file content for plagiarism check
+    const fileContent = await file.text();
+
+    // Update the deck with the file URL and content
     const { data: updatedDeck, error: updateError } = await supabase
       .from("decks")
       .update({
         flashcards_file_url: publicUrl,
+        content: fileContent, // Store the content for plagiarism checks
       })
       .eq("id", newDeck.id)
       .select()
@@ -42,6 +47,32 @@ export const createDeck = async (
   } catch (error) {
     console.error("Error in createDeck:", error);
     throw error;
+  }
+};
+
+export const getAllDeckContents = async (): Promise<string[]> => {
+  try {
+    const { data, error } = await supabase
+      .from("decks")
+      .select("id, creatorid");
+
+    if (error) throw error;
+
+    // Get the content of each deck by reading their flashcards
+    const contents = await Promise.all(
+      data.map((deck) =>
+        getFlashcards(deck.id, deck.creatorid)
+          .then((cards) =>
+            cards.map((card) => `${card.front} ${card.back}`).join(" "),
+          )
+          .catch(() => ""),
+      ),
+    );
+
+    return contents.filter((content) => content !== "");
+  } catch (error) {
+    console.error("Error fetching deck contents:", error);
+    return [];
   }
 };
 

@@ -16,7 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
-import { createDeck } from "@/lib/api/decks";
+import { createDeck, getAllDeckContents } from "@/lib/api/decks";
 import { LocalizedEducationCategories } from "./LocalizedEducationCategories";
 
 interface AddDeckDialogProps {
@@ -45,6 +45,27 @@ const countFlashcardsInFile = async (file: File): Promise<number> => {
     reader.onerror = (error) => reject(error);
     reader.readAsText(file);
   });
+};
+
+const jaccardSimilarity = (text1: string, text2: string): number => {
+  const set1 = new Set(text1.toLowerCase().split(/\s+/));
+  const set2 = new Set(text2.toLowerCase().split(/\s+/));
+
+  const intersection = new Set([...set1].filter((word) => set2.has(word))).size;
+  const union = new Set([...set1, ...set2]).size;
+
+  return intersection / union;
+};
+
+const detectPlagiarism = async (uploadedText: string): Promise<boolean> => {
+  const existingDecks = await getAllDeckContents();
+
+  for (const deckContent of existingDecks) {
+    const similarity = jaccardSimilarity(uploadedText, deckContent);
+    console.log(`Similarity: ${similarity * 100}%`);
+    if (similarity > 0.5) return true;
+  }
+  return false;
 };
 
 const AddDeckDialog = ({
@@ -137,6 +158,21 @@ const AddDeckDialog = ({
     try {
       setIsUploadingCover(true);
       const form = event.currentTarget;
+
+      // Vérification du plagiat
+      const fileContent = await flashcardsFile.text();
+      const isPlagiarized = await detectPlagiarism(fileContent);
+
+      if (isPlagiarized) {
+        toast({
+          title: "Plagiarism detected",
+          description:
+            "This deck is too similar to an existing one. Please modify your content.",
+          variant: "destructive",
+        });
+        setIsUploadingCover(false);
+        return;
+      }
 
       // Count flashcards in the file
       const cardcount = await countFlashcardsInFile(flashcardsFile);
