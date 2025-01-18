@@ -9,6 +9,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Star, BookOpen, Heart, MoreHorizontal } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import DeckImage from "./DeckImage";
 import { useAuth } from "@/lib/auth";
 import { BuyDeckDialog } from "./BuyDeckDialog";
 import { PurchasedDeckDialog } from "./PurchasedDeckDialog";
@@ -155,11 +156,7 @@ const DeckCard = ({
       >
         <CardHeader className="p-0">
           <div className="relative h-32 w-full">
-            <img
-              src={imageurl}
-              alt={title}
-              className="w-full h-full object-cover"
-            />
+            <DeckImage src={imageurl} alt={title} />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
 
             <div className="absolute top-2 w-full px-2 flex justify-between items-center">
