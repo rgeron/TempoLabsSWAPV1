@@ -16,7 +16,6 @@ const CategoryGrid = () => {
   const [decks, setDecks] = useState<DeckWithProfile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Séparer les catégories d'éducation des autres
   const educationCategory = CATEGORY_DEFINITIONS.find(
     (cat) => cat.name === "Education",
   );
@@ -43,8 +42,6 @@ const CategoryGrid = () => {
 
       try {
         setIsLoading(true);
-
-        // Fetch decks that contain ALL selected categories
         const { data: decksData, error: decksError } = await supabase
           .from("decks")
           .select("*")
@@ -53,12 +50,9 @@ const CategoryGrid = () => {
 
         if (decksError) throw decksError;
 
-        // Get all unique creator IDs
         const creatorIds = [
           ...new Set(decksData.map((deck) => deck.creatorid)),
         ];
-
-        // Fetch all creator profiles
         const { data: profiles, error: profilesError } = await supabase
           .from("profiles")
           .select("id, username, avatar_url")
@@ -66,7 +60,6 @@ const CategoryGrid = () => {
 
         if (profilesError) throw profilesError;
 
-        // Combine deck data with creator profiles
         const decksWithProfiles = decksData.map((deck) => {
           const profile = profiles?.find((p) => p.id === deck.creatorid);
           return {
@@ -93,15 +86,13 @@ const CategoryGrid = () => {
 
   return (
     <div className="space-y-6">
-      {/* Education Section - Horizontal */}
+      {/* Education Section */}
       {educationCategory && (
-        <Card className={`p-6 ${educationCategory.gradient} border-0 w-full`}>
+        <Card className="p-6 bg-white dark:bg-gray-800 border-0 w-full">
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
               <span className="text-2xl">{educationCategory.icon}</span>
-              <h3
-                className={`text-xl font-bold bg-gradient-to-r ${educationCategory.color} bg-clip-text text-transparent`}
-              >
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                 {educationCategory.name}
               </h3>
             </div>
@@ -119,14 +110,12 @@ const CategoryGrid = () => {
         {otherCategories.map((category) => (
           <Card
             key={category.name}
-            className={`flex flex-col shadow-md ${category.gradient} border-0`}
+            className="flex flex-col shadow-md bg-white dark:bg-gray-800 border-0"
           >
             <div className="p-6">
               <div className="flex items-center space-x-3 mb-6">
                 <span className="text-2xl">{category.icon}</span>
-                <h3
-                  className={`text-xl font-bold bg-gradient-to-r ${category.color} bg-clip-text text-transparent`}
-                >
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                   {category.name}
                 </h3>
               </div>
@@ -136,27 +125,26 @@ const CategoryGrid = () => {
                     key={subcategory}
                     onClick={() => handleCategoryClick(subcategory)}
                     className={cn(
-                      `relative text-left px-4 py-3 rounded-xl transition-all duration-200 shadow-sm
-                      text-gray-700 hover:text-gray-900 font-medium group`,
+                      "relative text-left px-4 py-3 rounded-xl transition-all duration-200",
+                      "text-gray-700 dark:text-gray-200 font-medium group",
                       selectedCategories.includes(subcategory)
-                        ? `${category.gradient} shadow-md`
-                        : `bg-white/80 ${category.hoverGradient} hover:shadow-md`,
+                        ? "bg-white dark:bg-gray-700 shadow-md"
+                        : "bg-white/80 hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700",
                     )}
                   >
                     <div className="flex items-center justify-between">
                       <span>{subcategory}</span>
                       {selectedCategories.includes(subcategory) && (
                         <Check
-                          className="h-4 w-4 text-emerald-600 ml-2
+                          className="h-4 w-4 text-emerald-600 dark:text-emerald-400 ml-2
                             animate-in zoom-in duration-200"
                         />
                       )}
                     </div>
-                    {/* Ripple effect overlay */}
                     <div className="absolute inset-0 rounded-xl overflow-hidden">
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-200" />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 dark:group-hover:bg-white/5 transition-colors duration-200" />
                       {selectedCategories.includes(subcategory) && (
-                        <div className="absolute inset-0 bg-emerald-500/10 animate-in fade-in duration-200" />
+                        <div className="absolute inset-0 bg-emerald-500/10 dark:bg-emerald-500/20 animate-in fade-in duration-200" />
                       )}
                     </div>
                   </button>
@@ -171,12 +159,12 @@ const CategoryGrid = () => {
       {selectedCategories.length > 0 && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-[#2B4C7E]">
+            <h2 className="text-2xl font-bold text-[#2B4C7E] dark:text-white">
               Results for {selectedCategories.join(", ")}
             </h2>
             <button
               onClick={() => setSelectedCategories([])}
-              className="text-sm text-gray-500 hover:text-gray-700"
+              className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
             >
               Clear selection
             </button>
@@ -184,7 +172,7 @@ const CategoryGrid = () => {
 
           {isLoading ? (
             <div className="flex items-center justify-center h-64">
-              <Loader2 className="h-8 w-8 animate-spin text-[#2B4C7E]" />
+              <Loader2 className="h-8 w-8 animate-spin text-[#2B4C7E] dark:text-blue-400" />
             </div>
           ) : decks.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -194,10 +182,10 @@ const CategoryGrid = () => {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-64 space-y-2">
-              <p className="text-lg text-gray-500">
+              <p className="text-lg text-gray-500 dark:text-gray-400">
                 No decks found with all selected categories
               </p>
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-gray-400 dark:text-gray-500">
                 Try selecting different categories
               </p>
             </div>

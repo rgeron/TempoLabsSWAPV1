@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   BookOpen,
@@ -41,8 +41,8 @@ const SidebarItem = ({
         "w-full flex items-center p-2 text-sm rounded-md transition-colors duration-200",
         isCollapsed ? "justify-center" : "space-x-2",
         isActive
-          ? "bg-[#2B4C7E] text-white"
-          : "text-[#2B4C7E] hover:bg-[#E6F3FF]",
+          ? "bg-[#2B4C7E] text-white dark:bg-blue-600"
+          : "text-[#2B4C7E] hover:bg-[#E6F3FF] dark:text-gray-200 dark:hover:bg-gray-800",
       )}
     >
       <div className="h-5 w-5 flex-shrink-0">{item.icon}</div>
@@ -93,26 +93,26 @@ const Sidebar = () => {
   return (
     <div
       className={cn(
-        "h-full bg-[#F3F6FF] flex flex-col transition-all duration-300",
+        "h-full bg-[#F3F6FF] dark:bg-gray-900 flex flex-col transition-all duration-300",
         isCollapsed ? "w-[80px]" : "w-[280px]",
       )}
     >
       {/* Logo Section */}
-      <div className="h-20 flex items-center px-4 bg-white">
+      <div className="h-20 flex items-center px-4 bg-white dark:bg-gray-900">
         <div className="flex items-center">
           <div className="h-8 w-8 bg-[#2B4C7E] rounded-lg flex items-center justify-center">
             <span className="text-white font-bold">S</span>
           </div>
           {!isCollapsed && (
-            <span className="font-bold text-lg ml-2 text-[#2B4C7E]">
+            <span className="font-bold text-lg ml-2 text-[#2B4C7E] dark:text-white">
               SwapDecks
             </span>
           )}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="ml-2 p-1.5 hover:bg-[#E6F3FF] rounded-md transition-colors"
+            className="ml-2 p-1.5 hover:bg-[#E6F3FF] dark:hover:bg-gray-800 rounded-md transition-colors"
           >
-            <Menu className="h-5 w-5 text-[#2B4C7E]" />
+            <Menu className="h-5 w-5 text-[#2B4C7E] dark:text-gray-400" />
           </button>
         </div>
       </div>
@@ -132,7 +132,7 @@ const Sidebar = () => {
             ))}
           </div>
 
-          <Separator className="mx-4 bg-[#2B4C7E]/20" />
+          <Separator className="mx-4 bg-[#2B4C7E]/20 dark:bg-gray-700" />
 
           {/* My Learning Section */}
           <div className="space-y-4">
@@ -142,9 +142,9 @@ const Sidebar = () => {
                 isCollapsed ? "justify-center" : "space-x-2",
               )}
             >
-              <User className="h-5 w-5 text-[#2B4C7E] flex-shrink-0" />
+              <User className="h-5 w-5 text-[#2B4C7E] dark:text-gray-200 flex-shrink-0" />
               {!isCollapsed && (
-                <h2 className="text-sm font-semibold text-[#2B4C7E]">
+                <h2 className="text-sm font-semibold text-[#2B4C7E] dark:text-gray-200">
                   MY LEARNING
                 </h2>
               )}
@@ -162,7 +162,7 @@ const Sidebar = () => {
             </div>
           </div>
 
-          <Separator className="mx-4 bg-[#2B4C7E]/20" />
+          <Separator className="mx-4 bg-[#2B4C7E]/20 dark:bg-gray-700" />
 
           {/* Store Section */}
           <div className="space-y-4">
@@ -172,9 +172,9 @@ const Sidebar = () => {
                 isCollapsed ? "justify-center" : "space-x-2",
               )}
             >
-              <Store className="h-5 w-5 text-[#2B4C7E] flex-shrink-0" />
+              <Store className="h-5 w-5 text-[#2B4C7E] dark:text-gray-200 flex-shrink-0" />
               {!isCollapsed && (
-                <h2 className="text-sm font-semibold text-[#2B4C7E]">
+                <h2 className="text-sm font-semibold text-[#2B4C7E] dark:text-gray-200">
                   MY STORE
                 </h2>
               )}

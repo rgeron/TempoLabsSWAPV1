@@ -5,12 +5,12 @@ import TopNav from "./TopNav";
 
 const DashboardLayout = () => {
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen bg-white dark:bg-gray-950">
       {/* Sidebar */}
       <Sidebar />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col bg-[#F8FAFF]">
+      <div className="flex-1 flex flex-col bg-[#F8FAFF] dark:bg-gray-900">
         {/* Top Navigation */}
         <TopNav />
 

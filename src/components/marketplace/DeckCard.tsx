@@ -23,9 +23,11 @@ import { cn } from "@/lib/utils";
 interface DeckCardProps extends DeckWithProfile {}
 
 const difficultyColors = {
-  Beginner: "bg-green-100 text-green-800",
-  Intermediate: "bg-yellow-100 text-yellow-800",
-  Advanced: "bg-red-100 text-red-800",
+  Beginner:
+    "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+  Intermediate:
+    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
+  Advanced: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
 };
 
 const MAX_VISIBLE_TAGS = 2;
@@ -62,13 +64,11 @@ const DeckCard = ({
   const [isOptimisticallyLiked, setIsOptimisticallyLiked] = useState(isLiked);
 
   const handleCreatorClick = (e: MouseEvent) => {
-    e.stopPropagation(); // Prevent opening the deck dialog
-
+    e.stopPropagation();
     if (!user) {
       setShowAuthModal(true);
       return;
     }
-
     if (creatorid) {
       navigate(`/app/creator/${creatorid}`);
     }
@@ -76,8 +76,7 @@ const DeckCard = ({
 
   const handleLikeClick = useCallback(
     async (e: React.MouseEvent) => {
-      e.stopPropagation(); // Prevent opening the deck dialog
-
+      e.stopPropagation();
       if (!user) {
         toast({
           title: "Sign in required",
@@ -89,11 +88,7 @@ const DeckCard = ({
 
       try {
         setIsLiking(true);
-
-        // Optimistic update
         setIsOptimisticallyLiked(!isOptimisticallyLiked);
-
-        // Update backend
         await updateLikedDecks(id, !isOptimisticallyLiked);
 
         toast({
@@ -101,11 +96,9 @@ const DeckCard = ({
           description: isOptimisticallyLiked
             ? "Deck removed from your liked decks"
             : "Deck added to your liked decks",
-          variant: "default",
         });
       } catch (error) {
         console.error("Error liking/unliking deck:", error);
-        // Revert optimistic update on error
         setIsOptimisticallyLiked(!isOptimisticallyLiked);
         toast({
           title: "Error",
@@ -118,105 +111,6 @@ const DeckCard = ({
     },
     [user, id, isOptimisticallyLiked, toast, updateLikedDecks],
   );
-
-  const handleDelete = async () => {
-    try {
-      setIsDeleting(true);
-      await deleteDeck(id);
-      toast({
-        title: "Success",
-        description: "Deck deleted successfully",
-      });
-      setShowDialog(false);
-      // You might want to trigger a refresh of the deck list here
-    } catch (error) {
-      console.error("Error deleting deck:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete deck",
-        variant: "destructive",
-      });
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  const renderDialog = () => {
-    if (!showDialog) return null;
-
-    if (isCreator) {
-      return (
-        <CreatorDeckDialog
-          isOpen={showDialog}
-          onClose={() => setShowDialog(false)}
-          deck={{
-            id,
-            title,
-            description,
-            price,
-            cardcount,
-            difficulty,
-            imageurl,
-            creatorid,
-            created_at,
-            creatorName,
-            creatorAvatar,
-            categories,
-            profiles,
-          }}
-          onDelete={handleDelete}
-          isDeleting={isDeleting}
-        />
-      );
-    }
-
-    if (isPurchased) {
-      return (
-        <PurchasedDeckDialog
-          isOpen={showDialog}
-          onClose={() => setShowDialog(false)}
-          deck={{
-            id,
-            title,
-            description,
-            price,
-            cardcount,
-            difficulty,
-            imageurl,
-            creatorid,
-            created_at,
-            creatorName,
-            creatorAvatar,
-            categories,
-            profiles,
-          }}
-          purchaseDate={created_at}
-        />
-      );
-    }
-
-    return (
-      <BuyDeckDialog
-        isOpen={showDialog}
-        onClose={() => setShowDialog(false)}
-        deck={{
-          id,
-          title,
-          description,
-          price,
-          cardcount,
-          difficulty,
-          imageurl,
-          creatorid,
-          created_at,
-          creatorName,
-          creatorAvatar,
-          categories,
-          profiles,
-        }}
-      />
-    );
-  };
 
   const renderCategories = () => {
     if (!categories || categories.length === 0) return null;
@@ -231,15 +125,20 @@ const DeckCard = ({
           return (
             <div
               key={category}
-              className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium ${style?.gradient} transition-colors duration-200 ${style?.hoverGradient}`}
+              className={cn(
+                "inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium",
+                "bg-white/80 dark:bg-gray-700/50",
+                "hover:bg-white dark:hover:bg-gray-700",
+                "transition-colors duration-200",
+              )}
             >
               <span>{style?.icon}</span>
-              {category}
+              <span className="dark:text-gray-200">{category}</span>
             </div>
           );
         })}
         {remainingCount > 0 && (
-          <div className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-600">
+          <div className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
             <MoreHorizontal className="h-3 w-3 mr-1" />
             {remainingCount} more
           </div>
@@ -251,7 +150,7 @@ const DeckCard = ({
   return (
     <>
       <Card
-        className="w-full max-w-[280px] h-[360px] overflow-hidden hover:shadow-lg transition-all duration-300 bg-white cursor-pointer relative flex flex-col"
+        className="w-full max-w-[280px] h-[360px] overflow-hidden hover:shadow-lg transition-all duration-300 bg-white dark:bg-gray-800 cursor-pointer relative flex flex-col"
         onClick={() => setShowDialog(true)}
       >
         <CardHeader className="p-0">
@@ -261,33 +160,32 @@ const DeckCard = ({
               alt={title}
               className="w-full h-full object-cover"
             />
-            {/* Gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
 
-            {/* Top row: Difficulty and Like button */}
             <div className="absolute top-2 w-full px-2 flex justify-between items-center">
-              <Badge className={`${difficultyColors[difficulty]} border-none`}>
+              <Badge
+                className={cn(difficultyColors[difficulty], "border-none")}
+              >
                 {difficulty}
               </Badge>
               {canLike && (
                 <button
                   onClick={handleLikeClick}
                   disabled={isLiking}
-                  className="p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-colors duration-200"
+                  className="p-2 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200"
                 >
                   <Heart
                     className={cn(
                       "h-5 w-5 transition-colors duration-200",
                       isOptimisticallyLiked
                         ? "fill-red-500 text-red-500"
-                        : "fill-none text-gray-600 hover:text-red-500",
+                        : "fill-none text-gray-600 dark:text-gray-300 hover:text-red-500",
                     )}
                   />
                 </button>
               )}
             </div>
 
-            {/* Bottom row: Creator profile */}
             {creatorName && (
               <button
                 onClick={handleCreatorClick}
@@ -309,32 +207,121 @@ const DeckCard = ({
         </CardHeader>
 
         <CardContent className="p-4 flex-1 flex flex-col">
-          <h3 className="font-semibold text-lg truncate">{title}</h3>
-          <p className="text-sm text-gray-500 line-clamp-2 mb-3">
+          <h3 className="font-semibold text-lg truncate dark:text-white">
+            {title}
+          </h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-3">
             {description}
           </p>
           {renderCategories()}
         </CardContent>
 
-        <CardFooter className="p-4 mt-auto border-t">
+        <CardFooter className="p-4 mt-auto border-t dark:border-gray-700">
           <div className="flex justify-between items-center w-full">
             <div className="flex items-center space-x-4">
               <div className="flex items-center">
                 <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                <span className="ml-1 text-sm">4.5</span>
+                <span className="ml-1 text-sm dark:text-gray-300">4.5</span>
               </div>
               <div className="flex items-center">
-                <BookOpen className="w-4 h-4 text-gray-400" />
-                <span className="ml-1 text-sm">{cardcount} cards</span>
+                <BookOpen className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                <span className="ml-1 text-sm dark:text-gray-300">
+                  {cardcount} cards
+                </span>
               </div>
             </div>
-            <div className="text-lg font-bold text-[#2B4C7E]">
+            <div className="text-lg font-bold text-[#2B4C7E] dark:text-blue-400">
               ${price.toFixed(2)}
             </div>
           </div>
         </CardFooter>
       </Card>
-      {renderDialog()}
+
+      {showDialog &&
+        (isCreator ? (
+          <CreatorDeckDialog
+            isOpen={true}
+            onClose={() => setShowDialog(false)}
+            deck={{
+              id,
+              title,
+              description,
+              price,
+              cardcount,
+              difficulty,
+              imageurl,
+              creatorid,
+              created_at,
+              creatorName,
+              creatorAvatar,
+              categories,
+              profiles,
+            }}
+            onDelete={async () => {
+              try {
+                setIsDeleting(true);
+                await deleteDeck(id);
+                toast({
+                  title: "Success",
+                  description: "Deck deleted successfully",
+                });
+                setShowDialog(false);
+              } catch (error) {
+                console.error("Error deleting deck:", error);
+                toast({
+                  title: "Error",
+                  description: "Failed to delete deck",
+                  variant: "destructive",
+                });
+              } finally {
+                setIsDeleting(false);
+              }
+            }}
+            isDeleting={isDeleting}
+          />
+        ) : isPurchased ? (
+          <PurchasedDeckDialog
+            isOpen={true}
+            onClose={() => setShowDialog(false)}
+            deck={{
+              id,
+              title,
+              description,
+              price,
+              cardcount,
+              difficulty,
+              imageurl,
+              creatorid,
+              created_at,
+              creatorName,
+              creatorAvatar,
+              categories,
+              profiles,
+            }}
+            purchaseDate={created_at}
+          />
+        ) : (
+          <BuyDeckDialog
+            isOpen={true}
+            onClose={() => setShowDialog(false)}
+            deck={{
+              id,
+              title,
+              description,
+              price,
+              cardcount,
+              difficulty,
+              imageurl,
+              creatorid,
+              created_at,
+              creatorName,
+              creatorAvatar,
+              categories,
+              profiles,
+            }}
+          />
+        ))}
+
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
