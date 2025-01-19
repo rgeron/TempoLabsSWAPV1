@@ -37,6 +37,23 @@ export const getOnboardingLink = async (userId: string) => {
   }
 };
 
+// Create a pending Stripe account
+export const createPendingAccount = async (email: string) => {
+  try {
+    const response = await fetch(`${STRIPE_API_URL}/create-pending-account`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+
+    if (!response.ok) throw new Error("Failed to create pending Stripe account");
+    return await response.json();
+  } catch (error) {
+    console.error("Error creating pending Stripe account:", error);
+    throw error;
+  }
+};
+
 // Create a checkout session for adding credits
 export const createCreditCheckoutSession = async (
   userId: string,
