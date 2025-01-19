@@ -20,7 +20,10 @@ export function useStripeConnect() {
       setIsLoading(true);
 
       // Create Connect account if needed
-      await createConnectAccount(user.id);
+      const account = await createConnectAccount(user.id);
+      if (!account) {
+        throw new Error("Failed to create Connect account");
+      }
 
       // Get onboarding link
       const url = await getOnboardingLink(user.id);
@@ -31,7 +34,7 @@ export function useStripeConnect() {
       console.error("Error setting up seller account:", error);
       toast({
         title: "Error",
-        description: "Failed to set up seller account. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to set up seller account. Please try again.",
         variant: "destructive",
       });
     } finally {
