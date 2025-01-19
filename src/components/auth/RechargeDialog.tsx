@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -6,13 +6,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/auth";
-import { Loader2, Wallet, ArrowDownToLine, ArrowUpToLine } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useStripeConnect } from "@/lib/hooks/useStripeConnect";
+import { ArrowDownToLine, ArrowUpToLine, Loader2 } from "lucide-react";
+import { useState } from "react";
 
 interface RechargeDialogProps {
   isOpen: boolean;
@@ -47,15 +47,18 @@ export function RechargeDialog({ isOpen, onClose }: RechargeDialogProps) {
       setIsLoading(true);
 
       // Create Stripe checkout session
-      const response = await fetch("/api/create-checkout-session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: user.id,
-          amount,
-          isRecharge: true,
-        }),
-      });
+      const response = await fetch(
+        "http://localhost:5001/api/create-checkout-session",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: user.id,
+            amount,
+            isRecharge: true,
+          }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to create checkout session");
