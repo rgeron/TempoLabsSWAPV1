@@ -9,6 +9,7 @@ import ListedDecks from "./components/dashboard/screens/ListedDecks";
 import PurchasedDecks from "./components/dashboard/screens/PurchasedDecks";
 import SalesAnalytics from "./components/dashboard/screens/SalesAnalytics";
 import SearchDeck from "./components/dashboard/screens/SearchDeck";
+import { SellerDashboard } from "./components/dashboard/SellerDashboard";
 import LandingPage from "./components/landing/LandingPage";
 import { Toaster } from "./components/ui/toaster";
 import { AuthProvider } from "./lib/auth";
@@ -31,6 +32,7 @@ const App = () => {
             <Route path="purchased-decks" element={<PurchasedDecks />} />
             <Route path="liked-decks" element={<LikedDecks />} />
             <Route path="listed-decks" element={<ListedDecks />} />
+            <Route path="seller-dashboard" element={<SellerDashboard />} />
             <Route path="sales-analytics" element={<SalesAnalytics />} />
             <Route path="search" element={<SearchDeck />} />
             <Route path="followed-creators" element={<FollowedCreators />} />

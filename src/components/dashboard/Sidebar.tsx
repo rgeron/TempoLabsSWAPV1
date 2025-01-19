@@ -10,6 +10,7 @@ import {
   Menu,
   Users,
   Home,
+  BanknoteIcon,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
@@ -81,6 +82,11 @@ const Sidebar = () => {
       path: "/app/sales-analytics",
       label: "Sales Analytics",
       icon: <TrendingUp />,
+    },
+    {
+      path: "/app/seller-dashboard",
+      label: "Seller Dashboard",
+      icon: <BanknoteIcon />,
     },
   ];
 
