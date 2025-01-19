@@ -25,19 +25,19 @@ router.post("/create-connect-account", async (req, res) => {
   try {
     const { userId } = req.body;
 
-    // Get user's email from Supabase
-    const { data: userData, error: userError } = await supabase
-      .from("profiles")
-      .select("email")
-      .eq("id", userId)
-      .single();
+    // Get user's email from Supabase auth
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.admin.getUserById(userId);
 
     if (userError) throw userError;
+    if (!user?.email) throw new Error("User email not found");
 
     // Create Express account
     const account = await stripe.accounts.create({
       type: "express",
-      email: userData.email,
+      email: user.email,
       capabilities: {
         card_payments: { requested: true },
         transfers: { requested: true },
