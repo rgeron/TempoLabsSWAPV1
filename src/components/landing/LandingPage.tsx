@@ -10,6 +10,7 @@ import AllDecks from "../marketplace/AllDecks";
 import DeckCard from "../marketplace/DeckCard";
 import { supabase } from "@/lib/supabase";
 import type { DeckWithProfile } from "@/types/marketplace";
+import { ThemeToggle } from "../ThemeToggle";
 
 const LandingPage = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -87,25 +88,26 @@ const LandingPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-blue-50 to-white">
+    <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
-      <header className="h-20 border-b bg-white shadow">
+      <header className="h-20 border-b bg-card shadow">
         <div className="container mx-auto h-full flex items-center justify-between px-4">
           <div className="flex items-center space-x-2">
-            <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold">S</span>
+            <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
+              <span className="text-primary-foreground font-bold">S</span>
             </div>
-            <span className="text-xl font-bold text-gray-900">SwapDecks</span>
+            <span className="text-xl font-bold text-foreground">SwapDecks</span>
           </div>
           <div className="flex items-center space-x-4">
+            <ThemeToggle />
             <Button
               variant="ghost"
-              className="text-gray-600 hover:text-gray-900"
+              className="text-muted-foreground hover:text-foreground"
             >
               About Us
             </Button>
             <Button
-              className="bg-blue-600 text-white hover:bg-blue-700"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
               onClick={() => setShowAuthModal(true)}
             >
               Sign In
@@ -116,18 +118,18 @@ const LandingPage = () => {
 
       {/* Hero Section with Search */}
       <section className="py-10 text-center">
-        <h1 className="text-5xl font-bold text-gray-900 mb-8">
+        <h1 className="text-5xl font-bold text-foreground mb-8">
           Find the Best Flashcard Decks
         </h1>
         <div className="max-w-2xl mx-auto relative">
           <form onSubmit={handleSearch}>
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
             <Input
               type="search"
               placeholder="Search for flashcard decks..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 pr-4 py-6 text-lg w-full rounded-full border-2 border-blue-100 focus:border-blue-300 focus:ring-2 focus:ring-blue-200 bg-white shadow"
+              className="pl-12 pr-4 py-6 text-lg w-full rounded-full border-2 focus:border-primary focus:ring-2 focus:ring-primary/20"
             />
           </form>
         </div>
@@ -135,15 +137,15 @@ const LandingPage = () => {
         {/* Search Results */}
         {isSearching ? (
           <div className="mt-8 flex justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : searchResults.length > 0 ? (
           <div className="mt-8 container mx-auto px-4">
             <div className="text-left mb-4">
-              <h2 className="text-2xl font-semibold text-gray-900">
+              <h2 className="text-2xl font-semibold text-foreground">
                 Search Results
               </h2>
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 {searchResults.length} decks found
               </p>
             </div>
@@ -154,7 +156,7 @@ const LandingPage = () => {
             </div>
           </div>
         ) : searchQuery && !isSearching ? (
-          <div className="mt-8 text-center text-gray-600">
+          <div className="mt-8 text-center text-muted-foreground">
             <p>No decks found matching your search.</p>
           </div>
         ) : null}
@@ -173,7 +175,7 @@ const LandingPage = () => {
           {/* Decks Section */}
           <section className="py-16">
             <div className="container mx-auto px-4">
-              <h2 className="text-2xl md:text-3xl font-bold text-[#2B4C7E] mb-8">
+              <h2 className="text-2xl md:text-3xl font-bold text-primary mb-8">
                 All Decks
               </h2>
               <AllDecks showTitle={false} />
