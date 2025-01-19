@@ -10,15 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/auth";
-import { useStripeConnect } from "@/lib/hooks/useStripeConnect";
-import {
-  Loader2,
-  AlertCircle,
-  Wallet,
-  ArrowDownToLine,
-  ArrowUpToLine,
-} from "lucide-react";
+import { Loader2, Wallet, ArrowDownToLine, ArrowUpToLine } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useStripeConnect } from "@/lib/hooks/useStripeConnect";
 
 interface RechargeDialogProps {
   isOpen: boolean;
@@ -30,19 +24,12 @@ const RECHARGE_AMOUNTS = [10, 20, 50, 100, 200, 500];
 export function RechargeDialog({ isOpen, onClose }: RechargeDialogProps) {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { withdrawFunds, checkAccountStatus } = useStripeConnect();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [customAmount, setCustomAmount] = useState<string>("");
-  const { setupSellerAccount, checkAccountStatus, withdrawFunds } =
-    useStripeConnect();
+  const [withdrawAmount, setWithdrawAmount] = useState<string>("");
   const [accountStatus, setAccountStatus] = useState<any>(null);
-
-  // Load account status when dialog opens
-  useState(() => {
-    if (isOpen) {
-      checkAccountStatus().then(setAccountStatus);
-    }
-  });
 
   const handleRecharge = async () => {
     const amount = selectedAmount || parseFloat(customAmount);
@@ -94,9 +81,8 @@ export function RechargeDialog({ isOpen, onClose }: RechargeDialogProps) {
   };
 
   const handleWithdraw = async () => {
-    const amount = selectedAmount || parseFloat(customAmount);
-
-    if (!user || !amount || isNaN(amount) || amount <= 0) {
+    const amount = parseFloat(withdrawAmount);
+    if (!amount || isNaN(amount) || amount <= 0) {
       toast({
         title: "Error",
         description: "Please enter a valid amount to withdraw",
@@ -110,7 +96,6 @@ export function RechargeDialog({ isOpen, onClose }: RechargeDialogProps) {
       onClose();
     } catch (error) {
       // Error handling is done in withdrawFunds
-      console.error("Error withdrawing funds:", error);
     }
   };
 
@@ -129,11 +114,9 @@ export function RechargeDialog({ isOpen, onClose }: RechargeDialogProps) {
     setCustomAmount(""); // Clear custom amount
   };
 
-  const isPending = accountStatus?.stripe_connect_status === "pending";
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Balance Management</DialogTitle>
           <DialogDescription>
@@ -145,15 +128,15 @@ export function RechargeDialog({ isOpen, onClose }: RechargeDialogProps) {
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="recharge" className="flex items-center gap-2">
               <ArrowDownToLine className="h-4 w-4" />
-              Recharge Balance
+              Recharge
             </TabsTrigger>
             <TabsTrigger value="withdraw" className="flex items-center gap-2">
               <ArrowUpToLine className="h-4 w-4" />
-              Withdraw Funds
+              Withdraw
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="recharge" className="space-y-4 mt-4">
+          <TabsContent value="recharge" className="space-y-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               {RECHARGE_AMOUNTS.map((amount) => (
                 <Button
@@ -200,72 +183,46 @@ export function RechargeDialog({ isOpen, onClose }: RechargeDialogProps) {
                   Processing...
                 </>
               ) : (
-                `Add $${selectedAmount || customAmount || 0} to Balance`
+                `Add $${selectedAmount || customAmount || 0}`
               )}
             </Button>
           </TabsContent>
 
-          <TabsContent value="withdraw" className="space-y-4 mt-4">
-            {isPending ? (
-              <div className="flex flex-col items-center space-y-4 p-6 bg-amber-50 rounded-lg">
-                <AlertCircle className="h-8 w-8 text-amber-500" />
-                <div className="text-center">
-                  <h3 className="font-semibold text-amber-800">
-                    Bank Account Setup Required
-                  </h3>
-                  <p className="text-amber-700 mt-1">
-                    Complete your account setup to withdraw funds
-                  </p>
-                </div>
-                <Button
-                  onClick={setupSellerAccount}
-                  disabled={isLoading}
-                  className="bg-amber-600 hover:bg-amber-700 text-white"
-                >
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : null}
-                  Set Up Bank Account
-                </Button>
+          <TabsContent value="withdraw" className="space-y-4 py-4">
+            <div className="space-y-2">
+              <div className="text-sm text-gray-500">
+                Enter withdrawal amount:
               </div>
-            ) : (
-              <>
-                <div className="space-y-2">
-                  <div className="text-sm text-gray-500">
-                    Enter withdrawal amount:
-                  </div>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
-                      $
-                    </span>
-                    <Input
-                      type="text"
-                      value={customAmount}
-                      onChange={(e) => handleCustomAmountChange(e.target.value)}
-                      className="pl-6"
-                      placeholder="Enter amount"
-                    />
-                  </div>
-                </div>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                  $
+                </span>
+                <Input
+                  type="text"
+                  value={withdrawAmount}
+                  onChange={(e) => setWithdrawAmount(e.target.value)}
+                  className="pl-6"
+                  placeholder="Enter amount"
+                />
+              </div>
+            </div>
 
-                <Button
-                  onClick={handleWithdraw}
-                  disabled={
-                    isLoading || !customAmount || parseFloat(customAmount) <= 0
-                  }
-                  className="w-full bg-[#2B4C7E] text-white hover:bg-[#1A365D]"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    `Withdraw $${customAmount || 0} to Bank Account`
-                  )}
-                </Button>
-              </>
-            )}
+            <Button
+              onClick={handleWithdraw}
+              disabled={
+                isLoading || !withdrawAmount || parseFloat(withdrawAmount) <= 0
+              }
+              className="w-full bg-[#2B4C7E] text-white hover:bg-[#1A365D]"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                `Withdraw $${withdrawAmount || 0}`
+              )}
+            </Button>
           </TabsContent>
         </Tabs>
       </DialogContent>
