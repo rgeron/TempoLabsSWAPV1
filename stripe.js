@@ -1,3 +1,5 @@
+Stripe.js;
+
 require("dotenv").config();
 const express = require("express");
 const Stripe = require("stripe");
@@ -93,7 +95,7 @@ router.post("/create-onboarding-link", async (req, res) => {
 // Create a checkout session for credits
 router.post("/create-checkout-session", async (req, res) => {
   try {
-    const { userId, amount, isRecharge } = req.body;
+    const { userId, amount } = req.body;
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -102,9 +104,9 @@ router.post("/create-checkout-session", async (req, res) => {
           price_data: {
             currency: "usd",
             product_data: {
-              name: isRecharge ? "Add Credits" : "Purchase Deck",
+              name: "Add Credits",
             },
-            unit_amount: Math.round(amount * 100),
+            unit_amount: Math.round(amount * 100), // Convert to cents
           },
           quantity: 1,
         },
@@ -114,7 +116,7 @@ router.post("/create-checkout-session", async (req, res) => {
       cancel_url: `${process.env.CLIENT_URL}/purchase-cancelled`,
       metadata: {
         userId,
-        isRecharge: isRecharge ? "true" : "false",
+        type: "recharge",
       },
     });
 
@@ -129,43 +131,88 @@ router.post("/create-checkout-session", async (req, res) => {
 router.post("/process-deck-purchase", async (req, res) => {
   try {
     const { buyerId, deckId, amount } = req.body;
+    const purchaseDate = new Date().toISOString();
 
-    // Get seller's Connect account ID
-    const { data: deckData, error: deckError } = await supabase
+    // Start a Supabase transaction
+    const { data: deck, error: deckError } = await supabase
       .from("decks")
-      .select("creatorid")
+      .select(
+        "*, profiles!decks_creatorid_fkey(stripe_connect_id, stripe_connect_status)",
+      )
       .eq("id", deckId)
       .single();
 
     if (deckError) throw deckError;
+    if (!deck) throw new Error("Deck not found");
 
-    const { data: sellerData, error: sellerError } = await supabase
-      .from("profiles")
-      .select("stripe_connect_id, stripe_connect_status")
-      .eq("id", deckData.creatorid)
-      .single();
+    const seller = deck.profiles;
+    if (
+      !seller?.stripe_connect_id ||
+      seller.stripe_connect_status !== "active"
+    ) {
+      throw new Error("Seller's Stripe account is not properly set up");
+    }
 
-    if (sellerError) throw sellerError;
+    // Calculate shares (90% to seller, 10% platform fee)
+    const platformFee = Math.round(amount * 0.1 * 100); // in cents
+    const sellerAmount = Math.round(amount * 0.9 * 100); // in cents
 
-    // Calculate platform fee (10%)
-    const platformFee = Math.round(amount * 0.1 * 100); // Convert to cents
-    const sellerAmount = Math.round(amount * 0.9 * 100); // Convert to cents
-
-    // Create a Transfer to the seller's Connect account
+    // Create transfer to seller's Connect account
     const transfer = await stripe.transfers.create({
       amount: sellerAmount,
       currency: "usd",
-      destination: sellerData.stripe_connect_id,
+      destination: seller.stripe_connect_id,
       description: `Deck sale: ${deckId}`,
     });
 
-    // Update balances in Supabase
-    const { error: updateError } = await supabase
+    // Update buyer's profile
+    const { error: buyerError } = await supabase
       .from("profiles")
-      .update({ balance: supabase.sql`balance - ${amount}` })
+      .update({
+        balance: supabase.sql`balance - ${amount}`,
+        purchaseddeckids: supabase.sql`array_append(purchaseddeckids, ${deckId})`,
+        purchaseinfo: supabase.sql`coalesce(purchaseinfo, '[]'::jsonb) || ${JSON.stringify(
+          [
+            {
+              deckId,
+              purchaseDate,
+              amount,
+            },
+          ],
+        )}::jsonb`,
+      })
       .eq("id", buyerId);
 
-    if (updateError) throw updateError;
+    if (buyerError) throw buyerError;
+
+    // Update seller's earnings
+    const { error: sellerError } = await supabase
+      .from("profiles")
+      .update({
+        total_earnings: supabase.sql`coalesce(total_earnings, 0) + ${amount * 0.9}`,
+        total_sales: supabase.sql`coalesce(total_sales, 0) + 1`,
+      })
+      .eq("id", deck.creatorid);
+
+    if (sellerError) throw sellerError;
+
+    // Update deck's purchase history
+    const { error: historyError } = await supabase
+      .from("decks")
+      .update({
+        purchase_history: supabase.sql`coalesce(purchase_history, '[]'::jsonb) || ${JSON.stringify(
+          [
+            {
+              buyerId,
+              purchaseDate,
+              amount,
+            },
+          ],
+        )}::jsonb`,
+      })
+      .eq("id", deckId);
+
+    if (historyError) throw historyError;
 
     res.json({ success: true, transfer });
   } catch (error) {
@@ -182,26 +229,41 @@ router.post("/create-payout", async (req, res) => {
     // Get Connect account ID
     const { data: userData, error: userError } = await supabase
       .from("profiles")
-      .select("stripe_connect_id, stripe_connect_status")
+      .select("stripe_connect_id, stripe_connect_status, balance")
       .eq("id", userId)
       .single();
 
     if (userError) throw userError;
+    if (!userData) throw new Error("User not found");
 
     if (userData.stripe_connect_status !== "active") {
       throw new Error("Account not fully onboarded");
     }
 
+    if ((userData.balance || 0) < amount) {
+      throw new Error("Insufficient balance");
+    }
+
     // Create payout
     const payout = await stripe.payouts.create(
       {
-        amount: Math.round(amount * 100),
+        amount: Math.round(amount * 100), // Convert to cents
         currency: "usd",
       },
       {
         stripeAccount: userData.stripe_connect_id,
       },
     );
+
+    // Update user's balance
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({
+        balance: supabase.sql`balance - ${amount}`,
+      })
+      .eq("id", userId);
+
+    if (updateError) throw updateError;
 
     res.json({ success: true, payout });
   } catch (error) {
@@ -234,14 +296,16 @@ router.post(
       switch (event.type) {
         case "checkout.session.completed": {
           const session = event.data.object;
-          const { userId, isRecharge } = session.metadata;
+          const { userId, type } = session.metadata;
           const amount = session.amount_total / 100; // Convert from cents
 
-          if (isRecharge === "true") {
+          if (type === "recharge") {
             // Update user's balance
             const { error } = await supabase
               .from("profiles")
-              .update({ balance: supabase.sql`balance + ${amount}` })
+              .update({
+                balance: supabase.sql`coalesce(balance, 0) + ${amount}`,
+              })
               .eq("id", userId);
 
             if (error) throw error;
