@@ -42,7 +42,7 @@ const PurchaseSuccess = () => {
               Purchase Successful!
             </h1>
             <p className="text-gray-600">
-              Thank you for your purchase. Your flashcard deck is now available
+              Thank you for your purchase. Your TEST flashcard deck is now available
               in your library.
             </p>
             <div className="pt-4 space-x-4">
