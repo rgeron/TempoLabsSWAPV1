@@ -116,7 +116,7 @@ const Sidebar = () => {
           )}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="ml-2 p-1.5 hover:bg-[#E6F3FF] dark:hover:bg-gray-800 rounded-md transition-colors"
+            className="ml-auto p-1.5 hover:bg-[#E6F3FF] dark:hover:bg-gray-800 rounded-md transition-colors"
           >
             <Menu className="h-5 w-5 text-[#2B4C7E] dark:text-gray-400" />
           </button>
