@@ -1,5 +1,3 @@
-Stripe.js;
-
 require("dotenv").config();
 const express = require("express");
 const Stripe = require("stripe");
