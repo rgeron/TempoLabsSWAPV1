@@ -5,6 +5,7 @@ import { Search, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Navigate } from "react-router-dom";
 import { AuthModal } from "../auth/AuthModal";
+import { AboutDialog } from "./AboutDialog";
 import CategoryGrid from "../marketplace/CategoryGrid";
 import AllDecks from "../marketplace/AllDecks";
 import DeckCard from "../marketplace/DeckCard";
@@ -14,6 +15,7 @@ import { ThemeToggle } from "../ThemeToggle";
 
 const LandingPage = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showAboutDialog, setShowAboutDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<DeckWithProfile[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -103,6 +105,7 @@ const LandingPage = () => {
             <Button
               variant="ghost"
               className="text-muted-foreground hover:text-foreground"
+              onClick={() => setShowAboutDialog(true)}
             >
               About Us
             </Button>
@@ -187,6 +190,10 @@ const LandingPage = () => {
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
+      />
+      <AboutDialog
+        isOpen={showAboutDialog}
+        onClose={() => setShowAboutDialog(false)}
       />
     </div>
   );
