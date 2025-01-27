@@ -98,7 +98,7 @@ export const BuyDeckDialog = ({
         toast({
           title: "Insufficient balance",
           description: `You need $${(deck.price - userBalance).toFixed(
-            2
+            2,
           )} more to buy this deck`,
           variant: "destructive",
         });
@@ -154,7 +154,7 @@ export const BuyDeckDialog = ({
             deckTitle: `Balance recharge for ${deck.title}`,
             amount: amountToRecharge,
           }),
-        }
+        },
       );
 
       const { url } = await response.json();
@@ -191,9 +191,10 @@ export const BuyDeckDialog = ({
           value={selectedTab}
           onValueChange={setSelectedTab}
         >
-          <TabsList className="w-full grid grid-cols-2">
+          <TabsList className="w-full grid grid-cols-3">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="preview">Preview Cards</TabsTrigger>
+            <TabsTrigger value="reviews">Reviews</TabsTrigger>
           </TabsList>
 
           <div className="flex-1 overflow-y-auto py-4">
@@ -215,6 +216,25 @@ export const BuyDeckDialog = ({
                 isLoading={isLoading}
                 limit={5}
               />
+            </TabsContent>
+
+            <TabsContent
+              value="reviews"
+              className="mt-0 h-full"
+              forceMount={selectedTab === "reviews"}
+            >
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-semibold">Reviews</h3>
+                    <span className="text-sm text-gray-500">(Coming soon)</span>
+                  </div>
+                </div>
+                <div className="flex flex-col items-center justify-center h-64 space-y-4 text-gray-500">
+                  <p>Reviews will be available soon!</p>
+                  <p className="text-sm">Stay tuned for updates.</p>
+                </div>
+              </div>
             </TabsContent>
           </div>
         </Tabs>
