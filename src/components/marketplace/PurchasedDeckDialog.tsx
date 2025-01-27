@@ -15,6 +15,10 @@ import { useEffect, useState } from "react";
 import { FlashcardPreview } from "./FlashcardPreview";
 import { OverviewTab } from "./OverviewTab";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/lib/auth";
+import { getDeckReviews, createReview, type Review } from "@/lib/api/reviews";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { format } from "date-fns";
 
 interface PurchasedDeckDialogProps {
   isOpen: boolean;
@@ -34,7 +38,33 @@ export function PurchasedDeckDialog({
   const [isLoading, setIsLoading] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [showReviewDialog, setShowReviewDialog] = useState(false);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(false);
+  const { user } = useAuth();
   const { toast } = useToast();
+
+  useEffect(() => {
+    const loadReviews = async () => {
+      if (selectedTab === "reviews") {
+        try {
+          setIsLoadingReviews(true);
+          const fetchedReviews = await getDeckReviews(deck.id);
+          setReviews(fetchedReviews);
+        } catch (error) {
+          console.error("Error loading reviews:", error);
+          toast({
+            title: "Error",
+            description: "Failed to load reviews",
+            variant: "destructive",
+          });
+        } finally {
+          setIsLoadingReviews(false);
+        }
+      }
+    };
+
+    loadReviews();
+  }, [selectedTab, deck.id, toast]);
 
   useEffect(() => {
     const loadFlashcards = async () => {
@@ -136,7 +166,9 @@ export function PurchasedDeckDialog({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <h3 className="text-lg font-semibold">Reviews</h3>
-                    <span className="text-sm text-gray-500">(Coming soon)</span>
+                    <span className="text-sm text-gray-500">
+                      ({reviews.length})
+                    </span>
                   </div>
                   <Button
                     onClick={() => setShowReviewDialog(true)}
@@ -145,10 +177,67 @@ export function PurchasedDeckDialog({
                     Write a Review
                   </Button>
                 </div>
-                <div className="flex flex-col items-center justify-center h-64 space-y-4 text-gray-500">
-                  <p>Reviews will be available soon!</p>
-                  <p className="text-sm">Stay tuned for updates.</p>
-                </div>
+                {isLoadingReviews ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-[#2B4C7E]" />
+                  </div>
+                ) : reviews.length > 0 ? (
+                  <div className="space-y-6">
+                    {reviews.map((review) => (
+                      <div
+                        key={review.id}
+                        className="space-y-2 p-4 bg-gray-50 rounded-lg"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage
+                                src={review.profiles?.avatar_url || undefined}
+                              />
+                              <AvatarFallback>
+                                {review.profiles?.username
+                                  ?.slice(0, 2)
+                                  .toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium">
+                                {review.profiles?.username}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                {format(
+                                  new Date(review.created_at),
+                                  "MMM d, yyyy",
+                                )}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                              <Star
+                                key={i}
+                                className={cn(
+                                  "h-4 w-4",
+                                  i < review.rating
+                                    ? "fill-yellow-400 text-yellow-400"
+                                    : "text-gray-300",
+                                )}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        {review.comment && (
+                          <p className="text-gray-600">{review.comment}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-64 space-y-4 text-gray-500">
+                    <p>No reviews yet</p>
+                    <p className="text-sm">Be the first to review this deck!</p>
+                  </div>
+                )}
               </div>
             </TabsContent>
           </div>
@@ -184,11 +273,23 @@ export function PurchasedDeckDialog({
         onClose={() => setShowReviewDialog(false)}
         deckTitle={deck.title}
         onSubmit={async (rating, comment) => {
-          toast({
-            title: "Review submitted",
-            description: "Thank you for your feedback!",
-          });
-          // TODO: Implement review submission to backend
+          if (!user) return;
+          try {
+            await createReview(deck.id, user.id, rating, comment);
+            const updatedReviews = await getDeckReviews(deck.id);
+            setReviews(updatedReviews);
+            toast({
+              title: "Review submitted",
+              description: "Thank you for your feedback!",
+            });
+          } catch (error) {
+            console.error("Error submitting review:", error);
+            toast({
+              title: "Error",
+              description: "Failed to submit review",
+              variant: "destructive",
+            });
+          }
         }}
       />
     </Dialog>
