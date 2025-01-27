@@ -1,7 +1,7 @@
 import { supabase } from "../supabase";
+import { STRIPE_API_URL } from "../config";
 
 const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
-const STRIPE_API_URL = `${CLIENT_URL}/api`;
 
 // Create or retrieve a Stripe Connect account
 export const createConnectAccount = async (userId: string) => {

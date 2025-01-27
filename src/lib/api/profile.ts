@@ -1,7 +1,7 @@
 import { supabase } from "../supabase";
+import { STRIPE_API_URL } from "../config";
 
 const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
-const STRIPE_API_URL = `${CLIENT_URL}/api`;
 
 // Get user profile
 export const getUserProfile = async (userId: string) => {
@@ -216,4 +216,16 @@ export const getStripeAccountDetails = async (userId: string) => {
 
   if (error) throw error;
   return data;
+};
+
+// Create a pending Stripe account
+export const createPendingStripeAccount = async (email: string) => {
+  const response = await fetch(`${STRIPE_API_URL}/create-pending-account`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+
+  if (!response.ok) throw new Error("Failed to create pending Stripe account");
+  return await response.json();
 };

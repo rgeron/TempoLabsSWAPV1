@@ -9,6 +9,7 @@ import {
 } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "./supabase";
+import { createPendingStripeAccount } from "./api/profile"; // Update the import
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"] & {
   country?: string;
@@ -32,9 +33,6 @@ type AuthContextType = {
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-const STRIPE_API_URL = "http://localhost:5001/api/";
-
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -137,13 +135,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!authData.user) throw new Error("No user returned from sign up");
 
       // Create a pending Stripe account
-      const response = await fetch(`${STRIPE_API_URL}/create-pending-account`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-
-      if (!response.ok) throw new Error("Failed to create pending Stripe account");
+      await createPendingStripeAccount(email);
 
       // Wait for Supabase's trigger to create the profile
       await new Promise((resolve) => setTimeout(resolve, 1000));
