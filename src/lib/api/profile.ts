@@ -14,35 +14,6 @@ export const getUserProfile = async (userId: string) => {
   return data;
 };
 
-// Update purchased decks
-export const updatePurchasedDecks = async (
-  userId: string,
-  deckId: string
-): Promise<void> => {
-  const purchaseDate = new Date().toISOString();
-
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("purchaseddeckids, purchaseinfo")
-    .eq("id", userId)
-    .single();
-
-  if (profileError) throw profileError;
-
-  const purchaseddeckids = [...(profile?.purchaseddeckids || []), deckId];
-  const purchaseinfo = [
-    ...(profile?.purchaseinfo || []),
-    { deckId, purchaseDate }
-  ];
-
-  const { error: updateError } = await supabase
-    .from("profiles")
-    .update({ purchaseddeckids, purchaseinfo })
-    .eq("id", userId);
-
-  if (updateError) throw updateError;
-};
-
 // Simplified likeDeck function
 export const likeDeck = async (
   userId: string,
