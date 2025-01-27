@@ -1,6 +1,7 @@
 import { supabase } from "../supabase";
 
-const STRIPE_API_URL = "http://localhost:5001/api/";
+const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
+const STRIPE_API_URL = `${CLIENT_URL}/api`;
 
 // Create or retrieve a Stripe Connect account
 export const createConnectAccount = async (userId: string) => {
@@ -46,7 +47,8 @@ export const createPendingAccount = async (email: string) => {
       body: JSON.stringify({ email }),
     });
 
-    if (!response.ok) throw new Error("Failed to create pending Stripe account");
+    if (!response.ok)
+      throw new Error("Failed to create pending Stripe account");
     return await response.json();
   } catch (error) {
     console.error("Error creating pending Stripe account:", error);
@@ -57,7 +59,7 @@ export const createPendingAccount = async (email: string) => {
 // Create a checkout session for adding credits
 export const createCreditCheckoutSession = async (
   userId: string,
-  amount: number,
+  amount: number
 ) => {
   try {
     const response = await fetch(`${STRIPE_API_URL}/create-checkout-session`, {
@@ -83,7 +85,7 @@ export const createCreditCheckoutSession = async (
 export const processDeckPurchase = async (
   buyerId: string,
   deckId: string,
-  amount: number,
+  amount: number
 ) => {
   try {
     const response = await fetch(`${STRIPE_API_URL}/process-deck-purchase`, {
@@ -110,7 +112,7 @@ export const getAccountStatus = async (userId: string) => {
     const { data, error } = await supabase
       .from("profiles")
       .select(
-        "stripe_connect_id, stripe_connect_status, balance, total_earnings",
+        "stripe_connect_id, stripe_connect_status, balance, total_earnings"
       )
       .eq("id", userId)
       .single();
