@@ -2,14 +2,14 @@ import type { Database } from "@/types/supabase";
 import type { User } from "@supabase/supabase-js";
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useState,
-  useCallback,
 } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "./supabase";
 import { createPendingStripeAccount } from "./api/profile"; // Update the import
+import { supabase } from "./supabase";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"] & {
   country?: string;
@@ -26,7 +26,7 @@ type AuthContextType = {
   updateLikedDecks: (deckId: string, isLiking: boolean) => Promise<void>;
   updateFollowedCreators: (
     creatorId: string,
-    isFollowing: boolean,
+    isFollowing: boolean
   ) => Promise<void>;
   updatePurchasedDecks: (deckId: string) => Promise<void>;
   updateLocalProfile: (newProfile: Profile) => void;
@@ -211,7 +211,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const updateFollowedCreators = async (
     creatorId: string,
-    isFollowing: boolean,
+    isFollowing: boolean
   ) => {
     if (!user) throw new Error("Not authenticated");
 

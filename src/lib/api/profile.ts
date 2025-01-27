@@ -1,5 +1,5 @@
-import { supabase } from "../supabase";
 import { STRIPE_API_URL } from "../config";
+import { supabase } from "../supabase";
 
 const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
 
