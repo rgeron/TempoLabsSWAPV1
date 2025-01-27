@@ -9,7 +9,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { getUserBalance } from "@/lib/api/balance";
-import { purchaseDeck } from "@/lib/api/decks";
 import { getFlashcards } from "@/lib/api/flashcards";
 import { useAuth } from "@/lib/auth";
 import type { BuyDeckDialogProps, FlashCard } from "@/types/marketplace";
@@ -17,7 +16,7 @@ import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FlashcardPreview } from "./FlashcardPreview";
 import { OverviewTab } from "./OverviewTab";
-import { createCreditCheckoutSession } from "@/lib/api/stripe";
+import { createCreditCheckoutSession, processDeckPurchase } from "@/lib/api/stripe";
 
 export const BuyDeckDialog = ({
   isOpen,
@@ -101,7 +100,7 @@ export const BuyDeckDialog = ({
       }
 
       // Process the purchase
-      await purchaseDeck(user.id, deck.id, deck.price);
+      await processDeckPurchase(user.id, deck.id, deck.price);
 
       toast({
         title: "Purchase successful",
