@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { ReviewDialog } from "./ReviewDialog";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +33,7 @@ export function PurchasedDeckDialog({
   const [flashcards, setFlashcards] = useState<FlashCard[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [showReviewDialog, setShowReviewDialog] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -102,9 +104,10 @@ export function PurchasedDeckDialog({
           value={selectedTab}
           onValueChange={setSelectedTab}
         >
-          <TabsList className="w-full grid grid-cols-2">
+          <TabsList className="w-full grid grid-cols-3">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="flashcards">Flashcards</TabsTrigger>
+            <TabsTrigger value="reviews">Reviews</TabsTrigger>
           </TabsList>
 
           <div className="flex-1 overflow-y-auto py-4">
@@ -122,6 +125,31 @@ export function PurchasedDeckDialog({
               forceMount={selectedTab === "flashcards"}
             >
               <FlashcardPreview flashcards={flashcards} isLoading={isLoading} />
+            </TabsContent>
+
+            <TabsContent
+              value="reviews"
+              className="mt-0 h-full"
+              forceMount={selectedTab === "reviews"}
+            >
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-semibold">Reviews</h3>
+                    <span className="text-sm text-gray-500">(Coming soon)</span>
+                  </div>
+                  <Button
+                    onClick={() => setShowReviewDialog(true)}
+                    className="bg-[#2B4C7E] text-white hover:bg-[#1A365D]"
+                  >
+                    Write a Review
+                  </Button>
+                </div>
+                <div className="flex flex-col items-center justify-center h-64 space-y-4 text-gray-500">
+                  <p>Reviews will be available soon!</p>
+                  <p className="text-sm">Stay tuned for updates.</p>
+                </div>
+              </div>
             </TabsContent>
           </div>
         </Tabs>
@@ -150,6 +178,19 @@ export function PurchasedDeckDialog({
           </Button>
         </div>
       </DialogContent>
+
+      <ReviewDialog
+        isOpen={showReviewDialog}
+        onClose={() => setShowReviewDialog(false)}
+        deckTitle={deck.title}
+        onSubmit={async (rating, comment) => {
+          toast({
+            title: "Review submitted",
+            description: "Thank you for your feedback!",
+          });
+          // TODO: Implement review submission to backend
+        }}
+      />
     </Dialog>
   );
 }
