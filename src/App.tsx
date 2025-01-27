@@ -13,9 +13,11 @@ import { SellerDashboard } from "./components/dashboard/SellerDashboard";
 import LandingPage from "./components/landing/LandingPage";
 import { Toaster } from "./components/ui/toaster";
 import { AuthProvider } from "./lib/auth";
+import { ThemeProvider } from "./lib/theme-provider";
+import OnboardingComplete from "./pages/OnboardingComplete";
+import OnboardingRefresh from "./pages/OnboardingRefresh";
 import PurchaseCancelled from "./pages/PurchaseCancelled";
 import PurchaseSuccess from "./pages/PurchaseSuccess";
-import { ThemeProvider } from "./lib/theme-provider";
 
 const App = () => {
   return (
@@ -25,6 +27,8 @@ const App = () => {
           {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/category/:category" element={<CategoryDecks />} />
+          <Route path="/onboarding/refresh" element={<OnboardingRefresh />} />
+          <Route path="/onboarding/complete" element={<OnboardingComplete />} />
 
           {/* App Routes */}
           <Route path="/app" element={<DashboardLayout />}>
