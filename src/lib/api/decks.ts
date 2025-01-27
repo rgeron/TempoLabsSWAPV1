@@ -1,6 +1,6 @@
 import type { Deck, DeckWithProfile } from "@/types/marketplace";
 import { supabase } from "../supabase";
-import { uploadFlashcardsFile } from "./flashcards";
+import { uploadFlashcardsFile, downloadFlashcardsFile } from "./flashcards";
 import { getFlashcards } from "./flashcards";
 import { transferBalance } from "./balance";
 
@@ -202,37 +202,6 @@ export const purchaseDeck = async (
     if (updateError) throw updateError;
   } catch (error) {
     console.error("Error in purchaseDeck:", error);
-    throw error;
-  }
-};
-
-export const downloadFlashcardsFile = async (
-  deckId: string,
-  creatorId: string,
-): Promise<string> => {
-  try {
-    // First get the deck to get the file URL
-    const { data: deck, error: deckError } = await supabase
-      .from("decks")
-      .select("flashcards_file_url")
-      .eq("id", deckId)
-      .eq("creatorid", creatorId)
-      .single();
-
-    if (deckError) throw deckError;
-    if (!deck?.flashcards_file_url)
-      throw new Error("Flashcards file not found");
-
-    // Download the file content
-    const response = await fetch(deck.flashcards_file_url);
-    if (!response.ok) {
-      throw new Error(`Failed to download file: ${response.statusText}`);
-    }
-
-    const content = await response.text();
-    return content;
-  } catch (error) {
-    console.error("Error downloading flashcards file:", error);
     throw error;
   }
 };

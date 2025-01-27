@@ -96,13 +96,7 @@ export const BuyDeckDialog = ({
       // Check if user has enough balance
       if (userBalance < deck.price) {
         // If balance is insufficient, prompt to recharge
-        toast({
-          title: "Insufficient balance",
-          description: `You need $${(deck.price - userBalance).toFixed(
-            2
-          )} more to buy this deck`,
-          variant: "destructive",
-        });
+        handleRecharge();
         return;
       }
 
