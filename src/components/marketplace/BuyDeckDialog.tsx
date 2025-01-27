@@ -17,6 +17,7 @@ import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FlashcardPreview } from "./FlashcardPreview";
 import { OverviewTab } from "./OverviewTab";
+import { createCreditCheckoutSession } from "@/lib/api/stripe";
 
 export const BuyDeckDialog = ({
   isOpen,
@@ -144,20 +145,7 @@ export const BuyDeckDialog = ({
       const amountToRecharge = deck.price - userBalance;
 
       // Create Stripe checkout session
-      const response = await fetch(
-        "http://localhost:5001/api/create-checkout-session",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId: user.id,
-            deckTitle: `Balance recharge for ${deck.title}`,
-            amount: amountToRecharge,
-          }),
-        }
-      );
-
-      const { url } = await response.json();
+      const url = await createCreditCheckoutSession(user.id, amountToRecharge);
 
       if (url) {
         window.location.href = url; // Redirect to Stripe checkout
