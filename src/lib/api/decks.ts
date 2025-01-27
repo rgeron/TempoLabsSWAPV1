@@ -1,12 +1,10 @@
 import type { Deck, DeckWithProfile } from "@/types/marketplace";
 import { supabase } from "../supabase";
-import { uploadFlashcardsFile, downloadFlashcardsFile } from "./flashcards";
-import { getFlashcards } from "./flashcards";
-import { transferBalance } from "./balance";
+import { getFlashcards, uploadFlashcardsFile } from "./flashcards";
 
 export const createDeck = async (
   deck: Partial<Deck>,
-  file: File,
+  file: File
 ): Promise<Deck> => {
   try {
     // First create the deck to get its ID
@@ -24,7 +22,7 @@ export const createDeck = async (
     const { publicUrl } = await uploadFlashcardsFile(
       file,
       deck.creatorid,
-      newDeck.id,
+      newDeck.id
     );
 
     // Update the deck with the file URL
@@ -59,10 +57,10 @@ export const getAllDeckContents = async (): Promise<string[]> => {
       data.map((deck) =>
         getFlashcards(deck.id, deck.creatorid)
           .then((cards) =>
-            cards.map((card) => `${card.front} ${card.back}`).join(" "),
+            cards.map((card) => `${card.front} ${card.back}`).join(" ")
           )
-          .catch(() => ""),
-      ),
+          .catch(() => "")
+      )
     );
 
     return contents.filter((content) => content !== "");
@@ -116,7 +114,7 @@ export const deleteDeck = async (deckId: string): Promise<void> => {
 const recordPurchase = async (
   deckId: string,
   buyerId: string,
-  amount: number,
+  amount: number
 ): Promise<void> => {
   // First get current purchase history
   const { data: deck, error: fetchError } = await supabase
@@ -143,4 +141,118 @@ const recordPurchase = async (
     .eq("id", deckId);
 
   if (updateError) throw updateError;
+};
+
+export const updateDeckPurchaseHistory = async (
+  deckId: string,
+  buyerId: string,
+  amount: number
+): Promise<void> => {
+  const purchaseDate = new Date().toISOString();
+  const { error } = await supabase
+    .from("decks")
+    .update({
+      purchase_history: supabase.sql`coalesce(purchase_history, '[]'::jsonb) || ${JSON.stringify(
+        [{ buyerId, purchaseDate, amount }]
+      )}::jsonb`,
+    })
+    .eq("id", deckId);
+
+  if (error) throw error;
+};
+
+// Process a deck purchase
+export const processDeckPurchase = async (
+  buyerId: string,
+  deckId: string,
+  amount: number
+) => {
+  try {
+    // Get Connect account ID from Supabase
+    const { data: deckData, error: deckError } = await supabase
+      .from("decks")
+      .select(
+        "creatorid, profiles!decks_creatorid_fkey(stripe_connect_id, stripe_connect_status)"
+      )
+      .eq("id", deckId)
+      .single();
+
+    if (deckError) throw deckError;
+    const seller = deckData.profiles;
+
+    if (
+      !seller?.stripe_connect_id ||
+      seller.stripe_connect_status !== "active"
+    ) {
+      throw new Error("Seller's Stripe account is not properly set up");
+    }
+
+    const response = await fetch(`${STRIPE_API_URL}/process-deck-purchase`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        amount,
+        accountId: seller.stripe_connect_id,
+      }),
+    });
+
+    if (!response.ok) throw new Error("Failed to process purchase");
+    const result = await response.json();
+
+    // Update buyer's profile
+    const { error: buyerError } = await supabase
+      .from("profiles")
+      .update({
+        balance: supabase.sql`balance - ${amount}`,
+        purchaseddeckids: supabase.sql`array_append(purchaseddeckids, ${deckId})`,
+        purchaseinfo: supabase.sql`coalesce(purchaseinfo, '[]'::jsonb) || ${JSON.stringify(
+          [
+            {
+              deckId,
+              purchaseDate: new Date().toISOString(),
+              amount,
+            },
+          ]
+        )}::jsonb`,
+      })
+      .eq("id", buyerId);
+
+    if (buyerError) throw buyerError;
+
+    // Update seller's earnings
+    const { error: sellerError } = await supabase
+      .from("profiles")
+      .update({
+        total_earnings: supabase.sql`coalesce(total_earnings, 0) + ${
+          amount * 0.9
+        }`,
+        total_sales: supabase.sql`coalesce(total_sales, 0) + 1`,
+      })
+      .eq("id", deckData.creatorid);
+
+    if (sellerError) throw sellerError;
+
+    // Update deck's purchase history
+    const { error: historyError } = await supabase
+      .from("decks")
+      .update({
+        purchase_history: supabase.sql`coalesce(purchase_history, '[]'::jsonb) || ${JSON.stringify(
+          [
+            {
+              buyerId,
+              purchaseDate: new Date().toISOString(),
+              amount,
+            },
+          ]
+        )}::jsonb`,
+      })
+      .eq("id", deckId);
+
+    if (historyError) throw historyError;
+
+    return result;
+  } catch (error) {
+    console.error("Error processing deck purchase:", error);
+    throw error;
+  }
 };

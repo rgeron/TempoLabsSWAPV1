@@ -11,7 +11,7 @@ import { supabase } from "../supabase";
 export const uploadFlashcardsFile = async (
   file: File,
   userId: string,
-  deckId: string,
+  deckId: string
 ): Promise<{ publicUrl: string; filePath: string }> => {
   // Always save as .txt regardless of original extension
   const filePath = `${userId}/${deckId}.txt`;
@@ -28,7 +28,9 @@ export const uploadFlashcardsFile = async (
     throw error;
   }
 
-  const { data: publicUrlData } = supabase.storage.from("flashcards-files").getPublicUrl(filePath);
+  const { data: publicUrlData } = supabase.storage
+    .from("flashcards-files")
+    .getPublicUrl(filePath);
 
   if (!publicUrlData) {
     throw new Error("Failed to get public URL");
@@ -45,7 +47,7 @@ export const uploadFlashcardsFile = async (
  */
 export const downloadFlashcardsFile = async (
   deckId: string,
-  creatorId: string,
+  creatorId: string
 ): Promise<string> => {
   try {
     const filePath = `${creatorId}/${deckId}.txt`;
@@ -81,7 +83,7 @@ export const downloadFlashcardsFile = async (
  */
 export const getFlashcards = async (
   deckId: string,
-  creatorId: string,
+  creatorId: string
 ): Promise<FlashCard[]> => {
   try {
     if (!creatorId) {
@@ -135,4 +137,13 @@ export const getFlashcards = async (
     console.error("Error fetching flashcards:", error);
     throw error;
   }
+};
+
+// Add a new function to delete a flashcards file
+export const deleteFlashcardsFile = async (filePath: string): Promise<void> => {
+  const { error } = await supabase.storage
+    .from("flashcards-files")
+    .remove([filePath]);
+
+  if (error) throw error;
 };
