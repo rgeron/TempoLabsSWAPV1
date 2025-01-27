@@ -1,5 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ReviewDialog } from "./ReviewDialog";
+import { cn } from "@/lib/utils"; // Vérifie si ce fichier existe
+
 import {
   Dialog,
   DialogContent,
@@ -10,7 +12,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { downloadFlashcardsFile, getFlashcards } from "@/lib/api/flashcards";
 import type { DeckWithProfile, FlashCard } from "@/types/marketplace";
-import { Download, Loader2 } from "lucide-react";
+import { Download, Loader2, Star } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FlashcardPreview } from "./FlashcardPreview";
 import { OverviewTab } from "./OverviewTab";
