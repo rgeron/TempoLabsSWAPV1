@@ -6,6 +6,7 @@ import {
   getAccountStatus,
   requestPayout,
 } from "@/lib/api/stripe";
+
 import { useToast } from "@/components/ui/use-toast";
 
 export function useStripeConnect() {

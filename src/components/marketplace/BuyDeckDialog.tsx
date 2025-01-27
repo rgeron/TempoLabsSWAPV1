@@ -10,13 +10,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { getUserBalance } from "@/lib/api/balance";
 import { getFlashcards } from "@/lib/api/flashcards";
+
+import { createCreditCheckoutSession } from "@/lib/api/client";
+import { processDeckPurchase } from "@/lib/api/decks";
 import { useAuth } from "@/lib/auth";
 import type { BuyDeckDialogProps, FlashCard } from "@/types/marketplace";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FlashcardPreview } from "./FlashcardPreview";
 import { OverviewTab } from "./OverviewTab";
-import { createCreditCheckoutSession, processDeckPurchase } from "@/lib/api/stripe";
 
 export const BuyDeckDialog = ({
   isOpen,

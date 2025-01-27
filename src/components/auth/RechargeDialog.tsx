@@ -9,11 +9,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
+import { createCreditCheckoutSession } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth";
 import { useStripeConnect } from "@/lib/hooks/useStripeConnect";
 import { ArrowDownToLine, ArrowUpToLine, Loader2 } from "lucide-react";
 import { useState } from "react";
-import { createCreditCheckoutSession } from "@/lib/api/stripe";
 
 interface RechargeDialogProps {
   isOpen: boolean;
