@@ -111,7 +111,7 @@ export const deleteDeck = async (deckId: string): Promise<void> => {
   if (error) throw error;
 };
 
-const recordPurchase = async (
+export const recordPurchase = async (
   deckId: string,
   buyerId: string,
   amount: number
