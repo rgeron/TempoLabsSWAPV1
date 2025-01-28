@@ -214,18 +214,54 @@ export function PurchasedDeckDialog({
                               </p>
                             </div>
                           </div>
-                          <div className="flex">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                              <Star
-                                key={i}
-                                className={cn(
-                                  "h-4 w-4",
-                                  i < review.rating
-                                    ? "fill-yellow-400 text-yellow-400"
-                                    : "text-gray-300",
-                                )}
-                              />
-                            ))}
+                          <div className="flex items-center space-x-4">
+                            <div className="flex">
+                              {Array.from({ length: 5 }).map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={cn(
+                                    "h-4 w-4",
+                                    i < review.rating
+                                      ? "fill-yellow-400 text-yellow-400"
+                                      : "text-gray-300",
+                                  )}
+                                />
+                              ))}
+                            </div>
+                            {user?.id === review.user_id && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-red-500 hover:text-red-700"
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  try {
+                                    await deleteReview(review.id);
+                                    const updatedReviews = await getDeckReviews(
+                                      deck.id,
+                                    );
+                                    setReviews(updatedReviews);
+                                    toast({
+                                      title: "Review deleted",
+                                      description:
+                                        "Your review has been deleted successfully",
+                                    });
+                                  } catch (error) {
+                                    console.error(
+                                      "Error deleting review:",
+                                      error,
+                                    );
+                                    toast({
+                                      title: "Error",
+                                      description: "Failed to delete review",
+                                      variant: "destructive",
+                                    });
+                                  }
+                                }}
+                              >
+                                Delete
+                              </Button>
+                            )}
                           </div>
                         </div>
                         {review.comment && (
