@@ -1,4 +1,4 @@
-import { STRIPE_API_URL, CLIENT_URL } from "../config"; // Updated import
+import { STRIPE_API_URL } from "../config"; // Updated import
 import { supabase } from "../supabase";
 
 // Create or retrieve a Stripe Connect account

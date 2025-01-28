@@ -1,4 +1,4 @@
-import { STRIPE_API_URL, CLIENT_URL } from "../config";
+import { STRIPE_API_URL } from "../config";
 import { supabase } from "../supabase";
 
 // Get user profile
