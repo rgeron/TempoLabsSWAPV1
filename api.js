@@ -140,10 +140,21 @@ router.post("/create-pending-account", async (req, res) => {
   try {
     const { email } = req.body;
 
-    // Create a pending account in Stripe
+    // Create an account token
+    const accountToken = await stripe.tokens.create({
+      account: {
+        business_type: "individual",
+        individual: {
+          email,
+        },
+        tos_shown_and_accepted: true,
+      },
+    });
+
+    // Create a pending account in Stripe using the account token
     const account = await stripe.accounts.create({
       type: "custom",
-      email,
+      account_token: accountToken.id,
       capabilities: {
         card_payments: { requested: true },
         transfers: { requested: true },
