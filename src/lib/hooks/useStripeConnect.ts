@@ -1,11 +1,12 @@
-import { useState } from "react";
 import { useAuth } from "@/lib/auth";
+import { useState } from "react";
+
+import { requestPayout } from "../api/balance";
 import {
   createConnectAccount,
-  getOnboardingLink,
   getAccountStatus,
-  requestPayout,
-} from "@/lib/api/stripe";
+  getOnboardingLink,
+} from "../api/profile";
 
 import { useToast } from "@/components/ui/use-toast";
 
@@ -35,7 +36,10 @@ export function useStripeConnect() {
       console.error("Error setting up seller account:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to set up seller account. Please try again.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to set up seller account. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -64,7 +68,7 @@ export function useStripeConnect() {
 
       if (status?.stripe_connect_status !== "active") {
         throw new Error(
-          "Please complete account setup before withdrawing funds",
+          "Please complete account setup before withdrawing funds"
         );
       }
 

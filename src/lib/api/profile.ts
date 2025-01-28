@@ -1,7 +1,5 @@
-import { STRIPE_API_URL } from "../config";
+import { STRIPE_API_URL, CLIENT_URL } from "../config";
 import { supabase } from "../supabase";
-
-const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
 
 // Get user profile
 export const getUserProfile = async (userId: string) => {
