@@ -135,6 +135,28 @@ router.post("/create-payout", async (req, res) => {
   }
 });
 
+// Create a pending Stripe account
+router.post("/create-pending-account", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // Create a pending account in Stripe
+    const account = await stripe.accounts.create({
+      type: "custom",
+      email,
+      capabilities: {
+        card_payments: { requested: true },
+        transfers: { requested: true },
+      },
+    });
+
+    res.json({ accountId: account.id });
+  } catch (error) {
+    console.error("Error creating pending Stripe account:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Webhook handler
 router.post(
   "/webhook",
