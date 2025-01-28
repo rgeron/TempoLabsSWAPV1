@@ -3,7 +3,7 @@ const express = require("express");
 const cors = require("cors");
 
 // Import the Stripe routes from stripe.js
-const stripeRoutes = require("./stripe.js");
+const stripeRoutes = require("./api.js");
 
 const app = express();
 
