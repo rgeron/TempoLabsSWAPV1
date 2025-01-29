@@ -3,7 +3,6 @@ import { useState } from "react";
 
 import { requestPayout } from "../api/balance";
 import {
-  createConnectAccount,
   getAccountStatus,
   getOnboardingLink,
 } from "../api/profile";
@@ -20,12 +19,6 @@ export function useStripeConnect() {
 
     try {
       setIsLoading(true);
-
-      // Create Connect account if needed
-      const account = await createConnectAccount(user.id);
-      if (!account) {
-        throw new Error("Failed to create Connect account");
-      }
 
       // Get onboarding link
       const url = await getOnboardingLink(user.id);
