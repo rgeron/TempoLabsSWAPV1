@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 import { useNavigate } from "react-router-dom";
-import { createPendingStripeAccount, createConnectAccount } from "./api/profile"; // Update the import
+import { createConnectAccount } from "./api/profile";
 import { supabase } from "./supabase";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"] & {
@@ -133,9 +133,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (authError) throw authError;
       if (!authData.user) throw new Error("No user returned from sign up");
-
-      // Create a pending Stripe account
-      await createPendingStripeAccount(email);
 
       // Create a Stripe Connect account
       await createConnectAccount(authData.user.id);
