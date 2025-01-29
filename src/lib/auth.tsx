@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 import { useNavigate } from "react-router-dom";
-import { createPendingStripeAccount } from "./api/profile"; // Update the import
+import { createPendingStripeAccount, createConnectAccount } from "./api/profile"; // Update the import
 import { supabase } from "./supabase";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"] & {
@@ -136,6 +136,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Create a pending Stripe account
       await createPendingStripeAccount(email);
+
+      // Create a Stripe Connect account
+      await createConnectAccount(authData.user.id);
 
       // Wait for Supabase's trigger to create the profile
       await new Promise((resolve) => setTimeout(resolve, 1000));

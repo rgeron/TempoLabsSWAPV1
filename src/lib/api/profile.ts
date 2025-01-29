@@ -215,15 +215,3 @@ export const getStripeAccountDetails = async (userId: string) => {
   if (error) throw error;
   return data;
 };
-
-// Create a pending Stripe account
-export const createPendingStripeAccount = async (email: string) => {
-  const response = await fetch(`${STRIPE_API_URL}/create-pending-account`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email }),
-  });
-
-  if (!response.ok) throw new Error("Failed to create pending Stripe account");
-  return await response.json();
-};
