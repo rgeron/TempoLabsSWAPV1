@@ -135,10 +135,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!authData.user) throw new Error("No user returned from sign up");
 
       // Create a Stripe Connect account
-      await createConnectAccount(authData.user.id);
+      const accountId = await createConnectAccount(authData.user.id);
 
       // Wait for Supabase's trigger to create the profile
       await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Update the profile with the Stripe Connect ID
+      await supabase
+        .from("profiles")
+        .update({ stripe_connect_id: accountId })
+        .eq("id", authData.user.id);
 
       // Set the user and fetch their profile
       setUser(authData.user);
