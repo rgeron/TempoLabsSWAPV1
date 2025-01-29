@@ -9,6 +9,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
+import { createCreditCheckoutSession } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth";
 import { useStripeConnect } from "@/lib/hooks/useStripeConnect";
 import { ArrowDownToLine, ArrowUpToLine, Loader2 } from "lucide-react";
@@ -47,24 +48,7 @@ export function RechargeDialog({ isOpen, onClose }: RechargeDialogProps) {
       setIsLoading(true);
 
       // Create Stripe checkout session
-      const response = await fetch(
-        "http://localhost:5001/api/create-checkout-session",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId: user.id,
-            amount,
-            isRecharge: true,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to create checkout session");
-      }
-
-      const { url } = await response.json();
+      const url = await createCreditCheckoutSession(user.id, amount);
 
       if (url) {
         window.location.href = url; // Redirect to Stripe checkout

@@ -2,12 +2,13 @@ import type { Database } from "@/types/supabase";
 import type { User } from "@supabase/supabase-js";
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useState,
-  useCallback,
 } from "react";
 import { useNavigate } from "react-router-dom";
+import { createPendingStripeAccount } from "./api/profile"; // Update the import
 import { supabase } from "./supabase";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"] & {
@@ -25,16 +26,13 @@ type AuthContextType = {
   updateLikedDecks: (deckId: string, isLiking: boolean) => Promise<void>;
   updateFollowedCreators: (
     creatorId: string,
-    isFollowing: boolean,
+    isFollowing: boolean
   ) => Promise<void>;
   updatePurchasedDecks: (deckId: string) => Promise<void>;
   updateLocalProfile: (newProfile: Profile) => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-const STRIPE_API_URL = "http://localhost:5001/api/";
-
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -137,13 +135,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!authData.user) throw new Error("No user returned from sign up");
 
       // Create a pending Stripe account
-      const response = await fetch(`${STRIPE_API_URL}/create-pending-account`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-
-      if (!response.ok) throw new Error("Failed to create pending Stripe account");
+      await createPendingStripeAccount(email);
 
       // Wait for Supabase's trigger to create the profile
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -219,7 +211,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const updateFollowedCreators = async (
     creatorId: string,
-    isFollowing: boolean,
+    isFollowing: boolean
   ) => {
     if (!user) throw new Error("Not authenticated");
 

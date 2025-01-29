@@ -9,8 +9,10 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { getUserBalance } from "@/lib/api/balance";
-import { purchaseDeck } from "@/lib/api/decks";
 import { getFlashcards } from "@/lib/api/flashcards";
+
+import { createCreditCheckoutSession } from "@/lib/api/client";
+import { processDeckPurchase } from "@/lib/api/decks";
 import { useAuth } from "@/lib/auth";
 import type { BuyDeckDialogProps, FlashCard } from "@/types/marketplace";
 import { Loader2, Star } from "lucide-react";
@@ -124,18 +126,13 @@ export const BuyDeckDialog = ({
       // Check if user has enough balance
       if (userBalance < deck.price) {
         // If balance is insufficient, prompt to recharge
-        toast({
-          title: "Insufficient balance",
-          description: `You need $${(deck.price - userBalance).toFixed(
-            2,
-          )} more to buy this deck`,
-          variant: "destructive",
-        });
+
+        handleRecharge();
         return;
       }
 
       // Process the purchase
-      await purchaseDeck(user.id, deck.id, deck.price);
+      await processDeckPurchase(user.id, deck.id, deck.price);
 
       toast({
         title: "Purchase successful",
@@ -173,20 +170,8 @@ export const BuyDeckDialog = ({
       const amountToRecharge = deck.price - userBalance;
 
       // Create Stripe checkout session
-      const response = await fetch(
-        "http://localhost:5001/api/create-checkout-session",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId: user.id,
-            deckTitle: `Balance recharge for ${deck.title}`,
-            amount: amountToRecharge,
-          }),
-        },
-      );
 
-      const { url } = await response.json();
+      const url = await createCreditCheckoutSession(user.id, amountToRecharge);
 
       if (url) {
         window.location.href = url; // Redirect to Stripe checkout

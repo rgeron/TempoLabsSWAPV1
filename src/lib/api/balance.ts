@@ -11,79 +11,73 @@ export const getUserBalance = async (userId: string): Promise<number> => {
   return data?.balance || 0;
 };
 
-export const updateUserBalance = async (
-  userId: string,
-  newBalance: number,
+// Add a new function to transfer balance between users
+export const transferBalance = async (
+  fromUserId: string,
+  toUserId: string,
+  amount: number
 ): Promise<void> => {
-  const { error } = await supabase
+  const { error: debitError } = await supabase
     .from("profiles")
-    .update({ balance: newBalance })
-    .eq("id", userId);
+    .update({ balance: supabase.sql`balance - ${amount}` })
+    .eq("id", fromUserId);
 
-  if (error) throw error;
+  if (debitError) throw debitError;
+
+  const { error: creditError } = await supabase
+    .from("profiles")
+    .update({ balance: supabase.sql`balance + ${amount}` })
+    .eq("id", toUserId);
+
+  if (creditError) throw creditError;
 };
 
-export const transferBalance = async (
-  buyerId: string,
-  sellerId: string,
-  amount: number,
-): Promise<void> => {
+// Request a payout (withdrawal)
+export const requestPayout = async (userId: string, amount: number) => {
   try {
-    // Get both profiles in a single query for efficiency
-    const { data: profiles, error: profilesError } = await supabase
+    // Get Connect account ID from Supabase
+    const { data: userData, error: userError } = await supabase
       .from("profiles")
-      .select("id, balance")
-      .in("id", [buyerId, sellerId]);
+      .select("stripe_connect_id, stripe_connect_status, balance")
+      .eq("id", userId)
+      .single();
 
-    if (profilesError) throw profilesError;
-    if (!profiles || profiles.length !== 2) {
-      throw new Error("Could not find both buyer and seller profiles");
+    if (userError) throw userError;
+    if (!userData) throw new Error("User not found");
+
+    if (userData.stripe_connect_status !== "active") {
+      throw new Error("Account not fully onboarded");
     }
 
-    // Find buyer and seller profiles
-    const buyerProfile = profiles.find((p) => p.id === buyerId);
-    const sellerProfile = profiles.find((p) => p.id === sellerId);
-
-    if (!buyerProfile || !sellerProfile) {
-      throw new Error("Could not find both buyer and seller profiles");
+    if ((userData.balance || 0) < amount) {
+      throw new Error("Insufficient balance");
     }
 
-    // Check buyer's balance
-    const buyerBalance = buyerProfile.balance || 0;
-    if (buyerBalance < amount) {
-      throw new Error(
-        `Insufficient balance. Need $${amount - buyerBalance} more.`,
-      );
-    }
+    const response = await fetch(`${STRIPE_API_URL}/create-payout`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        amount,
+        accountId: userData.stripe_connect_id,
+      }),
+    });
 
-    // Calculate new balances
-    const newBuyerBalance = buyerBalance - amount;
-    const newSellerBalance = (sellerProfile.balance || 0) + amount;
+    if (!response.ok) throw new Error("Failed to create payout");
+    const result = await response.json();
 
-    // Update buyer's balance
-    const { error: buyerError } = await supabase
+    // Update user's balance
+    const { error: updateError } = await supabase
       .from("profiles")
-      .update({ balance: newBuyerBalance })
-      .eq("id", buyerId);
+      .update({
+        balance: supabase.sql`balance - ${amount}`,
+      })
+      .eq("id", userId);
 
-    if (buyerError) throw buyerError;
+    if (updateError) throw updateError;
 
-    // Update seller's balance
-    const { error: sellerError } = await supabase
-      .from("profiles")
-      .update({ balance: newSellerBalance })
-      .eq("id", sellerId);
-
-    if (sellerError) {
-      // If seller update fails, revert buyer's balance
-      await supabase
-        .from("profiles")
-        .update({ balance: buyerBalance })
-        .eq("id", buyerId);
-      throw sellerError;
-    }
+    return result;
   } catch (error) {
-    console.error("Error in transferBalance:", error);
+    console.error("Error requesting payout:", error);
     throw error;
   }
 };
