@@ -13,15 +13,17 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2023-10-16",
 });
 
-// Create a Connect account
+// Create a Stripe Express Connect account (for individuals or companies)
 router.post("/create-connect-account", async (req, res) => {
   try {
     const { email } = req.body;
 
-    // Create Express account
     const account = await stripe.accounts.create({
       type: "express",
+      country: "FR",
       email,
+      business_type: "individual",
+      controller: { type: "application" }, // Platform controls transactions
       capabilities: {
         card_payments: { requested: true },
         transfers: { requested: true },
@@ -35,7 +37,7 @@ router.post("/create-connect-account", async (req, res) => {
   }
 });
 
-// Create onboarding link
+// Generate an onboarding link for user verification
 router.post("/create-onboarding-link", async (req, res) => {
   try {
     const { accountId } = req.body;
@@ -54,7 +56,7 @@ router.post("/create-onboarding-link", async (req, res) => {
   }
 });
 
-// Create a checkout session for credits
+// Create a checkout session for balance recharge
 router.post("/create-checkout-session", async (req, res) => {
   try {
     const { userId, amount } = req.body;
@@ -65,10 +67,8 @@ router.post("/create-checkout-session", async (req, res) => {
         {
           price_data: {
             currency: "eur",
-            product_data: {
-              name: "Add Credits to your balance",
-            },
-            unit_amount: Math.round(amount * 100), // Convert to cents
+            product_data: { name: "Add Credits to your balance" },
+            unit_amount: Math.round(amount * 100),
           },
           quantity: 1,
         },
@@ -76,10 +76,7 @@ router.post("/create-checkout-session", async (req, res) => {
       mode: "payment",
       success_url: `${process.env.CLIENT_URL}/app/purchase-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.CLIENT_URL}/app/purchase-cancelled`,
-      metadata: {
-        userId,
-        type: "recharge",
-      },
+      metadata: { userId, type: "recharge" },
     });
 
     res.json({ url: session.url });
@@ -89,20 +86,18 @@ router.post("/create-checkout-session", async (req, res) => {
   }
 });
 
-// Process deck purchase
-router.post("/process-deck-purchase", async (req, res) => {
+// Process product purchase and transfer money to the seller
+router.post("/process-purchase", async (req, res) => {
   try {
     const { amount, accountId } = req.body;
 
-    // Calculate shares (90% to seller, 10% platform fee)
-    const sellerAmount = Math.round(amount * 0.9 * 100); // in cents
+    const sellerAmount = Math.round(amount * 0.9 * 100); // 90% to seller, in cents
 
-    // Create transfer to seller's Connect account
     const transfer = await stripe.transfers.create({
       amount: sellerAmount,
-      currency: "usd",
+      currency: "eur", // Updated to match your marketplace
       destination: accountId,
-      description: `Deck sale`,
+      description: "Product sale",
     });
 
     res.json({ success: true, transfer });
@@ -112,20 +107,17 @@ router.post("/process-deck-purchase", async (req, res) => {
   }
 });
 
-// Create a payout
+// Initiate a payout from a seller's Stripe account to their bank
 router.post("/create-payout", async (req, res) => {
   try {
     const { amount, accountId } = req.body;
 
-    // Create payout
     const payout = await stripe.payouts.create(
       {
-        amount: Math.round(amount * 100), // Convert to cents
-        currency: "usd",
+        amount: Math.round(amount * 100),
+        currency: "eur", // Updated to EUR
       },
-      {
-        stripeAccount: accountId,
-      }
+      { stripeAccount: accountId }
     );
 
     res.json({ success: true, payout });
@@ -135,40 +127,7 @@ router.post("/create-payout", async (req, res) => {
   }
 });
 
-// Create a pending Stripe account
-router.post("/create-pending-account", async (req, res) => {
-  try {
-    const { email } = req.body;
-
-    // Create an account token
-    const accountToken = await stripe.tokens.create({
-      account: {
-        business_type: "individual",
-        individual: {
-          email,
-        },
-        tos_shown_and_accepted: true,
-      },
-    });
-
-    // Create a pending account in Stripe using the account token
-    const account = await stripe.accounts.create({
-      type: "custom",
-      account_token: accountToken.id,
-      capabilities: {
-        card_payments: { requested: true },
-        transfers: { requested: true },
-      },
-    });
-
-    res.json({ accountId: account.id });
-  } catch (error) {
-    console.error("Error creating pending Stripe account:", error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Webhook handler
+// Webhook handler for Stripe events
 router.post(
   "/webhook",
   express.raw({ type: "application/json" }),
@@ -176,7 +135,6 @@ router.post(
     const sig = req.headers["stripe-signature"];
 
     let event;
-
     try {
       event = stripe.webhooks.constructEvent(
         req.body,
@@ -195,18 +153,22 @@ router.post(
           const { userId, type } = session.metadata;
           const amount = session.amount_total / 100; // Convert from cents
 
-          // Handle the event in the client
-          // ...existing code...
+          console.log(
+            `✅ Checkout complete for User ${userId} - Type: ${type}, Amount: ${amount}`
+          );
           break;
         }
 
         case "account.updated": {
           const account = event.data.object;
-
-          // Handle the event in the client
-          // ...existing code...
+          console.log(
+            `🔄 Account ${account.id} updated: Charges Enabled: ${account.charges_enabled}, Payouts Enabled: ${account.payouts_enabled}`
+          );
           break;
         }
+
+        default:
+          console.log(`Unhandled event type: ${event.type}`);
       }
 
       res.json({ received: true });
