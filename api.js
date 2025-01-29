@@ -13,7 +13,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2023-10-16",
 });
 
-// Create a Stripe Express Connect account (for individuals or companies)
+// Create a Stripe Express Connect account (for individuals)
 router.post("/create-connect-account", async (req, res) => {
   try {
     const { email } = req.body;
