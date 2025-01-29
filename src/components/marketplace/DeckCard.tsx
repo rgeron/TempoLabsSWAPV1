@@ -47,6 +47,8 @@ const DeckCard = ({
   created_at,
   categories,
   profiles,
+  average_rating,
+  total_reviews,
 }: DeckCardProps) => {
   const { user, profile, updateLikedDecks } = useAuth();
   const { toast } = useToast();
@@ -216,10 +218,14 @@ const DeckCard = ({
         <CardFooter className="p-4 mt-auto border-t dark:border-gray-700">
           <div className="flex justify-between items-center w-full">
             <div className="flex items-center space-x-4">
-              <div className="flex items-center">
-                <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                <span className="ml-1 text-sm dark:text-gray-300">4.5</span>
-              </div>
+              {average_rating > 0 && (
+                <div className="flex items-center">
+                  <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                  <span className="ml-1 text-sm dark:text-gray-300">
+                    {average_rating.toFixed(1)}
+                  </span>
+                </div>
+              )}
               <div className="flex items-center">
                 <BookOpen className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                 <span className="ml-1 text-sm dark:text-gray-300">

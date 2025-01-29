@@ -26,9 +26,13 @@ const PurchasedDecks = () => {
 
       try {
         const allDecks = await getAllDecks();
-        const purchased = allDecks.filter((deck) =>
-          profile.purchaseddeckids.includes(deck.id)
-        ) as Deck[];
+        const purchased = allDecks
+          .filter((deck) => profile.purchaseddeckids.includes(deck.id))
+          .map((deck) => ({
+            ...deck,
+            average_rating: deck.average_rating || 0,
+            total_reviews: deck.total_reviews || 0,
+          })) as Deck[];
         setPurchasedDecks(purchased);
       } catch (error) {
         console.error("Error fetching purchased decks:", error);
@@ -55,16 +59,11 @@ const PurchasedDecks = () => {
         {purchasedDecks.map((deck) => (
           <div key={deck.id} className="space-y-2">
             <DeckCard
-              id={deck.id}
-              title={deck.title}
-              description={deck.description}
-              price={deck.price}
-              cardcount={deck.cardcount}
-              difficulty={deck.difficulty}
-              imageurl={deck.imageurl}
-              creatorid={deck.creatorid}
+              {...deck}
               creatorName={deck.profiles.username}
               creatorAvatar={deck.profiles.avatar_url || undefined}
+              average_rating={deck.average_rating}
+              total_reviews={deck.total_reviews}
             />
           </div>
         ))}
