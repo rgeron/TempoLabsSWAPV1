@@ -134,8 +134,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (authError) throw authError;
       if (!authData.user) throw new Error("No user returned from sign up");
 
-      // Create a pending Stripe account
-      await createPendingStripeAccount(email);
+      // Wait for email verification
+      if (!authData.user.email_confirmed_at) {
+        throw new Error("Please verify your email before proceeding");
+      }
+
+      // Create a pending Stripe account with additional information
+      await createPendingStripeAccount({
+        email,
+        account_name: username,
+        owner_name: username,
+      });
 
       // Wait for Supabase's trigger to create the profile
       await new Promise((resolve) => setTimeout(resolve, 1000));

@@ -138,14 +138,19 @@ router.post("/create-payout", async (req, res) => {
 // Create a pending Stripe account
 router.post("/create-pending-account", async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, account_name, owner_name } = req.body;
 
-    // Create an account token
+    // Create an account token with additional information
     const accountToken = await stripe.tokens.create({
       account: {
         business_type: "individual",
         individual: {
           email,
+          first_name: owner_name,
+          last_name: owner_name,
+        },
+        business_profile: {
+          name: account_name,
         },
         tos_shown_and_accepted: true,
       },
@@ -158,6 +163,18 @@ router.post("/create-pending-account", async (req, res) => {
       capabilities: {
         card_payments: { requested: true },
         transfers: { requested: true },
+      },
+      business_profile: {
+        name: account_name,
+      },
+      individual: {
+        email,
+        first_name: owner_name,
+        last_name: owner_name,
+      },
+      tos_acceptance: {
+        date: Math.floor(Date.now() / 1000),
+        ip: req.ip, // Assumes you're using a proxy or load balancer
       },
     });
 

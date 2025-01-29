@@ -21,6 +21,11 @@ export function useStripeConnect() {
     try {
       setIsLoading(true);
 
+      // Ensure the user's email is verified
+      if (!user.email_confirmed_at) {
+        throw new Error("Please verify your email before setting up a seller account");
+      }
+
       // Create Connect account if needed
       const account = await createConnectAccount(user.id);
       if (!account) {

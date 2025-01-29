@@ -131,6 +131,11 @@ export const createConnectAccount = async (userId: string) => {
     if (userError) throw userError;
     if (!user?.email) throw new Error("User email not found");
 
+    // Ensure the user's email is verified
+    if (!user.email_confirmed_at) {
+      throw new Error("Please verify your email before creating a Connect account");
+    }
+
     const response = await fetch(`${STRIPE_API_URL}/create-connect-account`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -217,11 +222,19 @@ export const getStripeAccountDetails = async (userId: string) => {
 };
 
 // Create a pending Stripe account
-export const createPendingStripeAccount = async (email: string) => {
+export const createPendingStripeAccount = async ({
+  email,
+  account_name,
+  owner_name,
+}: {
+  email: string;
+  account_name: string;
+  owner_name: string;
+}) => {
   const response = await fetch(`${STRIPE_API_URL}/create-pending-account`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ email, account_name, owner_name }),
   });
 
   if (!response.ok) throw new Error("Failed to create pending Stripe account");
