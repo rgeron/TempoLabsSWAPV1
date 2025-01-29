@@ -66,7 +66,7 @@ router.post("/create-checkout-session", async (req, res) => {
           price_data: {
             currency: "eur",
             product_data: {
-              name: "Add Credits",
+              name: "Add Credits to your balance",
             },
             unit_amount: Math.round(amount * 100), // Convert to cents
           },
