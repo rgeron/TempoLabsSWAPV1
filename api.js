@@ -95,9 +95,9 @@ router.post("/process-purchase", async (req, res) => {
 
     const transfer = await stripe.transfers.create({
       amount: sellerAmount,
-      currency: "eur", // Updated to match your marketplace
+      currency: "eur",
       destination: accountId,
-      description: "Product sale",
+      description: "Product sale TEST STRIPE",
     });
 
     res.json({ success: true, transfer });
