@@ -1,5 +1,4 @@
-import type { Database } from "@/types/supabase";
-import type { User } from "@supabase/supabase-js";
+import type { User } from "firebase/auth";
 import {
   createContext,
   useCallback,
@@ -8,12 +7,27 @@ import {
   useState,
 } from "react";
 import { useNavigate } from "react-router-dom";
-import { createPendingStripeAccount } from "./api/profile"; // Update the import
-import { supabase } from "./supabase";
+import { createPendingStripeAccount } from "./api/profile";
+import { db, auth } from "./firebase";
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signOut as firebaseSignOut, 
+  onAuthStateChanged, 
+  GoogleAuthProvider, 
+  signInWithPopup 
+} from "firebase/auth";
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 
-type Profile = Database["public"]["Tables"]["profiles"]["Row"] & {
+type Profile = {
+  id: string;
+  username: string;
+  email: string;
   country?: string;
   education_level_id?: number;
+  likeddeckids?: string[];
+  followedcreators?: string[];
+  purchaseddeckids?: string[];
 };
 
 type AuthContextType = {
@@ -22,6 +36,7 @@ type AuthContextType = {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, username: string) => Promise<void>;
   signOut: () => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<void>;
   updateLikedDecks: (deckId: string, isLiking: boolean) => Promise<void>;
   updateFollowedCreators: (
@@ -46,167 +61,79 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchProfile = useCallback(async (userId: string) => {
     if (!userId) return;
 
-    const { data } = await supabase
-      .from("profiles")
-      .select()
-      .eq("id", userId)
-      .single();
-
-    if (data) setProfile(data);
+    const profileDoc = await getDoc(doc(db, "profiles", userId));
+    if (profileDoc.exists()) {
+      setProfile(profileDoc.data() as Profile);
+    }
   }, []);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user?.id) {
-        setUser(session.user);
-        fetchProfile(session.user.id);
-      }
-    });
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user?.id) {
-        setUser(session.user);
-        fetchProfile(session.user.id);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUser(user);
+        fetchProfile(user.uid);
       } else {
         setUser(null);
         setProfile(null);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => unsubscribe();
   }, [fetchProfile]);
 
   const signIn = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    if (error) throw error;
-    if (data?.user?.id) {
-      await fetchProfile(data.user.id);
-      navigate("/app/home");
-    }
+    await signInWithEmailAndPassword(auth, email, password);
+    navigate("/app/home");
   };
 
   const signOut = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      navigate("/");
-    } catch (error) {
-      console.error("Error signing out:", error);
-      throw error;
-    }
+    await firebaseSignOut(auth);
+    navigate("/");
   };
 
   const signUp = async (email: string, password: string, username: string) => {
-    try {
-      // Check if username is already taken
-      const { data: existingUser, error: checkError } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("username", username)
-        .single();
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
 
-      if (checkError && checkError.code !== "PGRST116") {
-        throw checkError;
-      }
+    const profileData: Profile = {
+      id: user.uid,
+      username,
+      email,
+    };
 
-      if (existingUser) {
-        throw new Error("Username is already taken");
-      }
+    await setDoc(doc(db, "profiles", user.uid), profileData);
+    await createPendingStripeAccount(email);
 
-      // Sign up the user with metadata
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            username: username,
-          },
-        },
-      });
+    setUser(user);
+    setProfile(profileData);
+    navigate("/app/home");
+  };
 
-      if (authError) throw authError;
-      if (!authData.user) throw new Error("No user returned from sign up");
-
-      // Create a pending Stripe account
-      await createPendingStripeAccount(email);
-
-      // Wait for Supabase's trigger to create the profile
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Set the user and fetch their profile
-      setUser(authData.user);
-      await fetchProfile(authData.user.id);
-      navigate("/app/home");
-    } catch (error) {
-      console.error("Error in signUp:", error);
-      throw error;
-    }
+  const signInWithGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    await signInWithPopup(auth, provider);
+    navigate("/app/home");
   };
 
   const updateProfile = async (updates: Partial<Profile>) => {
     if (!user) throw new Error("Not authenticated");
 
-    // If updating username, check if it's already taken
-    if (updates.username) {
-      const { data: existingUser, error: checkError } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("username", updates.username)
-        .neq("id", user.id)
-        .single();
-
-      if (checkError && checkError.code !== "PGRST116") {
-        throw checkError;
-      }
-
-      if (existingUser) {
-        throw new Error("Username is already taken");
-      }
-    }
-
-    const { error } = await supabase
-      .from("profiles")
-      .update(updates)
-      .eq("id", user.id);
-
-    if (error) throw error;
-
-    // Refresh the profile data
-    await fetchProfile(user.id);
+    await updateDoc(doc(db, "profiles", user.uid), updates);
+    await fetchProfile(user.uid);
   };
 
   const updateLikedDecks = async (deckId: string, isLiking: boolean) => {
     if (!user) throw new Error("Not authenticated");
 
-    const { data: currentProfile, error: fetchError } = await supabase
-      .from("profiles")
-      .select("likeddeckids")
-      .eq("id", user.id)
-      .single();
-
-    if (fetchError) throw fetchError;
-
-    const currentLikedDecks = currentProfile?.likeddeckids || [];
+    const profileDoc = await getDoc(doc(db, "profiles", user.uid));
+    const currentProfile = profileDoc.data() as Profile;
+    const currentLikedDecks = currentProfile.likeddeckids || [];
     const newLikedDecks = isLiking
       ? [...currentLikedDecks, deckId]
       : currentLikedDecks.filter((id) => id !== deckId);
 
-    const { error: updateError } = await supabase
-      .from("profiles")
-      .update({ likeddeckids: newLikedDecks })
-      .eq("id", user.id);
-
-    if (updateError) throw updateError;
-
-    // Refresh the profile
-    await fetchProfile(user.id);
+    await updateDoc(doc(db, "profiles", user.uid), { likeddeckids: newLikedDecks });
+    await fetchProfile(user.uid);
   };
 
   const updateFollowedCreators = async (
@@ -215,53 +142,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   ) => {
     if (!user) throw new Error("Not authenticated");
 
-    const { data: currentProfile, error: fetchError } = await supabase
-      .from("profiles")
-      .select("followedcreators")
-      .eq("id", user.id)
-      .single();
-
-    if (fetchError) throw fetchError;
-
-    const currentFollowed = currentProfile?.followedcreators || [];
+    const profileDoc = await getDoc(doc(db, "profiles", user.uid));
+    const currentProfile = profileDoc.data() as Profile;
+    const currentFollowed = currentProfile.followedcreators || [];
     const newFollowed = isFollowing
       ? [...currentFollowed, creatorId]
       : currentFollowed.filter((id) => id !== creatorId);
 
-    const { error: updateError } = await supabase
-      .from("profiles")
-      .update({ followedcreators: newFollowed })
-      .eq("id", user.id);
-
-    if (updateError) throw updateError;
-
-    // Refresh the profile
-    await fetchProfile(user.id);
+    await updateDoc(doc(db, "profiles", user.uid), { followedcreators: newFollowed });
+    await fetchProfile(user.uid);
   };
 
   const updatePurchasedDecks = async (deckId: string) => {
     if (!user) throw new Error("Not authenticated");
 
-    const { data: currentProfile, error: fetchError } = await supabase
-      .from("profiles")
-      .select("purchaseddeckids")
-      .eq("id", user.id)
-      .single();
-
-    if (fetchError) throw fetchError;
-
-    const currentPurchased = currentProfile?.purchaseddeckids || [];
+    const profileDoc = await getDoc(doc(db, "profiles", user.uid));
+    const currentProfile = profileDoc.data() as Profile;
+    const currentPurchased = currentProfile.purchaseddeckids || [];
     const newPurchased = [...currentPurchased, deckId];
 
-    const { error: updateError } = await supabase
-      .from("profiles")
-      .update({ purchaseddeckids: newPurchased })
-      .eq("id", user.id);
-
-    if (updateError) throw updateError;
-
-    // Refresh the profile
-    await fetchProfile(user.id);
+    await updateDoc(doc(db, "profiles", user.uid), { purchaseddeckids: newPurchased });
+    await fetchProfile(user.uid);
   };
 
   const value = {
@@ -270,6 +171,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signUp,
     signOut,
+    signInWithGoogle,
     updateProfile,
     updateLikedDecks,
     updateFollowedCreators,
