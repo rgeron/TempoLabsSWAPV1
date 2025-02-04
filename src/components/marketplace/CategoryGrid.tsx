@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
-import { DeckWithProfile } from "@/types/marketplace";
+import { CATEGORY_DEFINITIONS, DeckWithProfile } from "@/types/marketplace";
 import { Check, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -80,7 +80,7 @@ const CategoryGrid = () => {
     <div className="space-y-6">
       {/* Other Categories Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {otherCategories.map((category) => (
+        {CATEGORY_DEFINITIONS.map((category) => (
           <Card
             key={category.name}
             className="flex flex-col shadow-md bg-white dark:bg-gray-800 border-0"
