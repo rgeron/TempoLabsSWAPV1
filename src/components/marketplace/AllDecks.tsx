@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import DeckCard from "./DeckCard";
+import DeckCard from "./deck/DeckCard";
 import { Loader2 } from "lucide-react";
 import { getAllDecks } from "@/lib/api/decks";
 import type { DeckWithProfile } from "@/types/marketplace";

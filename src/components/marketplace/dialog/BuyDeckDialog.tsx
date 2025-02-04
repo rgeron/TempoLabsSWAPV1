@@ -11,18 +11,18 @@ import { useToast } from "@/components/ui/use-toast";
 import { getUserBalance } from "@/lib/api/balance";
 import { getFlashcards } from "@/lib/api/flashcards";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { createCreditCheckoutSession } from "@/lib/api/client";
 import { processDeckPurchase } from "@/lib/api/decks";
-import { useAuth } from "@/lib/auth";
-import type { BuyDeckDialogProps, FlashCard } from "@/types/marketplace";
-import { Loader2, Star } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useEffect, useState } from "react";
-import { FlashcardPreview } from "./FlashcardPreview";
-import { OverviewTab } from "./OverviewTab";
 import { getDeckReviews, type Review } from "@/lib/api/reviews";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/lib/auth";
+import { cn } from "@/lib/utils";
+import type { BuyDeckDialogProps, FlashCard } from "@/types/marketplace";
 import { format } from "date-fns";
+import { Loader2, Star } from "lucide-react";
+import { useEffect, useState } from "react";
+import { FlashcardPreview } from "../FlashcardPreview";
+import { OverviewTab } from "../OverviewTab";
 
 export const BuyDeckDialog = ({
   isOpen,
@@ -279,7 +279,7 @@ export const BuyDeckDialog = ({
                               <p className="text-sm text-gray-500">
                                 {format(
                                   new Date(review.created_at),
-                                  "MMM d, yyyy",
+                                  "MMM d, yyyy"
                                 )}
                               </p>
                             </div>
@@ -292,7 +292,7 @@ export const BuyDeckDialog = ({
                                   "h-4 w-4",
                                   i < review.rating
                                     ? "fill-yellow-400 text-yellow-400"
-                                    : "text-gray-300",
+                                    : "text-gray-300"
                                 )}
                               />
                             ))}

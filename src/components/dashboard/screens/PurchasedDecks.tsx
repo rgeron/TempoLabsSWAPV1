@@ -1,4 +1,4 @@
-import DeckCard from "@/components/marketplace/DeckCard";
+import DeckCard from "@/components/marketplace/deck/DeckCard";
 import { getAllDecks } from "@/lib/api/decks";
 import { useAuth } from "@/lib/auth";
 import type { Database } from "@/types/supabase";

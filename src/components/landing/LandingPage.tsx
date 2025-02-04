@@ -8,7 +8,7 @@ import { AuthModal } from "../auth/AuthModal";
 import { AboutDialog } from "./AboutDialog";
 import CategoryGrid from "../marketplace/CategoryGrid";
 import AllDecks from "../marketplace/AllDecks";
-import DeckCard from "../marketplace/DeckCard";
+import DeckCard from "../marketplace/deck/DeckCard";
 import { supabase } from "@/lib/supabase";
 import type { DeckWithProfile } from "@/types/marketplace";
 import { ThemeToggle } from "../ThemeToggle";

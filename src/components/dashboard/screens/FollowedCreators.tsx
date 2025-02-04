@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
-import { useAuth } from "@/lib/auth";
-import { supabase } from "@/lib/supabase";
-import { Loader2 } from "lucide-react";
+import { CreatorDialog } from "@/components/marketplace/dialog/CreatorDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
 import type { Creator } from "@/types/marketplace";
-import { CreatorDialog } from "@/components/marketplace/CreatorDialog";
+import { Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 const FollowedCreators = () => {
   const { profile } = useAuth();

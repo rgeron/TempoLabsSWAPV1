@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import DeckCard from "@/components/marketplace/DeckCard";
+import DeckCard from "@/components/marketplace/deck/DeckCard";
 import type { DeckWithProfile } from "@/types/marketplace";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/components/ui/use-toast";

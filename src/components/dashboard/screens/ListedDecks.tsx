@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from "react";
-import { Loader2, Plus } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import DeckCard from "@/components/marketplace/deck/DeckCard";
+import DeleteDeckButton from "@/components/marketplace/deck/DeleteDeckButton";
+import AddDeckDialog from "@/components/marketplace/dialog/AddDeckDialog";
 import { Button } from "@/components/ui/button";
-import DeckCard from "@/components/marketplace/DeckCard";
+import { useToast } from "@/components/ui/use-toast";
+import { createDeck, deleteDeck, getUserDecks } from "@/lib/api/decks";
 import { useAuth } from "@/lib/auth";
-import { createDeck, getUserDecks, deleteDeck } from "@/lib/api/decks";
 import type { Deck } from "@/types/marketplace";
 import type { Database } from "@/types/supabase";
-import DeleteDeckButton from "@/components/marketplace/DeleteDeckButton";
-import AddDeckDialog from "@/components/marketplace/AddDeckDialog";
+import { Loader2, Plus } from "lucide-react";
+import React, { useEffect, useState } from "react";
 
 type NewDeck = Omit<
   Database["public"]["Tables"]["decks"]["Insert"],
@@ -58,7 +58,7 @@ const ListedDecks = () => {
       if (!user) throw new Error("User not authenticated");
 
       const selectedCategories = Array.from(
-        formData.getAll("categories"),
+        formData.getAll("categories")
       ) as string[];
       const file = formData.get("flashcardsFile") as File;
       if (!file) throw new Error("No file selected");

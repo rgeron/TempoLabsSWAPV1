@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { ReviewDialog } from "./ReviewDialog";
 import { cn } from "@/lib/utils"; // Vérifie si ce fichier existe
+import { ReviewDialog } from "./ReviewDialog";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Dialog,
   DialogContent,
@@ -10,17 +11,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/components/ui/use-toast";
 import { downloadFlashcardsFile, getFlashcards } from "@/lib/api/flashcards";
+import { createReview, getDeckReviews, type Review } from "@/lib/api/reviews";
+import { useAuth } from "@/lib/auth";
 import type { DeckWithProfile, FlashCard } from "@/types/marketplace";
+import { format } from "date-fns";
 import { Download, Loader2, Star } from "lucide-react";
 import { useEffect, useState } from "react";
-import { FlashcardPreview } from "./FlashcardPreview";
-import { OverviewTab } from "./OverviewTab";
-import { useToast } from "@/components/ui/use-toast";
-import { useAuth } from "@/lib/auth";
-import { getDeckReviews, createReview, type Review } from "@/lib/api/reviews";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { format } from "date-fns";
+import { FlashcardPreview } from "../FlashcardPreview";
+import { OverviewTab } from "../OverviewTab";
 
 interface PurchasedDeckDialogProps {
   isOpen: boolean;
@@ -98,7 +98,9 @@ export function PurchasedDeckDialog({
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${deck.title.toLowerCase().replace(/\s+/g, "-")}-flashcards.txt`;
+      a.download = `${deck.title
+        .toLowerCase()
+        .replace(/\s+/g, "-")}-flashcards.txt`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -209,7 +211,7 @@ export function PurchasedDeckDialog({
                               <p className="text-sm text-gray-500">
                                 {format(
                                   new Date(review.created_at),
-                                  "MMM d, yyyy",
+                                  "MMM d, yyyy"
                                 )}
                               </p>
                             </div>
@@ -223,7 +225,7 @@ export function PurchasedDeckDialog({
                                     "h-4 w-4",
                                     i < review.rating
                                       ? "fill-yellow-400 text-yellow-400"
-                                      : "text-gray-300",
+                                      : "text-gray-300"
                                   )}
                                 />
                               ))}
@@ -238,7 +240,7 @@ export function PurchasedDeckDialog({
                                   try {
                                     await deleteReview(review.id);
                                     const updatedReviews = await getDeckReviews(
-                                      deck.id,
+                                      deck.id
                                     );
                                     setReviews(updatedReviews);
                                     toast({
@@ -249,7 +251,7 @@ export function PurchasedDeckDialog({
                                   } catch (error) {
                                     console.error(
                                       "Error deleting review:",
-                                      error,
+                                      error
                                     );
                                     toast({
                                       title: "Error",

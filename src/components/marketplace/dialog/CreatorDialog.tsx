@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -6,15 +7,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2, Users } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import type { Creator, DeckWithProfile } from "@/types/marketplace";
-import DeckCard from "./DeckCard";
+import { Loader2, Users } from "lucide-react";
+import { useEffect, useState } from "react";
+import DeckCard from "../deck/DeckCard";
 
 interface CreatorDialogProps {
   isOpen: boolean;
@@ -58,7 +58,7 @@ export function CreatorDialog({
             `
             *,
             profiles!decks_creatorid_fkey (username, avatar_url)
-          `,
+          `
           )
           .eq("creatorid", creatorId)
           .order("created_at", { ascending: false });

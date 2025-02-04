@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import DeckCard from "@/components/marketplace/DeckCard";
+import DeckCard from "@/components/marketplace/deck/DeckCard";
 import type { DeckWithProfile } from "@/types/marketplace";
 
 const CategoryDecks = () => {

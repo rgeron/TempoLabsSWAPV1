@@ -1,25 +1,25 @@
-import React, { useState, useCallback, MouseEvent } from "react";
-import { AuthModal } from "../auth/AuthModal";
+import { AuthModal } from "@/components/auth/AuthModal";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Star, BookOpen, Heart, MoreHorizontal } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import DeckImage from "./DeckImage";
-import { useAuth } from "@/lib/auth";
-import { BuyDeckDialog } from "./BuyDeckDialog";
-import { PurchasedDeckDialog } from "./PurchasedDeckDialog";
-import { CreatorDeckDialog } from "./CreatorDeckDialog";
-import { deleteDeck } from "@/lib/api/decks";
 import { useToast } from "@/components/ui/use-toast";
+import { deleteDeck } from "@/lib/api/decks";
+import { useAuth } from "@/lib/auth";
+import { cn } from "@/lib/utils";
 import type { DeckWithProfile } from "@/types/marketplace";
 import { getCategoryStyle } from "@/types/marketplace";
+import { BookOpen, Heart, MoreHorizontal, Star } from "lucide-react";
+import React, { MouseEvent, useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { cn } from "@/lib/utils";
+import { BuyDeckDialog } from "../dialog/BuyDeckDialog";
+import { CreatorDeckDialog } from "../dialog/CreatorDeckDialog";
+import { PurchasedDeckDialog } from "../dialog/PurchasedDeckDialog";
+import DeckImage from "./DeckImage";
 
 interface DeckCardProps extends DeckWithProfile {}
 
@@ -31,7 +31,7 @@ const difficultyColors = {
   Advanced: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
 };
 
-const MAX_VISIBLE_TAGS = 2;
+const MAX_VISIBLE_TAGS = 3;
 
 const DeckCard = ({
   id,
@@ -112,7 +112,7 @@ const DeckCard = ({
         setIsLiking(false);
       }
     },
-    [user, id, isOptimisticallyLiked, toast, updateLikedDecks],
+    [user, id, isOptimisticallyLiked, toast, updateLikedDecks]
   );
 
   const renderCategories = () => {
@@ -132,7 +132,7 @@ const DeckCard = ({
                 "inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium",
                 "bg-white/80 dark:bg-gray-700/50",
                 "hover:bg-white dark:hover:bg-gray-700",
-                "transition-colors duration-200",
+                "transition-colors duration-200"
               )}
             >
               <span>{style?.icon}</span>
@@ -178,7 +178,7 @@ const DeckCard = ({
                       "h-5 w-5 transition-colors duration-200",
                       isOptimisticallyLiked
                         ? "fill-red-500 text-red-500"
-                        : "fill-none text-gray-600 dark:text-gray-300 hover:text-red-500",
+                        : "fill-none text-gray-600 dark:text-gray-300 hover:text-red-500"
                     )}
                   />
                 </button>

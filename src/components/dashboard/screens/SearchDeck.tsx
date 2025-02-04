@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import type { DeckWithProfile } from "@/types/marketplace";
-import DeckCard from "@/components/marketplace/DeckCard";
+import DeckCard from "@/components/marketplace/deck/DeckCard";
 import { Loader2 } from "lucide-react";
 
 const SearchDeck = () => {

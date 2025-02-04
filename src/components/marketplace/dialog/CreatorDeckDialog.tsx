@@ -1,18 +1,4 @@
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Loader2, Users, DollarSign, TrendingUp, Trash2 } from "lucide-react";
-import { useState, useEffect } from "react";
-import { getFlashcards } from "@/lib/api/flashcards";
-import type { DeckWithProfile, FlashCard } from "@/types/marketplace";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -23,8 +9,22 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { FlashcardPreview } from "./FlashcardPreview";
-import { OverviewTab } from "./OverviewTab";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getFlashcards } from "@/lib/api/flashcards";
+import type { DeckWithProfile, FlashCard } from "@/types/marketplace";
+import { DollarSign, Trash2, TrendingUp, Users } from "lucide-react";
+import { useEffect, useState } from "react";
+import { FlashcardPreview } from "../FlashcardPreview";
+import { OverviewTab } from "../OverviewTab";
 
 interface CreatorDeckDialogProps {
   isOpen: boolean;

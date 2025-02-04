@@ -1,5 +1,5 @@
-import { useState, FormEvent, useEffect } from "react";
-import { Loader2, Upload, Image as ImageIcon, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -8,16 +8,15 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Checkbox } from "@/components/ui/checkbox";
-import { CATEGORY_DEFINITIONS, DeckCategory } from "@/types/marketplace";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/lib/supabase";
-import { useAuth } from "@/lib/auth";
 import { createDeck, getAllDeckContents } from "@/lib/api/decks";
-import { LocalizedEducationCategories } from "./LocalizedEducationCategories";
+import { useAuth } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
+import { CATEGORY_DEFINITIONS, DeckCategory } from "@/types/marketplace";
+import { Image as ImageIcon, Loader2, Upload, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import { PlagiarismDisputeDialog } from "./PlagiarismDisputeDialog";
 
 interface AddDeckDialogProps {
@@ -77,7 +76,7 @@ const AddDeckDialog = ({
   const { user } = useAuth();
   const { toast } = useToast();
   const [selectedCategories, setSelectedCategories] = useState<DeckCategory[]>(
-    [],
+    []
   );
   const [selectedFileName, setSelectedFileName] = useState("");
   const [coverImage, setCoverImage] = useState<File | null>(null);
@@ -117,7 +116,7 @@ const AddDeckDialog = ({
   };
 
   const handleCoverImageChange = async (
-    event: React.ChangeEvent<HTMLInputElement>,
+    event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -378,7 +377,7 @@ const AddDeckDialog = ({
                                     selectedCategories.includes(category);
                                   if (isSelected) {
                                     setSelectedCategories((prev) =>
-                                      prev.filter((c) => c !== category),
+                                      prev.filter((c) => c !== category)
                                     );
                                   } else {
                                     setSelectedCategories((prev) => [
@@ -402,12 +401,12 @@ const AddDeckDialog = ({
                                       name="categories"
                                       value={category}
                                       checked={selectedCategories.includes(
-                                        category,
+                                        category
                                       )}
                                       onCheckedChange={(checked) =>
                                         handleCategoryChange(
                                           category,
-                                          checked as boolean,
+                                          checked as boolean
                                         )
                                       }
                                     />

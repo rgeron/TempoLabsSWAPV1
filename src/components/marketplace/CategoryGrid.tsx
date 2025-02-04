@@ -1,13 +1,12 @@
 import { Card } from "@/components/ui/card";
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
-import { LocalizedEducationCategories } from "./LocalizedEducationCategories";
-import { CATEGORY_DEFINITIONS, DeckWithProfile } from "@/types/marketplace";
-import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import DeckCard from "./DeckCard";
-import { Check, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CATEGORY_DEFINITIONS, DeckWithProfile } from "@/types/marketplace";
+import { Check, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import DeckCard from "./deck/DeckCard";
 
 const CategoryGrid = () => {
   const navigate = useNavigate();
@@ -17,10 +16,10 @@ const CategoryGrid = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const educationCategory = CATEGORY_DEFINITIONS.find(
-    (cat) => cat.name === "Education",
+    (cat) => cat.name === "Education"
   );
   const otherCategories = CATEGORY_DEFINITIONS.filter(
-    (cat) => cat.name !== "Education",
+    (cat) => cat.name !== "Education"
   );
 
   const handleCategoryClick = (category: string) => {
@@ -96,11 +95,6 @@ const CategoryGrid = () => {
                 {educationCategory.name}
               </h3>
             </div>
-            <LocalizedEducationCategories
-              onSelect={handleCategoryClick}
-              selectedCategories={selectedCategories}
-              className="grid grid-cols-4 md:grid-cols-6 gap-2"
-            />
           </div>
         </Card>
       )}
@@ -129,7 +123,7 @@ const CategoryGrid = () => {
                       "text-gray-700 dark:text-gray-200 font-medium group",
                       selectedCategories.includes(subcategory)
                         ? "bg-white dark:bg-gray-700 shadow-md"
-                        : "bg-white/80 hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700",
+                        : "bg-white/80 hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
                     )}
                   >
                     <div className="flex items-center justify-between">
