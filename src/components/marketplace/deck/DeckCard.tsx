@@ -11,7 +11,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { deleteDeck } from "@/lib/api/decks";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
-import type { DeckWithProfile } from "@/types/catergories";
+import { DeckWithProfile } from "@/types/decks";
 import { getCategoryStyle } from "@/types/catergories";
 import { BookOpen, Heart, MoreHorizontal, Star } from "lucide-react";
 import React, { MouseEvent, useCallback, useState } from "react";
@@ -41,15 +41,13 @@ const DeckCard = ({
   cardcount,
   difficulty,
   cover_image_url: imageurl,
-  creatorName,
-  creatorAvatar,
-  creatorid,
+  creator,
   created_at,
   categories,
-  profiles,
   average_rating,
   total_reviews,
 }: DeckCardProps) => {
+  const { username: creatorName, avatar_url: creatorAvatar, id: creatorid } = creator;
   const { user, profile, updateLikedDecks } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -258,7 +256,6 @@ const DeckCard = ({
               creatorName,
               creatorAvatar,
               categories,
-              profiles,
             }}
             onDelete={async () => {
               try {
@@ -299,7 +296,6 @@ const DeckCard = ({
               creatorName,
               creatorAvatar,
               categories,
-              profiles,
             }}
             purchaseDate={created_at}
           />
@@ -320,7 +316,6 @@ const DeckCard = ({
               creatorName,
               creatorAvatar,
               categories,
-              profiles,
             }}
           />
         ))}

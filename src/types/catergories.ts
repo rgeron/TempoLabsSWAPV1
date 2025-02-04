@@ -75,3 +75,7 @@ export const CATEGORY_DEFINITIONS: CategoryDefinition[] = [
     ],
   },
 ];
+
+export function getCategoryStyle(category: string): CategoryDefinition | undefined {
+  return CATEGORY_DEFINITIONS.find((def) => def.name === category);
+}
