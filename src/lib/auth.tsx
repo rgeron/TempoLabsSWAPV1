@@ -11,10 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { createPendingStripeAccount } from "./api/profile"; // Update the import
 import { supabase } from "./supabase";
 
-type Profile = Database["public"]["Tables"]["profiles"]["Row"] & {
-  country?: string;
-  education_level_id?: number;
-};
+type Profile = Database["public"]["Tables"]["profiles"]["Row"] & {};
 
 type AuthContextType = {
   user: User | null;

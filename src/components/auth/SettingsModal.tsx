@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -6,16 +7,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuth } from "@/lib/auth";
-import { useToast } from "@/components/ui/use-toast";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/lib/auth";
 import { Check, Image } from "lucide-react";
-import { CountrySelector } from "@/components/settings/CountrySelector";
-import { EducationLevelSelector } from "@/components/settings/EducationLevelSelector";
+import { useState } from "react";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -25,7 +23,7 @@ interface SettingsModalProps {
 // Generate 30 different avatar options
 const avatarOptions = Array.from(
   { length: 30 },
-  (_, i) => `https://api.dicebear.com/7.x/avataaars/svg?seed=${i}`,
+  (_, i) => `https://api.dicebear.com/7.x/avataaars/svg?seed=${i}`
 );
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
@@ -33,14 +31,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [showAvatarDialog, setShowAvatarDialog] = useState(false);
   const [selectedAvatar, setSelectedAvatar] = useState<string | null>(
-    profile?.avatar_url || null,
+    profile?.avatar_url || null
   );
-  const [selectedCountry, setSelectedCountry] = useState<string | null>(
-    profile?.country || null,
-  );
-  const [selectedEducationLevel, setSelectedEducationLevel] = useState<
-    number | null
-  >(profile?.education_level_id || null);
 
   const { toast } = useToast();
 
@@ -58,9 +50,6 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       await updateProfile({
         username: newUsername,
         avatar_url: selectedAvatar || profile?.avatar_url,
-        country: selectedCountry || profile?.country,
-        education_level_id:
-          selectedEducationLevel || profile?.education_level_id,
       });
 
       toast({
@@ -97,7 +86,11 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               <button
                 key={index}
                 type="button"
-                className={`relative rounded-lg overflow-hidden hover:ring-2 hover:ring-offset-2 hover:ring-[#2B4C7E] transition-all ${selectedAvatar === avatarUrl ? "ring-2 ring-[#2B4C7E] ring-offset-2" : ""}`}
+                className={`relative rounded-lg overflow-hidden hover:ring-2 hover:ring-offset-2 hover:ring-[#2B4C7E] transition-all ${
+                  selectedAvatar === avatarUrl
+                    ? "ring-2 ring-[#2B4C7E] ring-offset-2"
+                    : ""
+                }`}
                 onClick={() => {
                   setSelectedAvatar(avatarUrl);
                   setShowAvatarDialog(false);
@@ -174,21 +167,6 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   maxLength={20}
                   pattern="^[a-zA-Z0-9_-]+$"
                   title="Username can only contain letters, numbers, underscores, and hyphens"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="country">Country</Label>
-                <CountrySelector
-                  value={selectedCountry || undefined}
-                  onChange={(country) => setSelectedCountry(country)}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="education">Education Level</Label>
-                <EducationLevelSelector
-                  countryCode={selectedCountry || undefined}
-                  value={selectedEducationLevel || undefined}
-                  onChange={setSelectedEducationLevel}
                 />
               </div>
             </div>
