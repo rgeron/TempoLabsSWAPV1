@@ -1,4 +1,4 @@
-import { FlashCard } from "@/types/catergories";
+import { FlashCard } from "@/types/interface";
 import { supabase } from "../supabase";
 
 /**

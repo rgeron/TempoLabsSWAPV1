@@ -1,12 +1,13 @@
 import { STRIPE_API_URL } from "../config";
 import { supabase } from "../supabase";
 
+
 // Get user profile
 export const getUserProfile = async (userId: string) => {
   const { data, error } = await supabase
     .from("profiles")
     .select(
-      "username, avatar_url, balance, purchaseddeckids, likeddeckids, followedcreators"
+      "username, avatar_url, purchaseddeckids, likeddeckids, followedcreators"
     )
     .eq("id", userId)
     .single();
@@ -106,19 +107,6 @@ export const updateFollowedCreators = async (
   if (updateError) throw updateError;
 };
 
-// Add a new function to update the user's balance
-export const updateUserBalance = async (
-  userId: string,
-  amount: number
-): Promise<void> => {
-  const { error } = await supabase
-    .from("profiles")
-    .update({ balance: supabase.sql`balance + ${amount}` })
-    .eq("id", userId);
-
-  if (error) throw error;
-};
-
 // Create or retrieve a Stripe Connect account
 export const createConnectAccount = async (userId: string) => {
   try {
@@ -185,24 +173,6 @@ export const getOnboardingLink = async (userId: string) => {
   }
 };
 
-// Get account balance and status
-export const getAccountStatus = async (userId: string) => {
-  try {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select(
-        "stripe_connect_id, stripe_connect_status, balance, total_earnings"
-      )
-      .eq("id", userId)
-      .single();
-
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error("Error getting account status:", error);
-    throw error;
-  }
-};
 
 // Add a new function to get the user's Stripe account details
 export const getStripeAccountDetails = async (userId: string) => {
