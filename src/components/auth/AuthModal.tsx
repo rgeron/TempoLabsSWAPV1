@@ -22,46 +22,57 @@ interface AuthModalProps {
 
 export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, signInWithGoogle } = useAuth();
   const { toast } = useToast();
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSignIn = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsLoading(true);
-    let success = false;
-
     const formData = new FormData(event.currentTarget);
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
-    const username = formData.get("username") as string;
-    const isSignUp = event.currentTarget.dataset.mode === "signup";
-
     try {
-      if (isSignUp) {
-        await signUp(email, password, username);
-        toast({
-          title: "Account created",
-          description: "Please check your email to verify your account.",
-        });
-        success = true;
-      } else {
-        await signIn(email, password);
-        toast({
-          title: "Welcome back!",
-          description: "You have successfully signed in.",
-        });
-        success = true;
-      }
+      await signIn(email, password);
+      toast({
+        title: "Welcome back!",
+        description: "You have successfully signed in.",
+      });
+      onClose();
     } catch (error: any) {
-      console.error("Auth error:", error);
+      console.error("Sign in error:", error);
       toast({
         title: "Error",
-        description: error.message || "An error occurred during authentication",
+        description: error.message || "An error occurred during sign in",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
-      if (success) onClose();
+    }
+  };
+
+  const handleSignUp = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsLoading(true);
+    const formData = new FormData(event.currentTarget);
+    const email = formData.get("email") as string;
+    const username = formData.get("username") as string;
+    const password = formData.get("password") as string;
+    try {
+      await signUp(email, password, username);
+      toast({
+        title: "Account created",
+        description: "Please check your email to verify your account.",
+      });
+      onClose();
+    } catch (error: any) {
+      console.error("Sign up error:", error);
+      toast({
+        title: "Error",
+        description: error.message || "An error occurred during sign up",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -80,7 +91,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
           </TabsList>
           <TabsContent value="signin">
-            <form onSubmit={handleSubmit} data-mode="signin">
+            <form onSubmit={handleSignIn}>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
                   <Label htmlFor="email-signin">Email</Label>
@@ -133,7 +144,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
             </form>
           </TabsContent>
           <TabsContent value="signup">
-            <form onSubmit={handleSubmit} data-mode="signup">
+            <form onSubmit={handleSignUp}>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
                   <Label htmlFor="email-signup">Email</Label>

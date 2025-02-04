@@ -8,7 +8,6 @@ import {
   useState,
 } from "react";
 import { useNavigate } from "react-router-dom";
-import { createPendingStripeAccount } from "./api/profile"; // Update the import
 import { supabase } from "./supabase";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"] & {};
@@ -42,15 +41,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const fetchProfile = useCallback(async (userId: string) => {
-    if (!userId) return;
-
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("profiles")
       .select()
       .eq("id", userId)
-      .single();
-
-    if (data) setProfile(data);
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) {
+      const defaultUsername = `user_${userId.substring(0, 6)}`;
+      const { data: insertedData, error: insertError } = await supabase
+        .from("profiles")
+        .insert({ id: userId, username: defaultUsername })
+        .select()
+        .maybeSingle();
+      if (insertError) throw insertError;
+      setProfile(insertedData);
+    } else {
+      setProfile(data);
+    }
   }, []);
 
   useEffect(() => {
@@ -113,42 +121,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string, username: string) => {
     try {
-      // Check if username is already taken
-      const { data: existingUser, error: checkError } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("username", username)
-        .single();
-
-      if (checkError && checkError.code !== "PGRST116") {
-        throw checkError;
-      }
-
-      if (existingUser) {
-        throw new Error("Username is already taken");
-      }
-
-      // Sign up the user with metadata
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          data: {
-            username: username,
-          },
-        },
       });
-
       if (authError) throw authError;
       if (!authData.user) throw new Error("No user returned from sign up");
-
-      // Create a pending Stripe account
-      await createPendingStripeAccount(email);
-
-      // Wait for Supabase's trigger to create the profile
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Set the user and fetch their profile
+      
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .upsert({ id: authData.user.id, username });
+      if (profileError) throw profileError;
+      
       setUser(authData.user);
       await fetchProfile(authData.user.id);
       navigate("/app/home");
