@@ -8,7 +8,6 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
-import { getUserBalance } from "@/lib/api/balance";
 import { getFlashcards } from "@/lib/api/flashcards";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -86,24 +85,6 @@ export const BuyDeckDialog = ({
       loadFlashcards();
     }
   }, [isOpen, selectedTab, deck.id, deck.creatorid, toast]);
-
-  // Load user balance when dialog opens
-  useEffect(() => {
-    const loadUserBalance = async () => {
-      if (user) {
-        try {
-          const balance = await getUserBalance(user.id);
-          setUserBalance(balance);
-        } catch (error) {
-          console.error("Error loading user balance:", error);
-        }
-      }
-    };
-
-    if (isOpen) {
-      loadUserBalance();
-    }
-  }, [isOpen, user]);
 
   const handlePurchase = async () => {
     if (!user) {

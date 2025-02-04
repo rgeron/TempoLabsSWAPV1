@@ -1,7 +1,6 @@
 import { useAuth } from "@/lib/auth";
 import { useState } from "react";
 
-import { requestPayout } from "../api/balance";
 import {
   createConnectAccount,
   getAccountStatus,
@@ -65,14 +64,6 @@ export function useStripeConnect() {
       setIsLoading(true);
 
       const status = await checkAccountStatus();
-
-      if (status?.stripe_connect_status !== "active") {
-        throw new Error(
-          "Please complete account setup before withdrawing funds"
-        );
-      }
-
-      await requestPayout(user.id, amount);
 
       toast({
         title: "Success",
