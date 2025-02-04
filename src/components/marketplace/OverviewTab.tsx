@@ -1,7 +1,5 @@
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import type { DeckWithProfile } from "@/types/catergories";
-import { getCategoryStyle } from "@/types/catergories";
 import { BarChart, BookOpen, Calendar, DollarSign } from "lucide-react";
 
 interface OverviewTabProps {
@@ -87,7 +85,6 @@ export function OverviewTab({ deck, purchaseDate }: OverviewTabProps) {
           <h3 className="text-lg font-semibold mb-3">Categories</h3>
           <div className="flex flex-wrap gap-2">
             {deck.categories.map((category) => {
-              const style = getCategoryStyle(category);
               return (
                 <div
                   key={category}
