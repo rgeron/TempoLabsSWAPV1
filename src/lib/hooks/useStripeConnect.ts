@@ -1,11 +1,7 @@
 import { useAuth } from "@/lib/auth";
 import { useState } from "react";
 
-import {
-  createConnectAccount,
-  getAccountStatus,
-  getOnboardingLink,
-} from "../api/profile";
+import { createConnectAccount, getOnboardingLink } from "../api/profile";
 
 import { useToast } from "@/components/ui/use-toast";
 
@@ -46,24 +42,11 @@ export function useStripeConnect() {
     }
   };
 
-  const checkAccountStatus = async () => {
-    if (!user) return null;
-
-    try {
-      return await getAccountStatus(user.id);
-    } catch (error) {
-      console.error("Error checking account status:", error);
-      return null;
-    }
-  };
-
   const withdrawFunds = async (amount: number) => {
     if (!user) return;
 
     try {
       setIsLoading(true);
-
-      const status = await checkAccountStatus();
 
       toast({
         title: "Success",
