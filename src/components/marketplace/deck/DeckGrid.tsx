@@ -42,7 +42,7 @@ const DeckGrid = () => {
                 price={deck.price}
                 cardcount={deck.cardcount}
                 difficulty={deck.difficulty}
-                imageurl={deck.imageurl}
+                imageurl={deck.cover_image_url}
                 creatorName={deck.profiles?.username}
                 creatorAvatar={deck.profiles?.avatar_url || undefined}
               />

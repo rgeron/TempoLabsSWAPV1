@@ -73,7 +73,7 @@ const ListedDecks = () => {
           | "Intermediate"
           | "Advanced",
         cardcount: 0,
-        imageurl:
+        cover_image_url:
           "https://images.unsplash.com/photo-1532094349884-543bc11b234d",
         creatorid: user.id,
         flashcards_file_url: null, // This will be set by the createDeck function

@@ -226,7 +226,6 @@ const AddDeckDialog = ({
           | "Advanced",
         categories: selectedCategories,
         creatorid: user.id,
-        imageurl: coverImageUrl,
         cover_image_url: coverImageUrl,
         cardcount,
       };

@@ -114,7 +114,7 @@ export interface Deck {
   price: number;
   cardcount: number;
   difficulty: "Beginner" | "Intermediate" | "Advanced";
-  imageurl: string;
+  cover_image_url?: string | null;
   creatorid: string;
   categories?: DeckCategory[] | null;
   created_at: string;
