@@ -16,7 +16,7 @@ import { processDeckPurchase } from "@/lib/api/decks";
 import { getDeckReviews, type Review } from "@/lib/api/reviews";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
-import type { BuyDeckDialogProps, FlashCard } from "@/types/marketplace";
+import type { BuyDeckDialogProps, FlashCard } from "@/types/catergories";
 import { format } from "date-fns";
 import { Loader2, Star } from "lucide-react";
 import { useEffect, useState } from "react";

@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
-import { CATEGORY_DEFINITIONS, DeckWithProfile } from "@/types/marketplace";
+import { CATEGORY_DEFINITIONS, DeckWithProfile } from "@/types/catergories";
 import { Check, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";

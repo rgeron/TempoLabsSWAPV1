@@ -1,17 +1,17 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth";
-import { Search, Loader2 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import type { DeckWithProfile } from "@/types/catergories";
+import { Loader2, Search } from "lucide-react";
 import { useState } from "react";
 import { Navigate } from "react-router-dom";
 import { AuthModal } from "../auth/AuthModal";
-import { AboutDialog } from "./AboutDialog";
-import CategoryGrid from "../marketplace/CategoryGrid";
 import AllDecks from "../marketplace/AllDecks";
+import CategoryGrid from "../marketplace/CategoryGrid";
 import DeckCard from "../marketplace/deck/DeckCard";
-import { supabase } from "@/lib/supabase";
-import type { DeckWithProfile } from "@/types/marketplace";
 import { ThemeToggle } from "../ThemeToggle";
+import { AboutDialog } from "./AboutDialog";
 
 const LandingPage = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -50,7 +50,7 @@ const LandingPage = () => {
             `categories.cs.{${searchQuery}}` +
             (matchingProfiles?.length > 0
               ? `,creatorid.in.(${matchingProfiles.map((p) => p.id).join(",")})`
-              : ""),
+              : "")
         )
         .order("created_at", { ascending: false });
 

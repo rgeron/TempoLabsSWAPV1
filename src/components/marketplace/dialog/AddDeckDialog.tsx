@@ -14,7 +14,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { createDeck, getAllDeckContents } from "@/lib/api/decks";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { CATEGORY_DEFINITIONS, DeckCategory } from "@/types/marketplace";
+import { CATEGORY_DEFINITIONS, DeckCategory } from "@/types/catergories";
 import { Image as ImageIcon, Loader2, Upload, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { PlagiarismDisputeDialog } from "./PlagiarismDisputeDialog";

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { createDeck, deleteDeck, getUserDecks } from "@/lib/api/decks";
 import { useAuth } from "@/lib/auth";
-import type { Deck } from "@/types/marketplace";
+import type { Deck } from "@/types/catergories";
 import type { Database } from "@/types/supabase";
 import { Loader2, Plus } from "lucide-react";
 import React, { useEffect, useState } from "react";

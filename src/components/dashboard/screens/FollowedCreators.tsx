@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import type { Creator } from "@/types/marketplace";
+import type { Creator } from "@/types/catergories";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 

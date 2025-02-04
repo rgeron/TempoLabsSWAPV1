@@ -15,7 +15,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { downloadFlashcardsFile, getFlashcards } from "@/lib/api/flashcards";
 import { createReview, getDeckReviews, type Review } from "@/lib/api/reviews";
 import { useAuth } from "@/lib/auth";
-import type { DeckWithProfile, FlashCard } from "@/types/marketplace";
+import type { DeckWithProfile, FlashCard } from "@/types/catergories";
 import { format } from "date-fns";
 import { Download, Loader2, Star } from "lucide-react";
 import { useEffect, useState } from "react";

@@ -1,13 +1,13 @@
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import DeckCard from "@/components/marketplace/deck/DeckCard";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
-import DeckCard from "@/components/marketplace/deck/DeckCard";
-import type { DeckWithProfile } from "@/types/marketplace";
-import { useAuth } from "@/lib/auth";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
+import type { DeckWithProfile } from "@/types/catergories";
+import { Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 
 interface Creator {
   id: string;

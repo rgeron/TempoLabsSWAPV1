@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getFlashcards } from "@/lib/api/flashcards";
-import type { DeckWithProfile, FlashCard } from "@/types/marketplace";
+import type { DeckWithProfile, FlashCard } from "@/types/catergories";
 import { DollarSign, Trash2, TrendingUp, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FlashcardPreview } from "../FlashcardPreview";

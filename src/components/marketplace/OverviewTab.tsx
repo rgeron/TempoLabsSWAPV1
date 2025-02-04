@@ -1,9 +1,8 @@
-import React from "react";
-import type { DeckWithProfile } from "@/types/marketplace";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { BookOpen, Calendar, DollarSign, BarChart } from "lucide-react";
-import { getCategoryStyle } from "@/types/marketplace";
+import type { DeckWithProfile } from "@/types/catergories";
+import { getCategoryStyle } from "@/types/catergories";
+import { BarChart, BookOpen, Calendar, DollarSign } from "lucide-react";
 
 interface OverviewTabProps {
   deck: DeckWithProfile;

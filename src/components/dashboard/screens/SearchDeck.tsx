@@ -1,9 +1,9 @@
+import DeckCard from "@/components/marketplace/deck/DeckCard";
+import { supabase } from "@/lib/supabase";
+import type { DeckWithProfile } from "@/types/catergories";
+import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { supabase } from "@/lib/supabase";
-import type { DeckWithProfile } from "@/types/marketplace";
-import DeckCard from "@/components/marketplace/deck/DeckCard";
-import { Loader2 } from "lucide-react";
 
 const SearchDeck = () => {
   const [searchParams] = useSearchParams();
@@ -33,8 +33,10 @@ const SearchDeck = () => {
               `description.ilike.%${query}%,` +
               `categories.cs.{${query}}` +
               (matchingProfiles?.length > 0
-                ? `,creatorid.in.(${matchingProfiles.map((p) => p.id).join(",")})`
-                : ""),
+                ? `,creatorid.in.(${matchingProfiles
+                    .map((p) => p.id)
+                    .join(",")})`
+                : "")
           )
           .order("created_at", { ascending: false });
 

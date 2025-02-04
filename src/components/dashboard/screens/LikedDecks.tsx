@@ -2,7 +2,7 @@ import DeckCard from "@/components/marketplace/deck/DeckCard";
 import { useToast } from "@/components/ui/use-toast";
 import { getAllDecks } from "@/lib/api/decks";
 import { useAuth } from "@/lib/auth";
-import type { DeckWithProfile } from "@/types/marketplace";
+import type { DeckWithProfile } from "@/types/catergories";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 

@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from "react";
-import DeckCard from "./deck/DeckCard";
-import { Loader2 } from "lucide-react";
 import { getAllDecks } from "@/lib/api/decks";
-import type { DeckWithProfile } from "@/types/marketplace";
 import { useAuth } from "@/lib/auth";
+import type { DeckWithProfile } from "@/types/catergories";
+import { Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import DeckCard from "./deck/DeckCard";
 
 interface AllDecksProps {
   showTitle?: boolean;

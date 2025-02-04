@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import type { FlashCard } from "@/types/marketplace";
+import type { FlashCard } from "@/types/catergories";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Loader2, Repeat } from "lucide-react";
 import { useState } from "react";

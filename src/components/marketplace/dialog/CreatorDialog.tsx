@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import type { Creator, DeckWithProfile } from "@/types/marketplace";
+import type { Creator, DeckWithProfile } from "@/types/catergories";
 import { Loader2, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import DeckCard from "../deck/DeckCard";

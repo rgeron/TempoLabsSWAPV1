@@ -1,4 +1,4 @@
-import type { Deck, DeckWithProfile } from "@/types/marketplace";
+import type { Deck, DeckWithProfile } from "@/types/catergories";
 import { supabase } from "../supabase";
 import { getFlashcards, uploadFlashcardsFile } from "./flashcards";
 
