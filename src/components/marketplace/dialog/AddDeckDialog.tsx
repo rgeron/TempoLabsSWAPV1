@@ -369,56 +369,35 @@ const AddDeckDialog = ({
                               <span>{categoryGroup.icon}</span>
                               {categoryGroup.name}
                             </h4>
-                            {categoryGroup.name === "Education" ? (
-                              <LocalizedEducationCategories
-                                onSelect={(category) => {
-                                  const isSelected =
-                                    selectedCategories.includes(category);
-                                  if (isSelected) {
-                                    setSelectedCategories((prev) =>
-                                      prev.filter((c) => c !== category)
-                                    );
-                                  } else {
-                                    setSelectedCategories((prev) => [
-                                      ...prev,
-                                      category,
-                                    ]);
-                                  }
-                                }}
-                                selectedCategories={selectedCategories}
-                                className="w-full"
-                              />
-                            ) : (
-                              <div className="grid grid-cols-2 gap-2">
-                                {categoryGroup.subcategories.map((category) => (
-                                  <div
-                                    key={category}
-                                    className={`flex items-center space-x-2 p-2 rounded-md ${categoryGroup.gradient} transition-colors duration-200 ${categoryGroup.hoverGradient}`}
+                            <div className="grid grid-cols-2 gap-2">
+                              {categoryGroup.subcategories.map((category) => (
+                                <div
+                                  key={category}
+                                  className={`flex items-center space-x-2 p-2 rounded-md ${categoryGroup.gradient} transition-colors duration-200 ${categoryGroup.hoverGradient}`}
+                                >
+                                  <Checkbox
+                                    id={`category-${category}`}
+                                    name="categories"
+                                    value={category}
+                                    checked={selectedCategories.includes(
+                                      category
+                                    )}
+                                    onCheckedChange={(checked) =>
+                                      handleCategoryChange(
+                                        category,
+                                        checked as boolean
+                                      )
+                                    }
+                                  />
+                                  <label
+                                    htmlFor={`category-${category}`}
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer select-none"
                                   >
-                                    <Checkbox
-                                      id={`category-${category}`}
-                                      name="categories"
-                                      value={category}
-                                      checked={selectedCategories.includes(
-                                        category
-                                      )}
-                                      onCheckedChange={(checked) =>
-                                        handleCategoryChange(
-                                          category,
-                                          checked as boolean
-                                        )
-                                      }
-                                    />
-                                    <label
-                                      htmlFor={`category-${category}`}
-                                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer select-none"
-                                    >
-                                      {category}
-                                    </label>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
+                                    {category}
+                                  </label>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         ))}
                       </div>

@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
-import { CATEGORY_DEFINITIONS, DeckWithProfile } from "@/types/marketplace";
+import { DeckWithProfile } from "@/types/marketplace";
 import { Check, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -14,13 +14,6 @@ const CategoryGrid = () => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [decks, setDecks] = useState<DeckWithProfile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-
-  const educationCategory = CATEGORY_DEFINITIONS.find(
-    (cat) => cat.name === "Education"
-  );
-  const otherCategories = CATEGORY_DEFINITIONS.filter(
-    (cat) => cat.name !== "Education"
-  );
 
   const handleCategoryClick = (category: string) => {
     setSelectedCategories((prev) => {
@@ -85,20 +78,6 @@ const CategoryGrid = () => {
 
   return (
     <div className="space-y-6">
-      {/* Education Section */}
-      {educationCategory && (
-        <Card className="p-6 bg-white dark:bg-gray-800 border-0 w-full">
-          <div className="space-y-4">
-            <div className="flex items-center space-x-3">
-              <span className="text-2xl">{educationCategory.icon}</span>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                {educationCategory.name}
-              </h3>
-            </div>
-          </div>
-        </Card>
-      )}
-
       {/* Other Categories Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {otherCategories.map((category) => (
