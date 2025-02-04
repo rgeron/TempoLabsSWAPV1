@@ -1,4 +1,4 @@
-import { useState, FormEvent, useEffect } from "react";
+import { useState, FormEvent } from "react";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -9,37 +9,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Search, Bell, Settings, LogOut, Wallet } from "lucide-react";
+import { Search, Bell, Settings, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
-import { getUserBalance } from "@/lib/api/balance";
 import { SettingsModal } from "../auth/SettingsModal";
-import { RechargeDialog } from "../auth/RechargeDialog";
 import { ThemeToggle } from "../ThemeToggle";
 
 const TopNav = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [userBalance, setUserBalance] = useState<number>(0);
   const { signOut, user, profile } = useAuth();
   const navigate = useNavigate();
-  const [showRecharge, setShowRecharge] = useState(false);
-
-  useEffect(() => {
-    const loadUserBalance = async () => {
-      if (user) {
-        try {
-          const balance = await getUserBalance(user.id);
-          setUserBalance(balance);
-        } catch (error) {
-          console.error("Error loading user balance:", error);
-        }
-      }
-    };
-
-    loadUserBalance();
-  }, [user]);
 
   const handleSearch = (e: FormEvent) => {
     e.preventDefault();
@@ -112,15 +93,6 @@ const TopNav = () => {
                   <span className="text-sm font-medium text-[#2B4C7E] dark:text-gray-200">
                     {profile?.username || user?.email}
                   </span>
-                  <div
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowRecharge(true);
-                    }}
-                    className="text-xs text-[#2B4C7E]/70 dark:text-gray-400 cursor-pointer hover:text-[#2B4C7E] dark:hover:text-gray-200 flex items-center gap-1"
-                  >
-                    <Wallet className="h-3 w-3" />${userBalance.toFixed(2)}
-                  </div>
                 </div>
               </div>
             </DropdownMenuTrigger>
@@ -132,16 +104,6 @@ const TopNav = () => {
                 {profile?.username || user?.email}
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-[#E6F3FF] dark:bg-gray-700" />
-              <DropdownMenuItem
-                className="text-[#2B4C7E] dark:text-gray-200 focus:bg-[#E6F3FF] dark:focus:bg-gray-800 focus:text-[#2B4C7E] dark:focus:text-gray-200 cursor-pointer"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setShowRecharge(true);
-                }}
-              >
-                <Wallet className="mr-2 h-4 w-4" />
-                <span>Balance: ${userBalance.toFixed(2)}</span>
-              </DropdownMenuItem>
               <DropdownMenuItem
                 className="text-[#2B4C7E] dark:text-gray-200 focus:bg-[#E6F3FF] dark:focus:bg-gray-800 focus:text-[#2B4C7E] dark:focus:text-gray-200 cursor-pointer"
                 onClick={() => setShowSettings(true)}
@@ -165,11 +127,6 @@ const TopNav = () => {
       <SettingsModal
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
-      />
-
-      <RechargeDialog
-        isOpen={showRecharge}
-        onClose={() => setShowRecharge(false)}
       />
     </>
   );

@@ -134,6 +134,9 @@ export interface DeckWithProfile extends Deck {
     avatar_url: string | null;
   } | null;
   categories?: DeckCategory[] | null;
+  // Added missing properties for deck rating & reviews
+  average_rating?: number;
+  total_reviews?: number;
 }
 
 export interface BuyDeckDialogProps {

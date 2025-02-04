@@ -54,41 +54,6 @@ router.post("/create-onboarding-link", async (req, res) => {
   }
 });
 
-// Create a checkout session for credits
-router.post("/create-checkout-session", async (req, res) => {
-  try {
-    const { userId, amount } = req.body;
-
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      line_items: [
-        {
-          price_data: {
-            currency: "eur",
-            product_data: {
-              name: "Add Credits to your balance",
-            },
-            unit_amount: Math.round(amount * 100), // Convert to cents
-          },
-          quantity: 1,
-        },
-      ],
-      mode: "payment",
-      success_url: `${process.env.CLIENT_URL}/app/purchase-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.CLIENT_URL}/app/purchase-cancelled`,
-      metadata: {
-        userId,
-        type: "recharge",
-      },
-    });
-
-    res.json({ url: session.url });
-  } catch (error) {
-    console.error("Error creating checkout session:", error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
 // Process deck purchase
 router.post("/process-deck-purchase", async (req, res) => {
   try {
@@ -108,29 +73,6 @@ router.post("/process-deck-purchase", async (req, res) => {
     res.json({ success: true, transfer });
   } catch (error) {
     console.error("Error processing purchase:", error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Create a payout
-router.post("/create-payout", async (req, res) => {
-  try {
-    const { amount, accountId } = req.body;
-
-    // Create payout
-    const payout = await stripe.payouts.create(
-      {
-        amount: Math.round(amount * 100), // Convert to cents
-        currency: "usd",
-      },
-      {
-        stripeAccount: accountId,
-      }
-    );
-
-    res.json({ success: true, payout });
-  } catch (error) {
-    console.error("Error creating payout:", error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -190,16 +132,6 @@ router.post(
 
     try {
       switch (event.type) {
-        case "checkout.session.completed": {
-          const session = event.data.object;
-          const { userId, type } = session.metadata;
-          const amount = session.amount_total / 100; // Convert from cents
-
-          // Handle the event in the client
-          // ...existing code...
-          break;
-        }
-
         case "account.updated": {
           const account = event.data.object;
 
