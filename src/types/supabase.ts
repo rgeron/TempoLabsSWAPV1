@@ -21,7 +21,6 @@ export type Database = {
           difficulty: string;
           flashcards_file_url: string | null;
           id: string;
-          imageurl: string;
           price: number;
           purchase_history: Json | null;
           title: string;
@@ -38,7 +37,6 @@ export type Database = {
           difficulty: string;
           flashcards_file_url?: string | null;
           id?: string;
-          imageurl: string;
           price: number;
           purchase_history?: Json | null;
           title: string;
@@ -55,7 +53,6 @@ export type Database = {
           difficulty?: string;
           flashcards_file_url?: string | null;
           id?: string;
-          imageurl?: string;
           price?: number;
           purchase_history?: Json | null;
           title?: string;

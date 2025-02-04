@@ -1,12 +1,10 @@
-import { useLocalizedEducationCategories } from "@/lib/hooks/useLocalizedEducationCategories";
-
 export interface CategoryDefinition {
   name: string;
   color: string;
   gradient: string;
   hoverGradient: string;
   icon: string;
-  subcategories: DeckCategory[];
+  subcategories: string[]; // changed from DeckCategory[]
 }
 
 export const CATEGORY_DEFINITIONS: CategoryDefinition[] = [
@@ -76,34 +74,11 @@ export const CATEGORY_DEFINITIONS: CategoryDefinition[] = [
       "Design",
     ],
   },
-  {
-    name: "Education",
-    color: "from-emerald-500 to-teal-500",
-    gradient: "bg-gradient-to-br from-emerald-50 to-teal-50",
-    hoverGradient:
-      "hover:bg-gradient-to-br hover:from-emerald-100 hover:to-teal-100",
-    icon: "🎓",
-    subcategories: [
-      // These will be replaced dynamically based on country
-      "Elementary",
-      "Middle School",
-      "High School",
-      "College",
-      "University",
-      "Professional",
-      "Adult Education",
-      "Special Education",
-      "Early Childhood",
-      "Test Prep",
-      "Study Skills",
-      "Teaching Resources",
-    ],
-  },
 ];
 
 // Flatten all subcategories for type safety
 export const DECK_CATEGORIES = CATEGORY_DEFINITIONS.flatMap(
-  (cat) => cat.subcategories,
+  (cat) => cat.subcategories
 ) as const;
 
 export type DeckCategory = (typeof DECK_CATEGORIES)[number];
@@ -111,7 +86,7 @@ export type DeckCategory = (typeof DECK_CATEGORIES)[number];
 // Helper function to get category styling
 export const getCategoryStyle = (category: DeckCategory) => {
   const parentCategory = CATEGORY_DEFINITIONS.find((cat) =>
-    cat.subcategories.includes(category),
+    cat.subcategories.includes(category)
   );
   return parentCategory
     ? {
