@@ -49,12 +49,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (error) throw error;
     if (!data) {
       const defaultUsername = `user_${userId.substring(0, 6)}`;
-      const { data: insertedData, error: insertError } = await supabase
+      // Changed from insert to upsert to avoid duplicate key errors
+      const { data: insertedData, error: upsertError } = await supabase
         .from("profiles")
-        .insert({ id: userId, username: defaultUsername })
+        .upsert({ id: userId, username: defaultUsername })
         .select()
         .maybeSingle();
-      if (insertError) throw insertError;
+      if (upsertError) throw upsertError;
       setProfile(insertedData);
     } else {
       setProfile(data);
