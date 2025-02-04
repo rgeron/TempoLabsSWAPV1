@@ -1,6 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { BarChart, BookOpen, Calendar, DollarSign } from "lucide-react";
+import { DeckWithProfile } from "@/types/decks";
+import { CATEGORY_DEFINITIONS } from "@/types/catergories";
 
 interface OverviewTabProps {
   deck: DeckWithProfile;
@@ -85,12 +87,14 @@ export function OverviewTab({ deck, purchaseDate }: OverviewTabProps) {
           <h3 className="text-lg font-semibold mb-3">Categories</h3>
           <div className="flex flex-wrap gap-2">
             {deck.categories.map((category) => {
+              const definition = CATEGORY_DEFINITIONS.find((def) => def.name === category);
+              if (!definition) return null;
               return (
                 <div
                   key={category}
-                  className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium ${style?.gradient} transition-colors duration-200 ${style?.hoverGradient}`}
+                  className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium ${definition.gradient} transition-colors duration-200 ${definition.hoverGradient}`}
                 >
-                  <span>{style?.icon}</span>
+                  <span>{definition.icon}</span>
                   {category}
                 </div>
               );
