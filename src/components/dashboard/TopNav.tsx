@@ -1,5 +1,3 @@
-import { useState, FormEvent } from "react";
-import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -9,9 +7,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Search, Bell, Settings, LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth";
+import { LogOut, Search, Settings } from "lucide-react";
+import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { SettingsModal } from "../auth/SettingsModal";
 import { ThemeToggle } from "../ThemeToggle";
@@ -70,14 +69,6 @@ const TopNav = () => {
         <div className="flex items-center space-x-4 ml-4">
           {/* Theme Toggle */}
           <ThemeToggle />
-
-          {/* Notifications */}
-          <div className="relative cursor-pointer hover:opacity-80 transition-opacity">
-            <Bell className="h-6 w-6 text-[#2B4C7E] dark:text-gray-400" />
-            <div className="absolute -top-1 -right-1 h-5 w-5 bg-[#FF6B6B] rounded-full flex items-center justify-center">
-              <span className="text-white text-xs font-medium">3</span>
-            </div>
-          </div>
 
           {/* Profile Dropdown */}
           <DropdownMenu>
