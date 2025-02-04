@@ -18,12 +18,13 @@ type AuthContextType = {
   profile: Profile | null;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, username: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<void>;
   updateLikedDecks: (deckId: string, isLiking: boolean) => Promise<void>;
   updateFollowedCreators: (
     creatorId: string,
-    isFollowing: boolean
+    isFollowing: boolean,
   ) => Promise<void>;
   updatePurchasedDecks: (deckId: string) => Promise<void>;
   updateLocalProfile: (newProfile: Profile) => void;
@@ -87,6 +88,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await fetchProfile(data.user.id);
       navigate("/app/home");
     }
+  };
+
+  const signInWithGoogle = async () => {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/app/home`,
+      },
+    });
+    if (error) throw error;
   };
 
   const signOut = async () => {
@@ -208,7 +219,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const updateFollowedCreators = async (
     creatorId: string,
-    isFollowing: boolean
+    isFollowing: boolean,
   ) => {
     if (!user) throw new Error("Not authenticated");
 
@@ -268,6 +279,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signUp,
     signOut,
     updateProfile,
+    signInWithGoogle,
     updateLikedDecks,
     updateFollowedCreators,
     updatePurchasedDecks,
