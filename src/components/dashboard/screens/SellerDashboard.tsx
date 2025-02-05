@@ -20,9 +20,24 @@ import { withdrawFunds } from "@/lib/api/seller";
 
 export function SellerDashboard() {
   const { setupSellerAccount, isLoading } = useStripeConnect();
+  const [user, setUser] = useState<any>(null); // new user state
   const [accountStatus, setAccountStatus] = useState<any>(null);
   const [withdrawAmount, setWithdrawAmount] = useState("");
 
+  // Fetch current user
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data, error } = await supabase.auth.getUser();
+      if (error) {
+        console.error("Error fetching user:", error);
+      } else {
+        setUser(data.user);
+      }
+    };
+    fetchUser();
+  }, []);
+
+  // Load seller status when user is available
   useEffect(() => {
     const loadStatus = async () => {
       try {
