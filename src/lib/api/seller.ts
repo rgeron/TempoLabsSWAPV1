@@ -240,3 +240,15 @@ export const getStripeAccountDetails = async (userId: string) => {
   if (error) throw error;
   return data;
 };
+
+// New: update seller status function to be triggered after Stripe onboarding callback
+export const updateSellerStatus = async (userId: string, newStatus: string) => {
+  const { error } = await supabase
+    .from("sellers")
+    .update({
+      stripe_connect_status: newStatus,
+    })
+    .eq("id", userId);
+  if (error) throw error;
+  return true;
+};

@@ -12,11 +12,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { withdrawFunds } from "@/lib/api/seller";
 import { useStripeConnect } from "@/lib/hooks/useStripeConnect";
 import { supabase } from "@/lib/supabase";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { withdrawFunds } from "@/lib/api/seller";
 
 export function SellerDashboard() {
   const { setupSellerAccount, isLoading } = useStripeConnect();
@@ -25,7 +25,24 @@ export function SellerDashboard() {
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [hasInitiatedSetup, setHasInitiatedSetup] = useState(false);
 
-  // Fetch current user
+  // Refactored: extract loadStatus function to allow re-fetch after Stripe callback.
+  const loadStatus = async () => {
+    try {
+      const { data: seller } = await supabase
+        .from("sellers")
+        .select("*")
+        .eq("id", user?.id)
+        .single();
+      setAccountStatus(
+        seller || { stripe_connect_status: "pending", total_earnings: 0 }
+      );
+    } catch (error) {
+      console.error("Error loading seller status:", error);
+      setAccountStatus({ stripe_connect_status: "pending", total_earnings: 0 });
+    }
+  };
+
+  // On mount: load seller status and listen for callback query parameter.
   useEffect(() => {
     const fetchUser = async () => {
       const { data, error } = await supabase.auth.getUser();
@@ -38,30 +55,18 @@ export function SellerDashboard() {
     fetchUser();
   }, []);
 
-  // Load seller status when user is available
   useEffect(() => {
-    const loadStatus = async () => {
-      try {
-        const { data: seller } = await supabase
-          .from("sellers")
-          .select("*")
-          .eq("id", user?.id)
-          .single();
-
-        setAccountStatus(
-          seller || { stripe_connect_status: "pending", total_earnings: 0 }
-        );
-      } catch (error) {
-        console.error("Error loading seller status:", error);
-        setAccountStatus({
-          stripe_connect_status: "pending",
-          total_earnings: 0,
-        });
-      }
-    };
-
     if (user) {
       loadStatus();
+
+      // Check URL query params for stripeStatus update (e.g. ?stripeStatus=enabled)
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("stripeStatus") === "enabled") {
+        // Optionally, call getStripeAccountDetails or updateSellerStatus logic here.
+        setTimeout(() => {
+          loadStatus();
+        }, 1000);
+      }
     }
   }, [user]);
 

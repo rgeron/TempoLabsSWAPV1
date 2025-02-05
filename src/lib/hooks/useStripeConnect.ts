@@ -1,8 +1,8 @@
-import { useAuth } from "@/lib/auth";
-import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth";
 import { STRIPE_API_URL } from "@/lib/config";
+import { supabase } from "@/lib/supabase";
+import { useState } from "react";
 
 export function useStripeConnect() {
   const { user } = useAuth();
@@ -38,7 +38,8 @@ export function useStripeConnect() {
 
       const { accountId } = await response.json();
 
-      // Update seller record with Stripe account ID
+      // Update seller record with Stripe account ID and set status to pending;
+      // status will be updated dynamically via your callback/webhook.
       const { error: updateError } = await supabase
         .from("sellers")
         .update({
@@ -56,7 +57,7 @@ export function useStripeConnect() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ accountId }),
-        },
+        }
       );
 
       if (!onboardingResponse.ok) {
