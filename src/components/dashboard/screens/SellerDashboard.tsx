@@ -25,78 +25,33 @@ export function SellerDashboard() {
     verifyAccountStatus,
     isLoading,
   } = useStripeConnect();
-  const [user, setUser] = useState<any>(null); // new user state
+  const [user, setUser] = useState<any>(null);
   const [accountStatus, setAccountStatus] = useState<any>(null);
-  const [sellerRecordFound, setSellerRecordFound] = useState(false); // New state for seller existence
   const [withdrawAmount, setWithdrawAmount] = useState("");
-  const [hasInitiatedSetup, setHasInitiatedSetup] = useState(false);
   const [stripeInfo, setStripeInfo] = useState<any>(null);
 
-  // Updated loadStatus to verify Stripe status and refresh seller record.
-  const loadStatus = async () => {
-    try {
-      const { data: seller } = await supabase
-        .from("sellers")
-        .select("*")
-        .eq("id", user?.id)
-        .single();
-
-      if (seller) {
-        const stripeDetails = await verifyAccountStatus();
-        setStripeInfo(stripeDetails);
-        // Re-fetch seller record after verification updates the database.
-        const { data: refreshedSeller } = await supabase
-          .from("sellers")
-          .select("*")
-          .eq("id", user?.id)
-          .single();
-        setSellerRecordFound(true);
-        setAccountStatus(refreshedSeller);
-      } else {
-        setSellerRecordFound(false);
-        setAccountStatus({
-          stripe_connect_status: "restricted",
-          total_earnings: 0,
-        });
-      }
-    } catch (error) {
-      console.error("Error loading seller status:", error);
-      setSellerRecordFound(false);
-      setAccountStatus({
-        stripe_connect_status: "restricted",
-        total_earnings: 0,
-      });
-    }
-  };
-
-  // On mount: load seller status and listen for callback query parameter.
+  // On mount: load user and immediately verify account status.
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchUserAndVerify = async () => {
       const { data, error } = await supabase.auth.getUser();
       if (error) {
         console.error("Error fetching user:", error);
       } else {
         setUser(data.user);
+        const dataStatus = await verifyAccountStatus();
+        if (dataStatus) {
+          setStripeInfo(dataStatus);
+          // Optionally update the sellers table with the new status.
+          // await supabase.from("sellers").update({ stripe_connect_status: dataStatus.status }).eq("id", data.user.id);
+          setAccountStatus({
+            stripe_connect_status: dataStatus.status,
+            total_earnings: 0, // Update with real value if available
+          });
+        }
       }
     };
-    fetchUser();
+    fetchUserAndVerify();
   }, []);
-
-  useEffect(() => {
-    if (user) {
-      loadStatus();
-
-      // Check URL query params for stripeStatus update (e.g. ?stripeStatus=enabled)
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("stripeStatus") === "enabled") {
-        verifyAccountStatus()
-          .then(() => loadStatus())
-          .catch((error) =>
-            console.error("Error verifying Stripe account status:", error)
-          );
-      }
-    }
-  }, [user]);
 
   if (!accountStatus) {
     return (
@@ -120,35 +75,26 @@ export function SellerDashboard() {
               Status: {accountStatus.stripe_connect_status}
             </p>
           </div>
-          {!sellerRecordFound ? (
+          {/* Show "Start Setup" if no stripe account exists; otherwise, if not enabled, offer to "Complete Setup" */}
+          {!stripeInfo?.account?.stripe_connect_id ? (
             <Button
-              onClick={() => {
-                if (!hasInitiatedSetup) {
-                  setHasInitiatedSetup(true);
-                  setupSellerAccount();
-                }
-              }}
-              disabled={isLoading || hasInitiatedSetup}
+              onClick={() => setupSellerAccount()}
+              disabled={isLoading}
               className="bg-[#2B4C7E]"
             >
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : null}
+              {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Start Setup
             </Button>
           ) : (
-            !isEnabled &&
-            accountStatus.stripe_connect_id && (
+            !isEnabled && (
               <Button
                 onClick={() =>
-                  completeSellerSetup(accountStatus.stripe_connect_id)
+                  completeSellerSetup(stripeInfo.account.stripe_connect_id)
                 }
                 disabled={isLoading}
                 className="bg-[#2B4C7E]"
               >
-                {isLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : null}
+                {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                 Complete Setup
               </Button>
             )
