@@ -22,6 +22,7 @@ export function SellerDashboard() {
   const { setupSellerAccount, isLoading } = useStripeConnect();
   const [user, setUser] = useState<any>(null); // new user state
   const [accountStatus, setAccountStatus] = useState<any>(null);
+  const [sellerRecordFound, setSellerRecordFound] = useState(false); // New state for seller existence
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [hasInitiatedSetup, setHasInitiatedSetup] = useState(false);
 
@@ -33,11 +34,19 @@ export function SellerDashboard() {
         .select("*")
         .eq("id", user?.id)
         .single();
-      setAccountStatus(
-        seller || { stripe_connect_status: "pending", total_earnings: 0 }
-      );
+      if (seller) {
+        setSellerRecordFound(true);
+        setAccountStatus(seller);
+      } else {
+        setSellerRecordFound(false);
+        setAccountStatus({
+          stripe_connect_status: "pending",
+          total_earnings: 0,
+        });
+      }
     } catch (error) {
       console.error("Error loading seller status:", error);
+      setSellerRecordFound(false);
       setAccountStatus({ stripe_connect_status: "pending", total_earnings: 0 });
     }
   };
@@ -106,7 +115,8 @@ export function SellerDashboard() {
                 : "Your account is ready to receive payments"}
             </p>
           </div>
-          {isPending && (
+          {// Show setup button only if no seller record exists and account is pending
+          !sellerRecordFound && isPending && (
             <Button
               onClick={() => {
                 if (!hasInitiatedSetup) {
@@ -122,6 +132,14 @@ export function SellerDashboard() {
               ) : null}
               Complete Setup
             </Button>
+          )}
+          {// Optionally, if a seller record was found, show a message indicating setup is in progress or complete.
+          sellerRecordFound && (
+            <div className="text-green-600 font-medium">
+              {accountStatus.stripe_connect_id
+                ? "Setup complete"
+                : "Setup initiated"}
+            </div>
           )}
         </div>
       </Card>
