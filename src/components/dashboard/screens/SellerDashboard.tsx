@@ -25,6 +25,14 @@ export function SellerDashboard() {
           setAccountStatus({
             stripe_connect_status: dataStatus.status
           });
+          // Update the stripe_connect_status in the sellers database
+          const { error: updateError } = await supabase
+            .from("sellers")
+            .update({ stripe_connect_status: dataStatus.status })
+            .eq("user_id", data.user.id);
+          if (updateError) {
+            console.error("Error updating seller status:", updateError);
+          }
         }
       }
     };
