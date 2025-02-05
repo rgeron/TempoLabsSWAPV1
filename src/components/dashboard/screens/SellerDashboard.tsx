@@ -23,6 +23,7 @@ export function SellerDashboard() {
   const [user, setUser] = useState<any>(null); // new user state
   const [accountStatus, setAccountStatus] = useState<any>(null);
   const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [hasInitiatedSetup, setHasInitiatedSetup] = useState(false);
 
   // Fetch current user
   useEffect(() => {
@@ -92,8 +93,13 @@ export function SellerDashboard() {
           </div>
           {isPending && (
             <Button
-              onClick={setupSellerAccount}
-              disabled={isLoading}
+              onClick={() => {
+                if (!hasInitiatedSetup) {
+                  setHasInitiatedSetup(true);
+                  setupSellerAccount();
+                }
+              }}
+              disabled={isLoading || hasInitiatedSetup}
               className="bg-[#2B4C7E]"
             >
               {isLoading ? (
