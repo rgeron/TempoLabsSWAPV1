@@ -1,9 +1,3 @@
-import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { useStripeConnect } from "@/lib/hooks/useStripeConnect";
-import { Loader2, AlertCircle } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,6 +9,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { useStripeConnect } from "@/lib/hooks/useStripeConnect";
+import { supabase } from "@/lib/supabase";
+import { AlertCircle, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { withdrawFunds } from "@/lib/api/seller";
 
 export function SellerDashboard() {
   const { setupSellerAccount, isLoading } = useStripeConnect();
@@ -31,7 +33,7 @@ export function SellerDashboard() {
           .single();
 
         setAccountStatus(
-          seller || { stripe_connect_status: "pending", total_earnings: 0 },
+          seller || { stripe_connect_status: "pending", total_earnings: 0 }
         );
       } catch (error) {
         console.error("Error loading seller status:", error);

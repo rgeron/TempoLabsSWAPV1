@@ -205,7 +205,29 @@ export const processDeckPurchase = async (
   }
 };
 
+// Add a new function to process fund withdrawals
+export const withdrawFunds = async (amount: number) => {
+	// Retrieve current user info
+	const { data: { user }, error: userError } = await supabase.auth.getUser();
+	if (userError) throw userError;
+	if (!user?.id) throw new Error("User not authenticated");
+	const userId = user.id;
 
+	try {
+		const response = await fetch(`${STRIPE_API_URL}/withdraw-funds`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ userId, amount }),
+		});
+		if (!response.ok) throw new Error("Failed to withdraw funds");
+		const result = await response.json();
+		// ...optionally update profile...
+		return result;
+	} catch (error) {
+		console.error("Error withdrawing funds:", error);
+		throw error;
+	}
+};
 
 // Add a new function to get the user's Stripe account details
 export const getStripeAccountDetails = async (userId: string) => {

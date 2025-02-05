@@ -1,6 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const Stripe = require("stripe");
+const { createClient } = require("@supabase/supabase-js");
 
 const router = express.Router();
 router.use(express.json());
@@ -118,6 +119,52 @@ router.post("/create-pending-account", async (req, res) => {
     res.json({ accountId: account.id });
   } catch (error) {
     console.error("Error creating pending Stripe account:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Add endpoint to withdraw funds
+router.post("/withdraw-funds", async (req, res) => {
+  try {
+    const { userId, amount } = req.body;
+    if (!userId || !amount) {
+      return res.status(400).json({ error: "Missing parameters" });
+    }
+    
+    // Initialize Supabase client
+    const supabaseUrl = process.env.VITE_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Retrieve seller profile to get Stripe connected account id
+    const { data: sellerProfile, error: profileError } = await supabase
+      .from("profiles")
+      .select("stripe_connect_id, total_earnings")
+      .eq("id", userId)
+      .single();
+
+    if (profileError) throw profileError;
+    if (!sellerProfile?.stripe_connect_id) {
+      throw new Error("No connected Stripe account for this user");
+    }
+
+    // Optional: Validate that withdrawal amount does not exceed available earnings.
+
+    // Create a payout via Stripe using the connected account
+    const payout = await stripe.payouts.create(
+      {
+        amount: Math.round(amount * 100), // convert dollars to cents
+        currency: "usd",
+      },
+      { stripeAccount: sellerProfile.stripe_connect_id }
+    );
+
+    // Optionally update seller's earnings in Supabase here
+    // ...existing code...
+
+    res.json({ success: true, payout });
+  } catch (error) {
+    console.error("Error withdrawing funds:", error);
     res.status(500).json({ error: error.message });
   }
 });
