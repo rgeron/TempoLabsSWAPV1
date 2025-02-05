@@ -57,7 +57,7 @@ export function SellerDashboard() {
           ) : stripeInfo.status === "Completed" ? (
             <span className="text-green-600 font-semibold">Setup is complete.</span>
           ) : (
-            <Button onClick={() => completeSellerSetup()} disabled={isLoading} className="bg-[#2B4C7E]">
+            <Button onClick={() => completeSellerSetup(stripeInfo?.account?.id)} disabled={isLoading} className="bg-[#2B4C7E]">
               {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Complete Setup
             </Button>
