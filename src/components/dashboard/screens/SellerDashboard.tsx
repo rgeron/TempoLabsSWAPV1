@@ -46,22 +46,21 @@ export function SellerDashboard() {
           <div>
             <h2 className="text-xl font-semibold text-[#2B4C7E]">Seller Account Status</h2>
             <p className="text-sm text-gray-500 mt-1">
-              Status: {accountStatus.stripe_connect_status}
+              Status: {stripeInfo?.status || accountStatus.stripe_connect_status}
             </p>
           </div>
-          {/* If no account info, offer Start Setup; if account exists but not enabled, offer Complete Setup */}
-          {!stripeInfo?.account?.stripe_connect_id ? (
+          {!stripeInfo ? (
             <Button onClick={() => setupSellerAccount()} disabled={isLoading} className="bg-[#2B4C7E]">
               {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Start Setup
             </Button>
+          ) : stripeInfo.status === "Completed" ? (
+            <span className="text-green-600 font-semibold">Setup is complete.</span>
           ) : (
-            accountStatus.stripe_connect_status !== "enabled" && (
-              <Button onClick={() => completeSellerSetup(stripeInfo.account.stripe_connect_id)} disabled={isLoading} className="bg-[#2B4C7E]">
-                {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                Complete Setup
-              </Button>
-            )
+            <Button onClick={() => completeSellerSetup()} disabled={isLoading} className="bg-[#2B4C7E]">
+              {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Complete Setup
+            </Button>
           )}
         </div>
       </Card>
@@ -83,15 +82,6 @@ export function SellerDashboard() {
               : "None"}
           </p>
           <p>Capabilities: {JSON.stringify(stripeInfo.capabilities)}</p>
-        </Card>
-      )}
-
-      {accountStatus.stripe_connect_status === "enabled" && (
-        <Card className="p-6">
-          <div className="flex items-center space-x-2 text-amber-600 bg-amber-50 p-4 rounded-lg">
-            <AlertCircle className="h-5 w-5" />
-            <p className="text-sm">Your account is fully set up.</p>
-          </div>
         </Card>
       )}
     </div>
