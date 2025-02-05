@@ -11,7 +11,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { getFlashcards } from "@/lib/api/flashcards";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { createCreditCheckoutSession } from "@/lib/api/client";
+import { createCreditCheckoutSession } from "@/lib/api/seller";
 import { processDeckPurchase } from "@/lib/api/decks";
 import { getDeckReviews, type Review } from "@/lib/api/reviews";
 import { useAuth } from "@/lib/auth";
