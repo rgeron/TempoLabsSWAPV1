@@ -293,7 +293,20 @@ const AddDeckDialog = ({
                       className="w-full h-32 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="difficulty">Difficulty</Label>
+                    <select
+                      id="difficulty"
+                      name="difficulty"
+                      className="w-full rounded-md border border-input bg-background px-3 py-2"
+                      required
+                    >
+                      <option value="Beginner">Beginner</option>
+                      <option value="Intermediate">Intermediate</option>
+                      <option value="Advanced">Advanced</option>
+                    </select>
+                  </div>
+                  <div className="gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="price">Price ($)</Label>
                       <Input
@@ -324,65 +337,6 @@ const AddDeckDialog = ({
                           </Button>
                         </div>
                       )}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="difficulty">Difficulty</Label>
-                      <select
-                        id="difficulty"
-                        name="difficulty"
-                        className="w-full rounded-md border border-input bg-background px-3 py-2"
-                        required
-                      >
-                        <option value="Beginner">Beginner</option>
-                        <option value="Intermediate">Intermediate</option>
-                        <option value="Advanced">Advanced</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Cover Image</Label>
-                    <div className="flex flex-col space-y-4">
-                      <div className="flex items-center space-x-2">
-                        <Label
-                          htmlFor="cover-upload"
-                          className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background bg-white text-black hover:bg-gray-100 h-10 py-2 px-4 border border-input flex-1"
-                        >
-                          <ImageIcon className="h-4 w-4 mr-2" />
-                          {coverImage
-                            ? "Change Cover Image"
-                            : "Upload Cover Image"}
-                        </Label>
-                        <Input
-                          id="cover-upload"
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={handleCoverImageChange}
-                          disabled={isUploadingCover}
-                        />
-                      </div>
-                      {coverPreview && (
-                        <div className="relative w-40 h-40 rounded-lg overflow-hidden border border-input">
-                          <img
-                            src={coverPreview}
-                            alt="Cover preview"
-                            className="w-full h-full object-cover"
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="absolute top-2 right-2 h-6 w-6 bg-black/50 hover:bg-black/70"
-                            onClick={handleRemoveCover}
-                          >
-                            <X className="h-4 w-4 text-white" />
-                          </Button>
-                        </div>
-                      )}
-                      <p className="text-sm text-gray-500">
-                        Upload a cover image (max 5MB). Supported formats: JPEG,
-                        PNG
-                      </p>
                     </div>
                   </div>
                 </div>
@@ -438,7 +392,7 @@ const AddDeckDialog = ({
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="flashcardsFile">
-                      Flashcards File (.txt)
+                      Upload your deck of flashcards
                     </Label>
                     <div className="flex items-center space-x-2">
                       <Label
@@ -458,9 +412,52 @@ const AddDeckDialog = ({
                         onChange={handleFileChange}
                       />
                     </div>
-                    <p className="text-sm text-gray-500">
-                      Upload a .txt file with your flashcards
-                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Cover Image</Label>
+                    <div className="flex flex-col space-y-4">
+                      <div className="flex items-center space-x-2">
+                        <Label
+                          htmlFor="cover-upload"
+                          className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background bg-white text-black hover:bg-gray-100 h-10 py-2 px-4 border border-input flex-1"
+                        >
+                          <ImageIcon className="h-4 w-4 mr-2" />
+                          {coverImage
+                            ? "Change Cover Image"
+                            : "Upload Cover Image"}
+                        </Label>
+                        <Input
+                          id="cover-upload"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleCoverImageChange}
+                          disabled={isUploadingCover}
+                        />
+                      </div>
+                      {coverPreview && (
+                        <div className="relative w-40 h-40 rounded-lg overflow-hidden border border-input">
+                          <img
+                            src={coverPreview}
+                            alt="Cover preview"
+                            className="w-full h-full object-cover"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-2 right-2 h-6 w-6 bg-black/50 hover:bg-black/70"
+                            onClick={handleRemoveCover}
+                          >
+                            <X className="h-4 w-4 text-white" />
+                          </Button>
+                        </div>
+                      )}
+                      <p className="text-sm text-gray-500">
+                        Upload a cover image (max 5MB). Supported formats: JPEG,
+                        PNG
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
