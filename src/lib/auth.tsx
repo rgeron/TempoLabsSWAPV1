@@ -41,19 +41,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const fetchProfile = useCallback(async (userId: string) => {
+    // Ensure to select the isseller column
     const { data, error } = await supabase
       .from("profiles")
-      .select()
+      .select("*, isseller")
       .eq("id", userId)
       .maybeSingle();
     if (error) throw error;
     if (!data) {
       const defaultUsername = `user_${userId.substring(0, 6)}`;
-      // Changed from insert to upsert to avoid duplicate key errors
+      // Default isseller to false upon creation.
       const { data: insertedData, error: upsertError } = await supabase
         .from("profiles")
-        .upsert({ id: userId, username: defaultUsername })
-        .select()
+        .upsert({ id: userId, username: defaultUsername, isseller: false })
+        .select("*, isseller")
         .maybeSingle();
       if (upsertError) throw upsertError;
       setProfile(insertedData);

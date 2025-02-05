@@ -4,40 +4,38 @@ import { Loader2, AlertCircle } from "lucide-react";
 import { useStripeConnect } from "@/lib/hooks/useStripeConnect";
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/lib/auth";  // new import
 
 export function SellerDashboard() {
   const { setupSellerAccount, completeSellerSetup, verifyAccountStatus, isLoading } = useStripeConnect();
-  const [user, setUser] = useState<any>(null);
+  const { user, profile } = useAuth(); // using context for user and profile
   const [accountStatus, setAccountStatus] = useState<any>(null);
   const [stripeInfo, setStripeInfo] = useState<any>(null);
 
-  // On mount: load user and verify account status.
+  // On mount: if user is a seller, verify account status; else, allow start setup.
   useEffect(() => {
-    const fetchUserAndVerify = async () => {
-      const { data, error } = await supabase.auth.getUser();
-      if (error) {
-        console.error("Error fetching user:", error);
-      } else {
-        setUser(data.user);
-        const dataStatus = await verifyAccountStatus();
-        if (dataStatus) {
-          setStripeInfo(dataStatus);
-          setAccountStatus({
-            stripe_connect_status: dataStatus.status
-          });
-          // Update the stripe_connect_status in the sellers database
-          const { error: updateError } = await supabase
-            .from("sellers")
-            .update({ stripe_connect_status: dataStatus.status })
-            .eq("user_id", data.user.id);
-          if (updateError) {
-            console.error("Error updating seller status:", updateError);
-          }
+    const fetchAndVerifySeller = async () => {
+      if (!profile) return; // wait for profile
+      if (!profile.isseller) {
+        setAccountStatus({ stripe_connect_status: "Not a seller" });
+        return;
+      }
+      const dataStatus = await verifyAccountStatus();
+      if (dataStatus) {
+        setStripeInfo(dataStatus);
+        setAccountStatus({ stripe_connect_status: dataStatus.status });
+        // Update the stripe_connect_status in the sellers database
+        const { error: updateError } = await supabase
+          .from("sellers")
+          .update({ stripe_connect_status: dataStatus.status })
+          .eq("user_id", user?.id);
+        if (updateError) {
+          console.error("Error updating seller status:", updateError);
         }
       }
     };
-    fetchUserAndVerify();
-  }, []);
+    fetchAndVerifySeller();
+  }, [profile]);
 
   if (!accountStatus) {
     return (
@@ -57,7 +55,7 @@ export function SellerDashboard() {
               Status: {stripeInfo?.status || accountStatus.stripe_connect_status}
             </p>
           </div>
-          {!stripeInfo ? (
+          {!profile?.isseller || !stripeInfo ? (
             <Button onClick={() => setupSellerAccount()} disabled={isLoading} className="bg-[#2B4C7E]">
               {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Start Setup
