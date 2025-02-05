@@ -16,12 +16,24 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 // Create a Connect account
 router.post("/create-connect-account", async (req, res) => {
   try {
-    const { email } = req.body;
+    const { userId } = req.body;
+
+    // Get user's email from Supabase
+    const supabaseUrl = process.env.VITE_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.admin.getUserById(userId);
+    if (userError) throw userError;
+    if (!user?.email) throw new Error("User email not found");
 
     // Create Express account
     const account = await stripe.accounts.create({
       type: "express",
-      email,
+      email: user.email,
       capabilities: {
         card_payments: { requested: true },
         transfers: { requested: true },
@@ -123,7 +135,7 @@ router.post(
       event = stripe.webhooks.constructEvent(
         req.body,
         sig,
-        process.env.STRIPE_WEBHOOK_SECRET
+        process.env.STRIPE_WEBHOOK_SECRET,
       );
     } catch (err) {
       console.error("Webhook signature verification failed:", err);
@@ -146,7 +158,7 @@ router.post(
       console.error("Error processing webhook:", error);
       res.status(500).json({ error: error.message });
     }
-  }
+  },
 );
 
 module.exports = router;

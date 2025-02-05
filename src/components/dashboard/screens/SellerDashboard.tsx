@@ -17,19 +17,35 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export function SellerDashboard() {
-  const { setupSellerAccount, checkAccountStatus, withdrawFunds, isLoading } =
-    useStripeConnect();
+  const { setupSellerAccount, isLoading } = useStripeConnect();
   const [accountStatus, setAccountStatus] = useState<any>(null);
   const [withdrawAmount, setWithdrawAmount] = useState("");
 
   useEffect(() => {
     const loadStatus = async () => {
-      const status = await checkAccountStatus();
-      setAccountStatus(status);
+      try {
+        const { data: seller } = await supabase
+          .from("sellers")
+          .select("*")
+          .eq("id", user?.id)
+          .single();
+
+        setAccountStatus(
+          seller || { stripe_connect_status: "pending", total_earnings: 0 },
+        );
+      } catch (error) {
+        console.error("Error loading seller status:", error);
+        setAccountStatus({
+          stripe_connect_status: "pending",
+          total_earnings: 0,
+        });
+      }
     };
 
-    loadStatus();
-  }, []);
+    if (user) {
+      loadStatus();
+    }
+  }, [user]);
 
   if (!accountStatus) {
     return (
@@ -39,7 +55,9 @@ export function SellerDashboard() {
     );
   }
 
-  const isPending = accountStatus.stripe_connect_status === "pending";
+  const isPending =
+    !accountStatus.stripe_connect_id ||
+    accountStatus.stripe_connect_status === "pending";
 
   return (
     <div className="space-y-6">

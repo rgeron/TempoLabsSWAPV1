@@ -1,9 +1,8 @@
 import { useAuth } from "@/lib/auth";
 import { useState } from "react";
-
-import { createConnectAccount, getOnboardingLink } from "../api/profile";
-
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/lib/supabase";
+import { STRIPE_API_URL } from "@/lib/config";
 
 export function useStripeConnect() {
   const { user } = useAuth();
@@ -16,14 +15,55 @@ export function useStripeConnect() {
     try {
       setIsLoading(true);
 
-      // Create Connect account if needed
-      const account = await createConnectAccount(user.id);
-      if (!account) {
+      // First create seller record
+      const { error: sellerError } = await supabase
+        .from("sellers")
+        .insert([{ id: user.id }]);
+
+      if (sellerError && sellerError.code !== "23505") {
+        // Ignore if already exists
+        throw sellerError;
+      }
+
+      // Create Connect account
+      const response = await fetch(`${STRIPE_API_URL}/create-connect-account`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id }),
+      });
+
+      if (!response.ok) {
         throw new Error("Failed to create Connect account");
       }
 
+      const { accountId } = await response.json();
+
+      // Update seller record with Stripe account ID
+      const { error: updateError } = await supabase
+        .from("sellers")
+        .update({
+          stripe_connect_id: accountId,
+          stripe_connect_status: "pending",
+        })
+        .eq("id", user.id);
+
+      if (updateError) throw updateError;
+
       // Get onboarding link
-      const url = await getOnboardingLink(user.id);
+      const onboardingResponse = await fetch(
+        `${STRIPE_API_URL}/create-onboarding-link`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ accountId }),
+        },
+      );
+
+      if (!onboardingResponse.ok) {
+        throw new Error("Failed to create onboarding link");
+      }
+
+      const { url } = await onboardingResponse.json();
 
       // Redirect to onboarding
       window.location.href = url;
@@ -34,32 +74,7 @@ export function useStripeConnect() {
         description:
           error instanceof Error
             ? error.message
-            : "Failed to set up seller account. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const withdrawFunds = async (amount: number) => {
-    if (!user) return;
-
-    try {
-      setIsLoading(true);
-
-      toast({
-        title: "Success",
-        description: "Withdrawal request processed successfully",
-      });
-    } catch (error) {
-      console.error("Error withdrawing funds:", error);
-      toast({
-        title: "Error",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Failed to process withdrawal",
+            : "Failed to set up seller account",
         variant: "destructive",
       });
     } finally {
@@ -69,8 +84,6 @@ export function useStripeConnect() {
 
   return {
     setupSellerAccount,
-    checkAccountStatus,
-    withdrawFunds,
     isLoading,
   };
 }
