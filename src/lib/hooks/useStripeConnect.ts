@@ -1,9 +1,8 @@
 import { useToast } from "@/components/ui/use-toast";
+import { postStripeRequest } from "@/lib/api/stripeUtils";
 import { useAuth } from "@/lib/auth";
-import { STRIPE_API_URL } from "@/lib/config";
 import { supabase } from "@/lib/supabase";
 import { useState } from "react";
-import { postStripeRequest } from "@/lib/api/stripeUtils";
 
 export function useStripeConnect() {
   const { user } = useAuth();
