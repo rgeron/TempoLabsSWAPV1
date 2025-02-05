@@ -126,7 +126,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email,
         password,
       });
-      if (authError) throw authError;
+      if (authError) {
+        // Check if the error implies the user is already registered
+        if (
+          authError.message.toLowerCase().includes("already") ||
+          authError.status === 409
+        ) {
+          throw new Error("User already exists, please sign in");
+        }
+        throw authError;
+      }
       if (!authData.user) throw new Error("No user returned from sign up");
       
       const { error: profileError } = await supabase
