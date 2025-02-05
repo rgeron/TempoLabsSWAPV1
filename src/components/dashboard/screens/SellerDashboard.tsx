@@ -25,6 +25,7 @@ export function SellerDashboard() {
   const [sellerRecordFound, setSellerRecordFound] = useState(false); // New state for seller existence
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [hasInitiatedSetup, setHasInitiatedSetup] = useState(false);
+  const [stripeInfo, setStripeInfo] = useState<any>(null);
 
   // Updated loadStatus to verify Stripe status and refresh seller record.
   const loadStatus = async () => {
@@ -36,8 +37,8 @@ export function SellerDashboard() {
         .single();
 
       if (seller) {
-        // Instead of manual fetch, use verifyAccountStatus from hook.
-        await verifyAccountStatus();
+        const stripeDetails = await verifyAccountStatus();
+        setStripeInfo(stripeDetails);
         // Re-fetch seller record after verification updates the database.
         const { data: refreshedSeller } = await supabase
           .from("sellers")
@@ -139,6 +140,26 @@ export function SellerDashboard() {
           )}
         </div>
       </Card>
+
+      {stripeInfo && (
+        <Card className="p-6">
+          <h3 className="text-lg font-bold text-[#2B4C7E] mb-4">Stripe Account Details</h3>
+          <p>Status: {stripeInfo.status}</p>
+          <p>
+            Onboarding Information Needed:{" "}
+            {stripeInfo.onboarding_information_needed?.length
+              ? stripeInfo.onboarding_information_needed.join(", ")
+              : "None"}
+          </p>
+          <p>
+            Onboarding Information Eventually Needed:{" "}
+            {stripeInfo.onboarding_information_eventually_needed?.length
+              ? stripeInfo.onboarding_information_eventually_needed.join(", ")
+              : "None"}
+          </p>
+          <p>Capabilities: {JSON.stringify(stripeInfo.capabilities)}</p>
+        </Card>
+      )}
 
       {isEnabled ? (
         <Card className="p-6">

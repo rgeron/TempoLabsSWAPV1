@@ -93,12 +93,14 @@ export function useStripeConnect() {
     if (!user) return;
     try {
       setIsLoading(true);
-      const { status, account } = await postStripeRequest<{ status: string; account: any }>(
-        "verify-stripe-account",
-        { userId: user.id }
-      );
-      // Optionally, you can update any local state or perform further actions based on the new status.
-      return { status, account };
+      const data = await postStripeRequest<{
+        status: string;
+        account: any;
+        onboarding_information_needed: string[];
+        onboarding_information_eventually_needed: string[];
+        capabilities: any;
+      }>("verify-stripe-account", { userId: user.id });
+      return data;
     } catch (error) {
       console.error("Error verifying account status:", error);
       toast({
@@ -117,7 +119,7 @@ export function useStripeConnect() {
   return {
     setupSellerAccount,
     completeSellerSetup,
-    verifyAccountStatus, // new function exposed for use
+    verifyAccountStatus, // returns extended Stripe details
     isLoading,
   };
 }
