@@ -19,7 +19,12 @@ import { AlertCircle, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export function SellerDashboard() {
-  const { setupSellerAccount, completeSellerSetup, verifyAccountStatus, isLoading } = useStripeConnect();
+  const {
+    setupSellerAccount,
+    completeSellerSetup,
+    verifyAccountStatus,
+    isLoading,
+  } = useStripeConnect();
   const [user, setUser] = useState<any>(null); // new user state
   const [accountStatus, setAccountStatus] = useState<any>(null);
   const [sellerRecordFound, setSellerRecordFound] = useState(false); // New state for seller existence
@@ -50,14 +55,17 @@ export function SellerDashboard() {
       } else {
         setSellerRecordFound(false);
         setAccountStatus({
-          stripe_connect_status: "pending",
+          stripe_connect_status: "restricted",
           total_earnings: 0,
         });
       }
     } catch (error) {
       console.error("Error loading seller status:", error);
       setSellerRecordFound(false);
-      setAccountStatus({ stripe_connect_status: "pending", total_earnings: 0 });
+      setAccountStatus({
+        stripe_connect_status: "restricted",
+        total_earnings: 0,
+      });
     }
   };
 
@@ -112,7 +120,7 @@ export function SellerDashboard() {
               Status: {accountStatus.stripe_connect_status}
             </p>
           </div>
-          { !sellerRecordFound ? (
+          {!sellerRecordFound ? (
             <Button
               onClick={() => {
                 if (!hasInitiatedSetup) {
@@ -123,17 +131,24 @@ export function SellerDashboard() {
               disabled={isLoading || hasInitiatedSetup}
               className="bg-[#2B4C7E]"
             >
-              {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
               Start Setup
             </Button>
           ) : (
-            !isEnabled && accountStatus.stripe_connect_id && (
+            !isEnabled &&
+            accountStatus.stripe_connect_id && (
               <Button
-                onClick={() => completeSellerSetup(accountStatus.stripe_connect_id)}
+                onClick={() =>
+                  completeSellerSetup(accountStatus.stripe_connect_id)
+                }
                 disabled={isLoading}
                 className="bg-[#2B4C7E]"
               >
-                {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : null}
                 Complete Setup
               </Button>
             )
@@ -143,7 +158,9 @@ export function SellerDashboard() {
 
       {stripeInfo && (
         <Card className="p-6">
-          <h3 className="text-lg font-bold text-[#2B4C7E] mb-4">Stripe Account Details</h3>
+          <h3 className="text-lg font-bold text-[#2B4C7E] mb-4">
+            Stripe Account Details
+          </h3>
           <p>Status: {stripeInfo.status}</p>
           <p>
             Onboarding Information Needed:{" "}
@@ -181,7 +198,8 @@ export function SellerDashboard() {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Withdraw Funds</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Enter the amount you want to withdraw. This will be transferred to your connected bank account.
+                    Enter the amount you want to withdraw. This will be
+                    transferred to your connected bank account.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
 
@@ -208,7 +226,10 @@ export function SellerDashboard() {
                   <AlertDialogAction
                     onClick={() => {
                       const amount = parseFloat(withdrawAmount);
-                      if (amount > 0 && amount <= accountStatus.total_earnings) {
+                      if (
+                        amount > 0 &&
+                        amount <= accountStatus.total_earnings
+                      ) {
                         withdrawFunds(amount);
                       }
                     }}
@@ -219,7 +240,9 @@ export function SellerDashboard() {
                       parseFloat(withdrawAmount) > accountStatus.total_earnings
                     }
                   >
-                    {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                    {isLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : null}
                     Withdraw
                   </AlertDialogAction>
                 </AlertDialogFooter>

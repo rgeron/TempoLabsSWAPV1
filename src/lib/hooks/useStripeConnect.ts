@@ -36,7 +36,7 @@ export function useStripeConnect() {
         .from("sellers")
         .update({
           stripe_connect_id: accountId,
-          stripe_connect_status: "pending",
+          stripe_connect_status: "restricted",
         })
         .eq("id", user.id);
 
