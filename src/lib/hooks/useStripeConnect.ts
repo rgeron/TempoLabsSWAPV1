@@ -15,6 +15,22 @@ export function useStripeConnect() {
     try {
       setIsLoading(true);
 
+      // Set isseller property in profile to true immediately
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ isseller: true })
+        .eq("id", user.id);
+      if (profileError) {
+        console.error("Error updating profile to seller:", profileError);
+        toast({
+          title: "Error",
+          description: profileError.message,
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
       // First create seller record
       const { error: sellerError } = await supabase
         .from("sellers")
