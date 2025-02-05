@@ -174,7 +174,7 @@ router.post("/verify-stripe-account", async (req, res) => {
     // Retrieve seller's Stripe Connect ID from "sellers" table
     const { data: seller, error: sellerError } = await supabase
       .from("sellers")
-      .select("stripe_connect_id, stripe_connect_status")
+      .select("stripe_connect_id")
       .eq("id", userId)
       .single();
     if (sellerError || !seller) {
@@ -184,24 +184,7 @@ router.post("/verify-stripe-account", async (req, res) => {
     // Retrieve account details from Stripe
     const account = await stripe.accounts.retrieve(seller.stripe_connect_id);
 
-    // For first-time setups, set status to "Restricted"
-    let status = account.charges_enabled ? "Enabled" : "Restricted";
-    if (seller.stripe_connect_status === "pending") {
-      // Update seller record with the initial status "Restricted"
-      await supabase
-        .from("sellers")
-        .update({ stripe_connect_status: "Restricted" })
-        .eq("id", userId);
-      status = "Restricted";
-    }
-
-    res.json({
-      status,
-      capabilities: account.capabilities,
-      onboarding_information_needed: account.requirements.currently_due,
-      onboarding_information_eventually_needed: account.requirements.eventually_due,
-      account,
-    });
+    res.json({ account });
   } catch (error) {
     console.error("Error verifying Stripe account:", error);
     res.status(500).json({ error: error.message });
