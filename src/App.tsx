@@ -7,7 +7,6 @@ import Home from "./components/dashboard/screens/HomePage";
 import LikedDecks from "./components/dashboard/screens/LikedDecks";
 import ListedDecks from "./components/dashboard/screens/ListedDecks";
 import PurchasedDecks from "./components/dashboard/screens/PurchasedDecks";
-import SalesAnalytics from "./components/dashboard/screens/SalesAnalytics";
 import SearchDeck from "./components/dashboard/screens/SearchDeck";
 import { SellerDashboard } from "./components/dashboard/screens/SellerDashboard";
 import LandingPage from "./components/landing/LandingPage";
@@ -37,7 +36,6 @@ const App = () => {
             <Route path="liked-decks" element={<LikedDecks />} />
             <Route path="listed-decks" element={<ListedDecks />} />
             <Route path="seller-dashboard" element={<SellerDashboard />} />
-            <Route path="sales-analytics" element={<SalesAnalytics />} />
             <Route path="search" element={<SearchDeck />} />
             <Route path="followed-creators" element={<FollowedCreators />} />
             <Route path="category/:category" element={<CategoryDecks />} />

@@ -1,19 +1,18 @@
-import React, { useState, useCallback } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import {
-  BookOpen,
-  ShoppingCart,
-  TrendingUp,
-  Heart,
-  Store,
-  User,
-  Menu,
-  Users,
-  Home,
-  BanknoteIcon,
-} from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import {
+  BanknoteIcon,
+  BookOpen,
+  Heart,
+  Home,
+  Menu,
+  ShoppingCart,
+  Store,
+  User,
+  Users,
+} from "lucide-react";
+import React, { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 type NavItem = {
   path: string;
@@ -43,7 +42,7 @@ const SidebarItem = ({
         isCollapsed ? "justify-center" : "space-x-2",
         isActive
           ? "bg-[#2B4C7E] text-white dark:bg-blue-600"
-          : "text-[#2B4C7E] hover:bg-[#E6F3FF] dark:text-gray-200 dark:hover:bg-gray-800",
+          : "text-[#2B4C7E] hover:bg-[#E6F3FF] dark:text-gray-200 dark:hover:bg-gray-800"
       )}
     >
       <div className="h-5 w-5 flex-shrink-0">{item.icon}</div>
@@ -74,19 +73,14 @@ const Sidebar = () => {
 
   const storeItems: NavItem[] = [
     {
-      path: "/app/listed-decks",
-      label: "My Listed Decks",
-      icon: <ShoppingCart />,
-    },
-    {
-      path: "/app/sales-analytics",
-      label: "Sales Analytics",
-      icon: <TrendingUp />,
-    },
-    {
       path: "/app/seller-dashboard",
       label: "Seller Dashboard",
       icon: <BanknoteIcon />,
+    },
+    {
+      path: "/app/listed-decks",
+      label: "My Listed Decks",
+      icon: <ShoppingCart />,
     },
   ];
 
@@ -100,7 +94,7 @@ const Sidebar = () => {
     <div
       className={cn(
         "h-full bg-[#F3F6FF] dark:bg-gray-900 flex flex-col transition-all duration-300",
-        isCollapsed ? "w-[80px]" : "w-[280px]",
+        isCollapsed ? "w-[80px]" : "w-[280px]"
       )}
     >
       {/* Logo Section */}
@@ -145,7 +139,7 @@ const Sidebar = () => {
             <div
               className={cn(
                 "flex items-center px-4",
-                isCollapsed ? "justify-center" : "space-x-2",
+                isCollapsed ? "justify-center" : "space-x-2"
               )}
             >
               <User className="h-5 w-5 text-[#2B4C7E] dark:text-gray-200 flex-shrink-0" />
@@ -175,7 +169,7 @@ const Sidebar = () => {
             <div
               className={cn(
                 "flex items-center px-4",
-                isCollapsed ? "justify-center" : "space-x-2",
+                isCollapsed ? "justify-center" : "space-x-2"
               )}
             >
               <Store className="h-5 w-5 text-[#2B4C7E] dark:text-gray-200 flex-shrink-0" />
