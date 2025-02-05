@@ -64,8 +64,60 @@ export function useStripeConnect() {
     }
   };
 
+  // New: completeSellerSetup: reinitiates onboarding using existing account id
+  const completeSellerSetup = async (accountId: string) => {
+    try {
+      setIsLoading(true);
+      const { url } = await postStripeRequest<{ url: string }>(
+        "create-onboarding-link",
+        { accountId }
+      );
+      window.location.href = url;
+    } catch (error) {
+      console.error("Error completing onboarding:", error);
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to complete account setup",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // New: verifyAccountStatus verifies the Stripe account status from the server.
+  const verifyAccountStatus = async () => {
+    if (!user) return;
+    try {
+      setIsLoading(true);
+      const { status, account } = await postStripeRequest<{ status: string; account: any }>(
+        "verify-stripe-account",
+        { userId: user.id }
+      );
+      // Optionally, you can update any local state or perform further actions based on the new status.
+      return { status, account };
+    } catch (error) {
+      console.error("Error verifying account status:", error);
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to verify account status",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     setupSellerAccount,
+    completeSellerSetup,
+    verifyAccountStatus, // new function exposed for use
     isLoading,
   };
 }

@@ -171,7 +171,6 @@ router.post("/verify-stripe-account", async (req, res) => {
     const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: "Missing userId" });
 
-    // Removed redundant Supabase initialization; using global 'supabase'
     // Retrieve seller's Stripe Connect ID from "sellers" table
     const { data: seller, error: sellerError } = await supabase
       .from("sellers")

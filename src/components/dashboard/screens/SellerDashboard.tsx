@@ -19,14 +19,14 @@ import { AlertCircle, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export function SellerDashboard() {
-  const { setupSellerAccount, isLoading } = useStripeConnect();
+  const { setupSellerAccount, completeSellerSetup, verifyAccountStatus, isLoading } = useStripeConnect();
   const [user, setUser] = useState<any>(null); // new user state
   const [accountStatus, setAccountStatus] = useState<any>(null);
   const [sellerRecordFound, setSellerRecordFound] = useState(false); // New state for seller existence
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [hasInitiatedSetup, setHasInitiatedSetup] = useState(false);
 
-  // Refactored: extract loadStatus function to allow re-fetch after Stripe callback.
+  // Updated loadStatus to verify Stripe status and refresh seller record.
   const loadStatus = async () => {
     try {
       const { data: seller } = await supabase
@@ -34,9 +34,18 @@ export function SellerDashboard() {
         .select("*")
         .eq("id", user?.id)
         .single();
+
       if (seller) {
+        // Instead of manual fetch, use verifyAccountStatus from hook.
+        await verifyAccountStatus();
+        // Re-fetch seller record after verification updates the database.
+        const { data: refreshedSeller } = await supabase
+          .from("sellers")
+          .select("*")
+          .eq("id", user?.id)
+          .single();
         setSellerRecordFound(true);
-        setAccountStatus(seller);
+        setAccountStatus(refreshedSeller);
       } else {
         setSellerRecordFound(false);
         setAccountStatus({
@@ -71,17 +80,8 @@ export function SellerDashboard() {
       // Check URL query params for stripeStatus update (e.g. ?stripeStatus=enabled)
       const params = new URLSearchParams(window.location.search);
       if (params.get("stripeStatus") === "enabled") {
-        // Call the new endpoint to verify account status on Stripe
-        fetch("/api/verify-stripe-account", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: user.id }),
-        })
-          .then((res) => res.json())
-          .then(() => {
-            // Re-fetch status after verification
-            loadStatus();
-          })
+        verifyAccountStatus()
+          .then(() => loadStatus())
           .catch((error) =>
             console.error("Error verifying Stripe account status:", error)
           );
@@ -97,9 +97,7 @@ export function SellerDashboard() {
     );
   }
 
-  const isPending =
-    !accountStatus.stripe_connect_id ||
-    accountStatus.stripe_connect_status === "pending";
+  const isEnabled = accountStatus.stripe_connect_status === "enabled";
 
   return (
     <div className="space-y-6">
@@ -110,13 +108,10 @@ export function SellerDashboard() {
               Seller Account Status
             </h2>
             <p className="text-sm text-gray-500 mt-1">
-              {isPending
-                ? "Complete your account setup to start receiving payments"
-                : "Your account is ready to receive payments"}
+              Status: {accountStatus.stripe_connect_status}
             </p>
           </div>
-          {// Show setup button only if no seller record exists and account is pending
-          !sellerRecordFound && isPending && (
+          { !sellerRecordFound ? (
             <Button
               onClick={() => {
                 if (!hasInitiatedSetup) {
@@ -127,35 +122,36 @@ export function SellerDashboard() {
               disabled={isLoading || hasInitiatedSetup}
               className="bg-[#2B4C7E]"
             >
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : null}
-              Complete Setup
+              {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Start Setup
             </Button>
-          )}
-          {// Optionally, if a seller record was found, show a message indicating setup is in progress or complete.
-          sellerRecordFound && (
-            <div className="text-green-600 font-medium">
-              {accountStatus.stripe_connect_id
-                ? "Setup complete"
-                : "Setup initiated"}
-            </div>
+          ) : (
+            !isEnabled && accountStatus.stripe_connect_id && (
+              <Button
+                onClick={() => completeSellerSetup(accountStatus.stripe_connect_id)}
+                disabled={isLoading}
+                className="bg-[#2B4C7E]"
+              >
+                {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Complete Setup
+              </Button>
+            )
           )}
         </div>
       </Card>
 
-      <Card className="p-6">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-[#2B4C7E]">
-              Available for Withdrawal
-            </h2>
-            <p className="text-2xl font-bold text-[#2B4C7E]">
-              ${accountStatus.total_earnings.toFixed(2)}
-            </p>
-          </div>
+      {isEnabled ? (
+        <Card className="p-6">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-[#2B4C7E]">
+                Available for Withdrawal
+              </h2>
+              <p className="text-2xl font-bold text-[#2B4C7E]">
+                ${accountStatus.total_earnings.toFixed(2)}
+              </p>
+            </div>
 
-          {!isPending && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button className="w-full bg-[#2B4C7E]">Withdraw Funds</Button>
@@ -164,8 +160,7 @@ export function SellerDashboard() {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Withdraw Funds</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Enter the amount you want to withdraw. This will be
-                    transferred to your connected bank account.
+                    Enter the amount you want to withdraw. This will be transferred to your connected bank account.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
 
@@ -192,10 +187,7 @@ export function SellerDashboard() {
                   <AlertDialogAction
                     onClick={() => {
                       const amount = parseFloat(withdrawAmount);
-                      if (
-                        amount > 0 &&
-                        amount <= accountStatus.total_earnings
-                      ) {
+                      if (amount > 0 && amount <= accountStatus.total_earnings) {
                         withdrawFunds(amount);
                       }
                     }}
@@ -206,26 +198,24 @@ export function SellerDashboard() {
                       parseFloat(withdrawAmount) > accountStatus.total_earnings
                     }
                   >
-                    {isLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : null}
+                    {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                     Withdraw
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-          )}
-
-          {isPending && (
-            <div className="flex items-center space-x-2 text-amber-600 bg-amber-50 p-4 rounded-lg">
-              <AlertCircle className="h-5 w-5" />
-              <p className="text-sm">
-                Complete your account setup to withdraw funds
-              </p>
-            </div>
-          )}
-        </div>
-      </Card>
+          </div>
+        </Card>
+      ) : (
+        <Card className="p-6">
+          <div className="flex items-center space-x-2 text-amber-600 bg-amber-50 p-4 rounded-lg">
+            <AlertCircle className="h-5 w-5" />
+            <p className="text-sm">
+              Complete your account setup to withdraw funds
+            </p>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }
