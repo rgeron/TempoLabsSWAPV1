@@ -62,10 +62,20 @@ export function SellerDashboard() {
       // Check URL query params for stripeStatus update (e.g. ?stripeStatus=enabled)
       const params = new URLSearchParams(window.location.search);
       if (params.get("stripeStatus") === "enabled") {
-        // Optionally, call getStripeAccountDetails or updateSellerStatus logic here.
-        setTimeout(() => {
-          loadStatus();
-        }, 1000);
+        // Call the new endpoint to verify account status on Stripe
+        fetch("/api/verify-stripe-account", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: user.id }),
+        })
+          .then((res) => res.json())
+          .then(() => {
+            // Re-fetch status after verification
+            loadStatus();
+          })
+          .catch((error) =>
+            console.error("Error verifying Stripe account status:", error)
+          );
       }
     }
   }, [user]);

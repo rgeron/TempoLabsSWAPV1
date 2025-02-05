@@ -1,5 +1,6 @@
 import { STRIPE_API_URL } from "../config"; // Updated import
 import { supabase } from "../supabase";
+import { postStripeRequest } from "./stripeUtils";
 
 // Create or retrieve a Stripe Connect account
 export const createConnectAccount = async (userId: string) => {
@@ -13,14 +14,11 @@ export const createConnectAccount = async (userId: string) => {
     if (userError) throw userError;
     if (!user?.email) throw new Error("User email not found");
 
-    const response = await fetch(`${STRIPE_API_URL}/create-connect-account`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: user.email }),
-    });
-
-    if (!response.ok) throw new Error("Failed to create Connect account");
-    const { accountId } = await response.json();
+    // Using the helper function
+    const { accountId } = await postStripeRequest<{ accountId: string }>(
+      "create-connect-account",
+      { email: user.email }
+    );
 
     // Update Supabase with Connect account ID
     const { error: updateError } = await supabase
@@ -52,14 +50,11 @@ export const getOnboardingLink = async (userId: string) => {
 
     if (userError) throw userError;
 
-    const response = await fetch(`${STRIPE_API_URL}/create-onboarding-link`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ accountId: userData.stripe_connect_id }),
-    });
-
-    if (!response.ok) throw new Error("Failed to create onboarding link");
-    const { url } = await response.json();
+    // Using the helper function
+    const { url } = await postStripeRequest<{ url: string }>(
+      "create-onboarding-link",
+      { accountId: userData.stripe_connect_id }
+    );
     return url;
   } catch (error) {
     console.error("Error getting onboarding link:", error);
@@ -70,15 +65,7 @@ export const getOnboardingLink = async (userId: string) => {
 // Create a pending Stripe account
 export const createPendingAccount = async (email: string) => {
   try {
-    const response = await fetch(`${STRIPE_API_URL}/create-pending-account`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
-
-    if (!response.ok)
-      throw new Error("Failed to create pending Stripe account");
-    return await response.json();
+    return await postStripeRequest("create-pending-account", { email });
   } catch (error) {
     console.error("Error creating pending Stripe account:", error);
     throw error;
@@ -91,18 +78,14 @@ export const createCreditCheckoutSession = async (
   amount: number
 ) => {
   try {
-    const response = await fetch(`${STRIPE_API_URL}/create-checkout-session`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    const { url } = await postStripeRequest<{ url: string }>(
+      "create-checkout-session",
+      {
         userId,
         amount,
         isRecharge: true,
-      }),
-    });
-
-    if (!response.ok) throw new Error("Failed to create checkout session");
-    const { url } = await response.json();
+      }
+    );
     return url;
   } catch (error) {
     console.error("Error creating checkout session:", error);
@@ -136,17 +119,13 @@ export const processDeckPurchase = async (
       throw new Error("Seller's Stripe account is not properly set up");
     }
 
-    const response = await fetch(`${STRIPE_API_URL}/process-deck-purchase`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    const response = await postStripeRequest<{ /*stripe response*/ }>(
+      "process-deck-purchase",
+      {
         amount,
         accountId: seller.stripe_connect_id,
-      }),
-    });
-
-    if (!response.ok) throw new Error("Failed to process purchase");
-    const result = await response.json();
+      }
+    );
 
     // Update buyer's profile
     const { error: buyerError } = await supabase
@@ -198,7 +177,7 @@ export const processDeckPurchase = async (
 
     if (historyError) throw historyError;
 
-    return result;
+    return response;
   } catch (error) {
     console.error("Error processing deck purchase:", error);
     throw error;
@@ -207,22 +186,13 @@ export const processDeckPurchase = async (
 
 // Add a new function to process fund withdrawals
 export const withdrawFunds = async (amount: number) => {
-	// Retrieve current user info
 	const { data: { user }, error: userError } = await supabase.auth.getUser();
 	if (userError) throw userError;
 	if (!user?.id) throw new Error("User not authenticated");
 	const userId = user.id;
 
 	try {
-		const response = await fetch(`${STRIPE_API_URL}/withdraw-funds`, {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ userId, amount }),
-		});
-		if (!response.ok) throw new Error("Failed to withdraw funds");
-		const result = await response.json();
-		// ...optionally update profile...
-		return result;
+		return await postStripeRequest("withdraw-funds", { userId, amount });
 	} catch (error) {
 		console.error("Error withdrawing funds:", error);
 		throw error;

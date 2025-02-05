@@ -6,6 +6,12 @@ const { createClient } = require("@supabase/supabase-js");
 const router = express.Router();
 router.use(express.json());
 
+// Initialize Supabase client once
+const supabase = createClient(
+  process.env.VITE_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY
+);
+
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error("Missing Stripe secret key");
 }
@@ -19,11 +25,7 @@ router.post("/create-connect-account", async (req, res) => {
   try {
     const { userId } = req.body;
 
-    // Get user's email from Supabase
-    const supabaseUrl = process.env.VITE_SUPABASE_URL;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
+    // Removed redundant Supabase initialization; using global 'supabase'
     const {
       data: { user },
       error: userError,
@@ -130,12 +132,8 @@ router.post("/withdraw-funds", async (req, res) => {
     if (!userId || !amount) {
       return res.status(400).json({ error: "Missing parameters" });
     }
-    
-    // Initialize Supabase client
-    const supabaseUrl = process.env.VITE_SUPABASE_URL;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Removed redundant Supabase initialization; using global 'supabase'
     // Retrieve seller profile to get Stripe connected account id
     const { data: sellerProfile, error: profileError } = await supabase
       .from("profiles")
@@ -147,8 +145,6 @@ router.post("/withdraw-funds", async (req, res) => {
     if (!sellerProfile?.stripe_connect_id) {
       throw new Error("No connected Stripe account for this user");
     }
-
-    // Optional: Validate that withdrawal amount does not exceed available earnings.
 
     // Create a payout via Stripe using the connected account
     const payout = await stripe.payouts.create(
@@ -169,6 +165,42 @@ router.post("/withdraw-funds", async (req, res) => {
   }
 });
 
+// Add endpoint to verify Stripe account status
+router.post("/verify-stripe-account", async (req, res) => {
+  try {
+    const { userId } = req.body;
+    if (!userId) return res.status(400).json({ error: "Missing userId" });
+
+    // Removed redundant Supabase initialization; using global 'supabase'
+    // Retrieve seller's Stripe Connect ID from "sellers" table
+    const { data: seller, error: sellerError } = await supabase
+      .from("sellers")
+      .select("stripe_connect_id")
+      .eq("id", userId)
+      .single();
+    if (sellerError || !seller) {
+      throw sellerError || new Error("Seller not found");
+    }
+
+    // Verify account status on Stripe
+    const account = await stripe.accounts.retrieve(seller.stripe_connect_id);
+    if (account.charges_enabled) {
+      // Update seller record status to active
+      const { error: updateError } = await supabase
+        .from("sellers")
+        .update({ stripe_connect_status: "active" })
+        .eq("id", userId);
+      if (updateError) throw updateError;
+      return res.json({ status: "active", account });
+    }
+
+    return res.json({ status: "pending", account });
+  } catch (error) {
+    console.error("Error verifying Stripe account:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Webhook handler
 router.post(
   "/webhook",
@@ -182,7 +214,7 @@ router.post(
       event = stripe.webhooks.constructEvent(
         req.body,
         sig,
-        process.env.STRIPE_WEBHOOK_SECRET,
+        process.env.STRIPE_WEBHOOK_SECRET
       );
     } catch (err) {
       console.error("Webhook signature verification failed:", err);
@@ -205,7 +237,7 @@ router.post(
       console.error("Error processing webhook:", error);
       res.status(500).json({ error: error.message });
     }
-  },
+  }
 );
 
 module.exports = router;

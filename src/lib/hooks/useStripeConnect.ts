@@ -3,6 +3,7 @@ import { useAuth } from "@/lib/auth";
 import { STRIPE_API_URL } from "@/lib/config";
 import { supabase } from "@/lib/supabase";
 import { useState } from "react";
+import { postStripeRequest } from "@/lib/api/stripeUtils";
 
 export function useStripeConnect() {
   const { user } = useAuth();
@@ -25,21 +26,13 @@ export function useStripeConnect() {
         throw sellerError;
       }
 
-      // Create Connect account
-      const response = await fetch(`${STRIPE_API_URL}/create-connect-account`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id }),
-      });
+      // Create Connect account using the common helper
+      const { accountId } = await postStripeRequest<{ accountId: string }>(
+        "create-connect-account",
+        { userId: user.id }
+      );
 
-      if (!response.ok) {
-        throw new Error("Failed to create Connect account");
-      }
-
-      const { accountId } = await response.json();
-
-      // Update seller record with Stripe account ID and set status to pending;
-      // status will be updated dynamically via your callback/webhook.
+      // Update seller record with Stripe account ID and set status to pending
       const { error: updateError } = await supabase
         .from("sellers")
         .update({
@@ -50,23 +43,12 @@ export function useStripeConnect() {
 
       if (updateError) throw updateError;
 
-      // Get onboarding link
-      const onboardingResponse = await fetch(
-        `${STRIPE_API_URL}/create-onboarding-link`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ accountId }),
-        }
+      // Get onboarding link using the common helper
+      const { url } = await postStripeRequest<{ url: string }>(
+        "create-onboarding-link",
+        { accountId }
       );
 
-      if (!onboardingResponse.ok) {
-        throw new Error("Failed to create onboarding link");
-      }
-
-      const { url } = await onboardingResponse.json();
-
-      // Redirect to onboarding
       window.location.href = url;
     } catch (error) {
       console.error("Error setting up seller account:", error);
