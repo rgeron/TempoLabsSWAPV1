@@ -73,7 +73,7 @@ const AddDeckDialog = ({
   onOpenChange,
   isSubmitting,
 }: AddDeckDialogProps) => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
   const [selectedCategories, setSelectedCategories] = useState<DeckCategory[]>(
     []
@@ -85,6 +85,7 @@ const AddDeckDialog = ({
   const [flashcardsFile, setFlashcardsFile] = useState<File | null>(null);
   const [showDisputeDialog, setShowDisputeDialog] = useState(false);
   const [disputeDeckTitle, setDisputeDeckTitle] = useState("");
+  const [priceValue, setPriceValue] = useState<number>(0);
 
   // Reset states when dialog closes
   useEffect(() => {
@@ -163,6 +164,18 @@ const AddDeckDialog = ({
       setIsUploadingCover(true);
       const form = event.currentTarget;
       const title = form.title.value;
+      let price = parseFloat(form.price.value);
+
+      // For non-seller users, override price and inform the user.
+      if (price > 0 && !profile?.isseller) {
+        toast({
+          title: "Not a seller",
+          description:
+            "Since you're not a seller, your deck will be free on the market.",
+          variant: "info",
+        });
+        price = 0;
+      }
 
       // Vérification du plagiat
       const fileContent = await flashcardsFile.text();
@@ -219,7 +232,7 @@ const AddDeckDialog = ({
       const deckData = {
         title,
         description: form.description.value,
-        price: parseFloat(form.price.value),
+        price,
         difficulty: form.difficulty.value as
           | "Beginner"
           | "Intermediate"
@@ -290,7 +303,27 @@ const AddDeckDialog = ({
                         step="0.01"
                         min="0"
                         required
+                        onChange={(e) =>
+                          setPriceValue(parseFloat(e.target.value) || 0)
+                        }
                       />
+                      {!profile?.isseller && priceValue > 0 && (
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm text-gray-600">
+                            Your deck will be free. To set a price, please
+                            become a seller.
+                          </span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              (window.location.href = "/app/seller-dashboard")
+                            }
+                          >
+                            Go to Seller Dashboard
+                          </Button>
+                        </div>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="difficulty">Difficulty</Label>
